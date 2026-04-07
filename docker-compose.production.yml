@@ -1,0 +1,10 @@
+services:
+  app:
+    image: ghcr.io/galov/ibis-electronics-payload:main
+    container_name: ibis-electronics
+    env_file:
+      - .env.production
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+

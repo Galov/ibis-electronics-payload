@@ -36,7 +36,9 @@ ENV PAYLOAD_PUBLIC_SERVER_URL=$PAYLOAD_PUBLIC_SERVER_URL
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.js ./next.config.js
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/redirects.js ./redirects.js
 
 EXPOSE 3000
 
