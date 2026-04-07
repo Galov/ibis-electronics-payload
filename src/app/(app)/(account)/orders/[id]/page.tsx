@@ -76,6 +76,10 @@ export default async function Order({ params, searchParams }: PageProps) {
       select: {
         amount: true,
         currency: true,
+        econtOfficeAddress: true,
+        econtOfficeCode: true,
+        econtOfficeId: true,
+        econtOfficeName: true,
         items: true,
         customerEmail: true,
         customer: true,
@@ -86,6 +90,7 @@ export default async function Order({ params, searchParams }: PageProps) {
         speedyOfficeName: true,
         status: true,
         createdAt: true,
+        customerNotes: true,
         updatedAt: true,
         shippingAddress: true,
       },
@@ -93,11 +98,9 @@ export default async function Order({ params, searchParams }: PageProps) {
 
     const canAccessAsGuest =
       !user &&
-      email &&
       accessToken &&
       orderResult &&
-      orderResult.customerEmail &&
-      orderResult.customerEmail === email
+      (!email || (orderResult.customerEmail && orderResult.customerEmail === email))
     const canAccessAsUser =
       user &&
       orderResult &&
@@ -196,6 +199,29 @@ export default async function Order({ params, searchParams }: PageProps) {
           </div>
         )}
 
+        {order.deliveryMethod === 'econt-office' && (order.econtOfficeName || order.econtOfficeAddress) ? (
+          <div>
+            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
+              Офис на Econt
+            </h2>
+
+            <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
+              {order.econtOfficeName ? (
+                <p className="font-medium text-primary/85">{order.econtOfficeName}</p>
+              ) : null}
+              {order.econtOfficeAddress ? (
+                <p className="mt-2 text-sm text-primary/60">{order.econtOfficeAddress}</p>
+              ) : null}
+              {order.econtOfficeCode ? (
+                <p className="mt-2 text-xs text-primary/45">Офис код: {order.econtOfficeCode}</p>
+              ) : null}
+              {order.econtOfficeId ? (
+                <p className="mt-2 text-xs text-primary/45">Офис ID: {order.econtOfficeId}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
         {order.deliveryMethod === 'speedy-office' && (order.speedyOfficeName || order.speedyOfficeAddress) ? (
           <div>
             <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
@@ -216,7 +242,7 @@ export default async function Order({ params, searchParams }: PageProps) {
           </div>
         ) : null}
 
-        {order.deliveryMethod !== 'speedy-office' && order.shippingAddress && (
+        {order.deliveryMethod === 'address' && order.shippingAddress && (
           <div>
             <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Адрес за доставка</h2>
 
@@ -224,6 +250,18 @@ export default async function Order({ params, searchParams }: PageProps) {
             <AddressItem address={order.shippingAddress} hideActions />
           </div>
         )}
+
+        {order.customerNotes ? (
+          <div>
+            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
+              Бележки към поръчката
+            </h2>
+
+            <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
+              <p className="whitespace-pre-line text-sm text-primary/70">{order.customerNotes}</p>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

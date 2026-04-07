@@ -45,7 +45,7 @@ const getSpeedyCredentials = () => {
   const password = process.env.SPEEDY_PASSWORD || ''
 
   if (!userName || !password) {
-    throw new Error('Липсват данни за достъп до Speedy.')
+    throw new Error('Липсват SPEEDY_USERNAME и/или SPEEDY_PASSWORD за Speedy.')
   }
 
   return { password, userName }

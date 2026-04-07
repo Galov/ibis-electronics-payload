@@ -6,7 +6,18 @@ import type {
 type ManualOrderData = {
   billingAddress?: Record<string, unknown>
   customerEmail?: string
-  deliveryMethod?: 'address' | 'speedy-office'
+  customerNotes?: string
+  deliveryMethod?: 'address' | 'speedy-office' | 'econt-office'
+  econtOffice?: {
+    address?: string
+    cityId?: string
+    cityName?: string
+    code?: string
+    id?: string
+    name?: string
+    regionId?: string
+    regionName?: string
+  }
   shippingFee?: number
   shippingAddress?: Record<string, unknown>
   speedyOffice?: {
@@ -45,7 +56,9 @@ export const manualAdapter = (): PaymentAdapter => ({
     const {
       billingAddress,
       customerEmail,
+      customerNotes,
       deliveryMethod,
+      econtOffice,
       shippingAddress,
       shippingFee,
       speedyOffice,
@@ -92,10 +105,6 @@ export const manualAdapter = (): PaymentAdapter => ({
 
     const resolvedEmail = user?.email || customerEmail
 
-    if (!resolvedEmail) {
-      throw new Error('За изпращане на поръчка е необходим имейл на клиента.')
-    }
-
     const normalizedItems = cart.items.map((item) => {
       const product =
         item.product && typeof item.product === 'object' ? item.product : null
@@ -117,7 +126,7 @@ export const manualAdapter = (): PaymentAdapter => ({
         cart: cart.id,
         currency: cart.currency,
         customer: user?.id || undefined,
-        customerEmail: resolvedEmail,
+        ...(resolvedEmail ? { customerEmail: resolvedEmail } : {}),
         items: normalizedItems,
         paymentMethod: 'manual',
         status: 'pending',
@@ -132,8 +141,16 @@ export const manualAdapter = (): PaymentAdapter => ({
         amount: totalAmount,
         currency: cart.currency,
         customer: user?.id || undefined,
-        customerEmail: resolvedEmail,
+        ...(resolvedEmail ? { customerEmail: resolvedEmail } : {}),
+        customerNotes: customerNotes?.trim() || undefined,
         deliveryMethod: deliveryMethod || 'address',
+        econtOfficeAddress:
+          econtOffice && (econtOffice.name || econtOffice.address || econtOffice.cityName || econtOffice.regionName)
+            ? [econtOffice.regionName, econtOffice.cityName, econtOffice.address].filter(Boolean).join(', ')
+            : undefined,
+        econtOfficeCode: econtOffice?.code || undefined,
+        econtOfficeId: econtOffice?.id || undefined,
+        econtOfficeName: econtOffice?.name || undefined,
         items: normalizedItems,
         shippingFee: normalizedShippingFee,
         shippingAddress,
@@ -177,6 +194,7 @@ export const manualAdapter = (): PaymentAdapter => ({
 
     return {
       message: 'Поръчката беше изпратена успешно.',
+      accessToken: typeof order.accessToken === 'string' ? order.accessToken : '',
       orderID: order.id,
       transactionID: transaction.id,
     }

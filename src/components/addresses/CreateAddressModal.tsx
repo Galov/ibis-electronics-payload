@@ -18,7 +18,7 @@ type Props = {
   initialData?: Partial<Omit<Address, 'country'>> & { country?: string }
   buttonText?: string
   modalTitle?: string
-  callback?: (address: Partial<Address>) => void
+  callback?: (address: Partial<Address> | undefined) => void
   skipSubmission?: boolean
   disabled?: boolean
 }
@@ -41,10 +41,10 @@ export const CreateAddressModal: React.FC<Props> = ({
     setOpen(false)
   }
 
-  const handleCallback = (data: Partial<Address>) => {
+  const handleCallback = (data: Partial<Address> | undefined) => {
     closeModal()
 
-    if (callback) {
+    if (callback && data) {
       callback(data)
     }
   }

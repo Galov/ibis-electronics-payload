@@ -147,10 +147,53 @@ export const plugins: Plugin[] = [
                 value: 'address',
               },
               {
+                label: 'Офис на Econt',
+                value: 'econt-office',
+              },
+              {
                 label: 'Офис на Speedy',
                 value: 'speedy-office',
               },
             ],
+          },
+          {
+            name: 'econtOfficeId',
+            type: 'text',
+            admin: {
+              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
+              position: 'sidebar',
+              readOnly: true,
+            },
+            label: 'Econt офис ID',
+          },
+          {
+            name: 'econtOfficeCode',
+            type: 'text',
+            admin: {
+              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
+              position: 'sidebar',
+              readOnly: true,
+            },
+            label: 'Econt офис код',
+          },
+          {
+            name: 'econtOfficeName',
+            type: 'text',
+            admin: {
+              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
+              position: 'sidebar',
+              readOnly: true,
+            },
+            label: 'Име на офис',
+          },
+          {
+            name: 'econtOfficeAddress',
+            type: 'textarea',
+            admin: {
+              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
+              readOnly: true,
+            },
+            label: 'Адрес на офис',
           },
           {
             name: 'speedyOfficeId',
@@ -189,6 +232,14 @@ export const plugins: Plugin[] = [
               readOnly: true,
             },
             label: 'Доставка',
+          },
+          {
+            name: 'customerNotes',
+            type: 'textarea',
+            admin: {
+              readOnly: true,
+            },
+            label: 'Бележки към поръчката',
           },
           {
             name: 'accessToken',

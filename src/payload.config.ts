@@ -25,6 +25,7 @@ import { Pages } from '@/collections/Pages'
 import { Partners } from '@/collections/Partners'
 import { Users } from '@/collections/Users'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
+import { econtOfficesHandler } from '@/endpoints/econt-offices'
 import { speedyOfficesHandler } from '@/endpoints/speedy-offices'
 import { ContactPage } from '@/globals/ContactPage'
 import { Footer } from '@/globals/Footer'
@@ -115,6 +116,11 @@ export default buildConfig({
       handler: recalculateRetailPricesHandler,
       method: 'post',
       path: '/pricing/recalculate',
+    },
+    {
+      handler: econtOfficesHandler,
+      method: 'get',
+      path: '/integrations/econt/offices',
     },
     {
       handler: speedyOfficesHandler,

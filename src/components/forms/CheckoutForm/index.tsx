@@ -10,8 +10,20 @@ import { getOrderAccessParams } from './getOrderAccessParams'
 
 type Props = {
   customerEmail?: string
+  customerNotes?: string
   billingAddress?: Partial<Address>
-  deliveryMethod: 'address' | 'speedy-office'
+  disabled?: boolean
+  deliveryMethod: 'address' | 'speedy-office' | 'econt-office'
+  econtOffice?: {
+    address: string
+    cityId: string
+    cityName: string
+    code: string
+    id: string
+    name: string
+    regionId: string
+    regionName: string
+  } | null
   shippingFee: number
   shippingAddress?: Partial<Address>
   speedyOffice?: {
@@ -28,8 +40,11 @@ type Props = {
 
 export const CheckoutForm: React.FC<Props> = ({
   customerEmail,
+  customerNotes,
   billingAddress,
+  disabled = false,
   deliveryMethod,
+  econtOffice,
   shippingFee,
   shippingAddress,
   speedyOffice,
@@ -47,12 +62,18 @@ export const CheckoutForm: React.FC<Props> = ({
       setIsLoading(true)
       setProcessingPayment(true)
 
+      const trimmedCustomerEmail = customerEmail?.trim() || ''
+      const effectiveCustomerEmail =
+        trimmedCustomerEmail || `guest-${Date.now()}@orders.ibiselectronics.local`
+
       try {
         const confirmResult = await confirmOrder('manual', {
           additionalData: {
             billingAddress,
-            ...(customerEmail ? { customerEmail } : {}),
+            customerEmail: effectiveCustomerEmail,
+            customerNotes: customerNotes?.trim() || undefined,
             deliveryMethod,
+            ...(deliveryMethod === 'econt-office' && econtOffice ? { econtOffice } : {}),
             shippingFee,
             ...(deliveryMethod === 'speedy-office' && speedyOffice ? { speedyOffice } : {}),
             ...(deliveryMethod === 'address' ? { shippingAddress } : {}),
@@ -68,12 +89,12 @@ export const CheckoutForm: React.FC<Props> = ({
           let accessToken = 'accessToken' in confirmResult ? (confirmResult.accessToken as string) : ''
           const queryParams = new URLSearchParams()
 
-          if (customerEmail) {
-            queryParams.set('email', customerEmail)
+          if (trimmedCustomerEmail) {
+            queryParams.set('email', trimmedCustomerEmail)
 
             if (!accessToken) {
               const orderAccessParams = await getOrderAccessParams({
-                email: customerEmail,
+                email: trimmedCustomerEmail,
                 orderID: String(confirmResult.orderID),
               })
 
@@ -103,7 +124,9 @@ export const CheckoutForm: React.FC<Props> = ({
       clearCart,
       confirmOrder,
       customerEmail,
+      customerNotes,
       deliveryMethod,
+      econtOffice,
       router,
       setProcessingPayment,
       shippingFee,
@@ -118,7 +141,7 @@ export const CheckoutForm: React.FC<Props> = ({
       <div className="mt-8 flex gap-4">
         <Button
           className="h-12 rounded-md bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)]"
-          disabled={isLoading}
+          disabled={disabled || isLoading}
           type="submit"
           variant="default"
         >
