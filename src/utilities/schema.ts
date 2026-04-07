@@ -1,4 +1,5 @@
 import { buildCategoryPath } from '@/utilities/category'
+import { IBIS_CONTACT_LOCATION, IBIS_CONTACT_LOCATION_LABEL } from '@/constants/contact'
 import { getBaseURL } from '@/utilities/getBaseURL'
 
 type BreadcrumbItem = {
@@ -19,7 +20,6 @@ type ContactLocation = {
 
 type ContactPageLike = {
   store?: ContactLocation
-  warehouse?: ContactLocation
 }
 
 const baseURL = getBaseURL()
@@ -50,7 +50,7 @@ export const buildBreadcrumbSchema = (items: BreadcrumbItem[]) => ({
 })
 
 export const buildOrganizationSchema = (contactPage?: ContactPageLike | null) => {
-  const phones = [contactPage?.store?.phone, contactPage?.warehouse?.phone]
+  const phones = [contactPage?.store?.phone]
     .map((phone) => normalizePhone(phone))
     .filter(Boolean)
 
@@ -70,21 +70,23 @@ export const buildOrganizationSchema = (contactPage?: ContactPageLike | null) =>
 }
 
 export const buildLocalBusinessSchemas = (contactPage?: ContactPageLike | null) => {
-  const locations = [
-    contactPage?.store ? { ...contactPage.store, label: 'Магазин' } : null,
-    contactPage?.warehouse ? { ...contactPage.warehouse, label: 'Склад' } : null,
-  ].filter(Boolean) as Array<ContactLocation & { label: string }>
+  const location = {
+    address: IBIS_CONTACT_LOCATION.address,
+    label: IBIS_CONTACT_LOCATION_LABEL,
+    phone: contactPage?.store?.phone || '',
+    workingHours: contactPage?.store?.workingHours || '',
+  }
 
-  return locations.map((location) => ({
+  return [({
     '@context': 'https://schema.org',
     '@type': 'Store',
     address: buildPostalAddress(location.address),
     areaServed: 'BG',
-    name: `Ibis Electronics - ${location.label}`,
+    name: location.label,
     openingHours: location.workingHours,
     telephone: normalizePhone(location.phone),
     url: toAbsoluteUrl('/contact'),
-  }))
+  })]
 }
 
 export const buildProductSchema = (args: {

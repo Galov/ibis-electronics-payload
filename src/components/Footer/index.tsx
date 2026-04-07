@@ -1,5 +1,6 @@
 import { CMSLink } from '@/components/Link'
 import { SiteLogo } from '@/components/Logo/SiteLogo'
+import { IBIS_CONTACT_LOCATION, IBIS_CONTACT_LOCATION_LABEL } from '@/constants/contact'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import type { ContactPage, Footer as FooterGlobal } from '@/payload-types'
 import { Clock3, MapPin, Phone } from 'lucide-react'
@@ -15,7 +16,7 @@ const locationRows = (location?: ContactPage['store'] | null) =>
     {
       icon: MapPin,
       label: 'Адрес',
-      value: location?.address,
+      value: IBIS_CONTACT_LOCATION.address,
     },
     {
       icon: Phone,
@@ -34,16 +35,10 @@ export async function Footer() {
   const footer = (await getCachedGlobal('footer', 1)()) as FooterGlobal
   const contactPage = (await getCachedGlobal('contact-page', 0)()) as ContactPage
 
-  const locations = [
-    {
-      label: 'Магазин',
-      value: contactPage.store,
-    },
-    {
-      label: 'Склад',
-      value: contactPage.warehouse,
-    },
-  ]
+  const location = {
+    label: IBIS_CONTACT_LOCATION_LABEL,
+    value: contactPage.store,
+  }
 
   return (
     <footer className="bg-[rgb(1,55,186)] text-sm text-white">
@@ -56,32 +51,34 @@ export async function Footer() {
             </Link>
           </div>
 
-          {locations.map((location) => (
-            <div key={location.label}>
-              <h3 className="mb-4 text-base font-normal tracking-[0.08em] uppercase text-white/95">
-                {location.label}
-              </h3>
+          <div>
+            <h3 className="mb-4 text-base font-normal tracking-[0.08em] uppercase text-white/95">
+              Контакти
+            </h3>
 
-              <div className="space-y-3 text-sm leading-6 text-white/80">
-                {locationRows(location.value).map((row) => {
-                  const Icon = row.icon
-
-                  return (
-                    <div key={`${location.label}-${row.label}`} className="flex items-start gap-3">
-                      <Icon className="mt-1 h-4 w-4 shrink-0 text-white/70" />
-                      {row.href ? (
-                        <a className="hover:text-white" href={row.href}>
-                          {row.value}
-                        </a>
-                      ) : (
-                        <p className="whitespace-pre-line">{row.value}</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+            <div className="mb-4 text-sm leading-6 text-white/92">
+              <p>{location.label}</p>
             </div>
-          ))}
+
+            <div className="space-y-3 text-sm leading-6 text-white/80">
+              {locationRows(location.value).map((row) => {
+                const Icon = row.icon
+
+                return (
+                  <div key={`${location.label}-${row.label}`} className="flex items-start gap-3">
+                    <Icon className="mt-1 h-4 w-4 shrink-0 text-white/70" />
+                    {row.href ? (
+                      <a className="hover:text-white" href={row.href}>
+                        {row.value}
+                      </a>
+                    ) : (
+                      <p className="whitespace-pre-line">{row.value}</p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
 
           <div>
             <h3 className="mb-4 text-base font-normal tracking-[0.08em] uppercase text-white/95">

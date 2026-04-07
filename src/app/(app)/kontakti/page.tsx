@@ -1,6 +1,7 @@
 import configPromise from '@payload-config'
 import { ContactLocations } from '@/components/contact/ContactLocations'
 import { ContactForm } from '@/components/forms/ContactForm'
+import { IBIS_CONTACT_LOCATION, IBIS_CONTACT_LOCATION_LABEL } from '@/constants/contact'
 import { generateMeta } from '@/utilities/generateMeta'
 import { buildLocalBusinessSchemas } from '@/utilities/schema'
 import { getPayload } from 'payload'
@@ -12,17 +13,12 @@ type ContactPageData = {
     image?: { url?: string | null } | null
     title?: string | null
   } | null
-  store: {
+  store?: {
     address: string
     phone: string
     workingHours: string
   }
   title?: string
-  warehouse: {
-    address: string
-    phone: string
-    workingHours: string
-  }
 }
 
 export async function generateMetadata() {
@@ -46,17 +42,13 @@ export default async function KontaktiPage() {
     slug: 'contact-page' as never,
   })) as ContactPageData
 
-  const locations = [
-    {
-      label: 'Магазин',
-      ...contactPage.store,
-    },
-    {
-      label: 'Склад',
-      ...contactPage.warehouse,
-    },
-  ] as const
   const localBusinessJsonLd = buildLocalBusinessSchemas(contactPage)
+  const location = {
+    address: IBIS_CONTACT_LOCATION.address,
+    label: IBIS_CONTACT_LOCATION_LABEL,
+    phone: contactPage.store?.phone,
+    workingHours: contactPage.store?.workingHours,
+  }
 
   return (
     <div className="container py-12 md:py-14">
@@ -76,7 +68,7 @@ export default async function KontaktiPage() {
       </div>
 
       <div className="space-y-12">
-        <ContactLocations locations={[locations[0], locations[1]]} />
+        <ContactLocations location={location} />
 
         <section className="rounded-xl bg-muted/20 px-5 py-6 md:px-7 md:py-8">
           <div className="mb-8 max-w-2xl">
