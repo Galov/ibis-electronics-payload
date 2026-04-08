@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import type { Plugin } from 'payload'
 import { ecommercePlugin, EUR } from '@payloadcms/plugin-ecommerce'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
@@ -284,4 +285,25 @@ export const plugins: Plugin[] = [
       }),
     },
   }),
+  ...(process.env.R2_BUCKET &&
+  process.env.R2_ACCESS_KEY_ID &&
+  process.env.R2_SECRET_ACCESS_KEY &&
+  process.env.R2_ENDPOINT
+    ? [
+        s3Storage({
+          collections: {
+            media: true,
+          },
+          bucket: process.env.R2_BUCKET,
+          config: {
+            credentials: {
+              accessKeyId: process.env.R2_ACCESS_KEY_ID,
+              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+            },
+            endpoint: process.env.R2_ENDPOINT,
+            region: process.env.R2_REGION || 'auto',
+          },
+        }),
+      ]
+    : []),
 ]

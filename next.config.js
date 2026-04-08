@@ -3,6 +3,7 @@ import { withPayload } from '@payloadcms/next/withPayload'
 import redirects from './redirects.js'
 
 const NEXT_PUBLIC_SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+const NEXT_PUBLIC_R2_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL || ''
 const NEXT_DIST_DIR = process.env.NEXT_DIST_DIR || '.next'
 
 /** @type {import('next').NextConfig} */
@@ -12,6 +13,14 @@ const nextConfig = {
     unoptimized: true,
     remotePatterns: [
       ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
+        const url = new URL(item)
+
+        return {
+          hostname: url.hostname,
+          protocol: url.protocol.replace(':', ''),
+        }
+      }),
+      ...[NEXT_PUBLIC_R2_PUBLIC_BASE_URL].filter(Boolean).map((item) => {
         const url = new URL(item)
 
         return {

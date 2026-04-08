@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@payloadcms/admin-bar": "3.79.0",
+    "@payloadcms/db-mongodb": "3.79.0",
     "@payloadcms/email-nodemailer": "3.79.0",
     "@payloadcms/live-preview-react": "3.79.0",
     "@payloadcms/next": "3.79.0",
@@ -31,6 +32,7 @@
     "@payloadcms/plugin-form-builder": "3.79.0",
     "@payloadcms/plugin-seo": "3.79.0",
     "@payloadcms/richtext-lexical": "3.79.0",
+    "@payloadcms/storage-s3": "3.79.0",
     "@payloadcms/translations": "3.79.0",
     "@payloadcms/ui": "3.79.0",
     "@radix-ui/react-accordion": "1.2.11",
@@ -63,8 +65,7 @@
     "sharp": "0.34.2",
     "sonner": "^1.7.2",
     "stripe": "18.5.0",
-    "tailwind-merge": "^3.4.0",
-    "@payloadcms/db-mongodb": "3.79.0"
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
