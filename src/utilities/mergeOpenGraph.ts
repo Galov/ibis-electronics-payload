@@ -7,7 +7,7 @@ const defaultOpenGraph: Metadata['openGraph'] = {
   description: 'Каталог с продукти, партньори и информация за Ibis Electronics.',
   images: [
     {
-      url: getSocialImageURL('/logo.png'),
+      url: getSocialImageURL('/ibis_blue_logo.png'),
     },
   ],
   siteName: 'Ibis Electronics',

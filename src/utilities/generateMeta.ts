@@ -67,7 +67,7 @@ export const generateMeta = async (args: {
   const resolvedPath = path || normalizePath(doc?.slug) || '/'
   const canonical = buildAbsoluteUrl(resolvedPath)
   const ogImage = getMetaImage(doc?.meta?.image)
-  const socialImage = ogImage || getSocialImageURL('/logo.png')
+  const socialImage = ogImage || getSocialImageURL('/ibis_blue_logo.png')
 
   return {
     ...(canonical

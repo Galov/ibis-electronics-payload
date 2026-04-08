@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     images: [
       {
-        url: getSocialImageURL('/logo.png'),
+        url: getSocialImageURL('/ibis_blue_logo.png'),
       },
     ],
     locale: 'bg_BG',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    images: [getSocialImageURL('/logo.png')],
+    images: [getSocialImageURL('/ibis_blue_logo.png')],
   },
 }
 
