@@ -5,6 +5,8 @@ import React, { useEffect, useRef } from 'react'
 
 import type { Props as MediaProps } from '../types'
 
+const publicStorageBase = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL || ''
+
 export const Video: React.FC<MediaProps> = (props) => {
   const { onClick, resource, videoClassName } = props
 
@@ -23,6 +25,10 @@ export const Video: React.FC<MediaProps> = (props) => {
 
   if (resource && typeof resource === 'object') {
     const { filename } = resource
+    const src =
+      filename && publicStorageBase
+        ? `${publicStorageBase.replace(/\/$/, '')}/${encodeURIComponent(filename)}`
+        : `${process.env.NEXT_PUBLIC_SERVER_URL}/media/${filename}`
 
     return (
       <video
@@ -35,7 +41,7 @@ export const Video: React.FC<MediaProps> = (props) => {
         playsInline
         ref={videoRef}
       >
-        <source src={`${process.env.NEXT_PUBLIC_SERVER_URL}/media/${filename}`} />
+        <source src={src} />
       </video>
     )
   }

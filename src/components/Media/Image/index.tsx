@@ -11,6 +11,7 @@ import type { Props as MediaProps } from '../types'
 import { cssVariables } from '@/cssVariables'
 
 const { breakpoints } = cssVariables
+const publicStorageBase = process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL || ''
 
 export const Image: React.FC<MediaProps> = (props) => {
   const {
@@ -35,6 +36,7 @@ export const Image: React.FC<MediaProps> = (props) => {
   if (!src && resource && typeof resource === 'object') {
     const {
       alt: altFromResource,
+      filename,
       height: fullHeight,
       url,
       width: fullWidth,
@@ -44,7 +46,11 @@ export const Image: React.FC<MediaProps> = (props) => {
     height = heightFromProps ?? fullHeight
     alt = altFromResource
 
-    src = `${process.env.NEXT_PUBLIC_SERVER_URL}${url}`
+    if (filename && publicStorageBase) {
+      src = `${publicStorageBase.replace(/\/$/, '')}/${encodeURIComponent(filename)}`
+    } else {
+      src = `${process.env.NEXT_PUBLIC_SERVER_URL}${url}`
+    }
   }
 
   // NOTE: this is used by the browser to determine which image to download at different screen sizes
