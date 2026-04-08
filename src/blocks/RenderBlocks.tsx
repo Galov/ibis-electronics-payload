@@ -4,7 +4,9 @@ import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { CarouselBlock } from '@/blocks/Carousel/Component'
 import { ContentBlock } from '@/blocks/Content/Component'
 import { FormBlock } from '@/blocks/Form/Component'
+import { InfoStepsBlock } from '@/blocks/InfoSteps/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
+import { ServiceCardsBlock } from '@/blocks/ServiceCards/Component'
 import { ThreeItemGridBlock } from '@/blocks/ThreeItemGrid/Component'
 import { toKebabCase } from '@/utilities/toKebabCase'
 import React, { Fragment } from 'react'
@@ -16,7 +18,9 @@ const blockComponents = {
   content: ContentBlock,
   cta: CallToActionBlock,
   formBlock: FormBlock,
+  infoSteps: InfoStepsBlock,
   mediaBlock: MediaBlock,
+  serviceCards: ServiceCardsBlock,
   threeItemGrid: ThreeItemGridBlock,
 }
 

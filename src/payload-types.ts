@@ -601,6 +601,8 @@ export interface Page {
     | CarouselBlock
     | ThreeItemGridBlock
     | BannerBlock
+    | ServiceCardsBlock
+    | InfoStepsBlock
   )[];
   meta?: {
     title?: string | null;
@@ -835,6 +837,53 @@ export interface BannerBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'banner';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceCardsBlock".
+ */
+export interface ServiceCardsBlock {
+  eyebrow?: string | null;
+  title: string;
+  description?: string | null;
+  items: {
+    title: string;
+    description: string;
+    tags?:
+      | {
+          label: string;
+          id?: string | null;
+        }[]
+      | null;
+    highlights?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'serviceCards';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoStepsBlock".
+ */
+export interface InfoStepsBlock {
+  eyebrow?: string | null;
+  title: string;
+  description?: string | null;
+  items: {
+    title: string;
+    summary?: string | null;
+    description?: string | null;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'infoSteps';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1092,6 +1141,8 @@ export interface PagesSelect<T extends boolean = true> {
         carousel?: T | CarouselBlockSelect<T>;
         threeItemGrid?: T | ThreeItemGridBlockSelect<T>;
         banner?: T | BannerBlockSelect<T>;
+        serviceCards?: T | ServiceCardsBlockSelect<T>;
+        infoSteps?: T | InfoStepsBlockSelect<T>;
       };
   meta?:
     | T
@@ -1210,6 +1261,55 @@ export interface ThreeItemGridBlockSelect<T extends boolean = true> {
 export interface BannerBlockSelect<T extends boolean = true> {
   style?: T;
   content?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ServiceCardsBlock_select".
+ */
+export interface ServiceCardsBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  title?: T;
+  description?: T;
+  items?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        tags?:
+          | T
+          | {
+              label?: T;
+              id?: T;
+            };
+        highlights?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InfoStepsBlock_select".
+ */
+export interface InfoStepsBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  title?: T;
+  description?: T;
+  items?:
+    | T
+    | {
+        title?: T;
+        summary?: T;
+        description?: T;
+        id?: T;
+      };
   id?: T;
   blockName?: T;
 }

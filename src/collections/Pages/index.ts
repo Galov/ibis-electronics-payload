@@ -2,6 +2,8 @@ import type { CollectionConfig } from 'payload'
 
 import { Banner } from '@/blocks/Banner/config'
 import { Carousel } from '@/blocks/Carousel/config'
+import { InfoSteps } from '@/blocks/InfoSteps/config'
+import { ServiceCards } from '@/blocks/ServiceCards/config'
 import { ThreeItemGrid } from '@/blocks/ThreeItemGrid/config'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { adminOnly } from '@/access/adminOnly'
@@ -99,6 +101,8 @@ export const Pages: CollectionConfig = {
                 Carousel,
                 ThreeItemGrid,
                 Banner,
+                ServiceCards,
+                InfoSteps,
               ],
               required: true,
             },
