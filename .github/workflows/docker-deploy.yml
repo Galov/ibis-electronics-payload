@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-and-publish
-    if: needs.build-and-publish.result == 'success' && vars.DEPLOY_HOST != '' && vars.DEPLOY_USER != '' && vars.DEPLOY_PATH != '' && secrets.DEPLOY_SSH_KEY != ''
+    if: needs.build-and-publish.result == 'success' && vars.DEPLOY_HOST != '' && vars.DEPLOY_USER != '' && vars.DEPLOY_PATH != ''
     steps:
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.2.0
@@ -77,4 +77,3 @@ jobs:
             docker compose -f docker-compose.production.yml pull
             docker compose -f docker-compose.production.yml up -d
             docker image prune -f
-
