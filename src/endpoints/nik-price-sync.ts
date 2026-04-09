@@ -70,16 +70,17 @@ const buildProductSlug = ({
 }: {
   title: string
   sku: string
-  sourceId: number
+  sourceId?: number | null
 }) => {
-  const base = `${title}-${sku}-${sourceId}`
+  const suffix = sourceId ? `${sourceId}` : 'nik'
+  const base = `${title}-${sku}-${suffix}`
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-  return base || `product-${sourceId}`
+  return base || (sourceId ? `product-${sourceId}` : `product-${sku.toLowerCase()}`)
 }
 
 const getPositiveNumber = (value: unknown) => {
@@ -432,14 +433,14 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
       const sourcePrice = getPositiveNumber(item?.data?.sourcePrice)
       const stockQty = getNonNegativeNumber(item?.data?.stockQty)
 
-      if (!title || !sku || sourceId === null || sourcePrice === null || stockQty === null) {
+      if (!title || !sku || sourcePrice === null || stockQty === null) {
         result.invalid += 1
         result.items.push({
           sku: sku ?? null,
           sourceId,
           status: 'invalid',
           message:
-            'product.created requires sourceId, sku, data.title, data.sourcePrice and data.stockQty.',
+            'product.created requires sku, data.title, data.sourcePrice and data.stockQty.',
         })
         continue
       }
@@ -463,7 +464,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
       await req.payload.create({
         collection: 'products',
         data: {
-          sourceId,
+          ...(sourceId !== null ? { sourceId } : {}),
           sku,
           slug: buildProductSlug({ title, sku, sourceId }),
           title,

@@ -106,11 +106,18 @@
 
 Задължителни полета за `product.created`:
 
-- `sourceId`
 - `sku`
 - `data.title`
 - `data.sourcePrice`
 - `data.stockQty`
+
+`sourceId` е optional само за `product.created`.
+
+Ако `sourceId` липсва:
+
+- продуктът пак може да се създаде в `Ibis`
+- create логиката използва `sku` като идентификатор за този сценарий
+- полето `sourceId` остава празно в `Ibis`
 
 Поддържани допълнителни полета:
 

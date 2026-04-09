@@ -60,14 +60,15 @@ export const uploadProductImagesToR2 = async ({
 }: {
   images: ProductImageInput[]
   sku: string
-  sourceId: number
+  sourceId?: number | null
 }) => {
   if (!images.length || !r2Client || !bucket) {
     return images as ProductImageOutput[]
   }
 
   const outputs: ProductImageOutput[] = []
-  const skuSegment = sanitizeSegment(sku) || `product-${sourceId}`
+  const skuSegment = sanitizeSegment(sku) || (sourceId ? `product-${sourceId}` : 'product')
+  const storagePrefix = sourceId ? `products/${sourceId}` : `products/by-sku/${skuSegment}`
 
   for (const [index, image] of images.entries()) {
     const fallbackBase = `${skuSegment}-${index + 1}`
@@ -75,7 +76,7 @@ export const uploadProductImagesToR2 = async ({
     const ext = path.extname(filename) || '.jpg'
     const basename = path.basename(filename, ext)
     const normalizedFilename = `${sanitizeSegment(basename) || fallbackBase}${ext.toLowerCase()}`
-    const storageKey = `products/${sourceId}/${index + 1}-${normalizedFilename}`
+    const storageKey = `${storagePrefix}/${index + 1}-${normalizedFilename}`
 
     try {
       const response = await fetch(image.legacyUrl)
