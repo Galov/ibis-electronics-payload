@@ -159,8 +159,20 @@
 По желание:
 
 - `data.stockQty`
+- `data.images`
 
 `price` в `Ibis` се преизчислява автоматично от `sourcePrice` + текущата `markupPercent`.
+
+Ако `data.images` присъства в payload-а:
+
+- `Ibis` заменя текущите снимки на продукта
+- сваля новите изображения
+- качва ги в своето `R2`
+- записва новите `storageKey` стойности
+
+Ако `data.images` липсва:
+
+- снимките не се пипат
 
 ## product.deactivated
 

@@ -294,12 +294,14 @@ const normalizeImages = (images: unknown) => {
 }
 
 const updatePriceAndStock = async ({
+  images,
   payload,
   productId,
   sourcePrice,
   stockQty,
   markupPercent,
 }: {
+  images?: NormalizedImage[]
   payload: Payload
   productId: number | string
   sourcePrice: number
@@ -320,6 +322,7 @@ const updatePriceAndStock = async ({
             stockStatus: getStockStatus(stockQty),
           }
         : {}),
+      ...(images ? { images } : {}),
     },
     overrideAccess: true,
   })
@@ -520,6 +523,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
     if (parsedRequest.event === 'product.price_stock_updated') {
       const sourcePrice = getPositiveNumber(item?.data?.sourcePrice)
       const stockQty = getNonNegativeNumber(item?.data?.stockQty)
+      const shouldUpdateImages = Array.isArray(item?.data?.images)
 
       if (sourcePrice === null) {
         result.invalid += 1
@@ -532,7 +536,16 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
         continue
       }
 
+      const images = shouldUpdateImages
+        ? await uploadProductImagesToR2({
+            images: normalizeImages(item?.data?.images),
+            sku: sku ?? product.sku ?? `product-${sourceId ?? product.sourceId ?? 'unknown'}`,
+            sourceId: sourceId ?? product.sourceId ?? 0,
+          })
+        : undefined
+
       const price = await updatePriceAndStock({
+        images,
         payload: req.payload,
         productId: product.id,
         sourcePrice,
