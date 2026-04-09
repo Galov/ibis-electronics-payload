@@ -1,4 +1,5 @@
 import type { Payload, PayloadHandler } from 'payload'
+import { uploadProductImagesToR2 } from '@/utilities/uploadProductImagesToR2'
 
 type NikSyncEvent =
   | 'product.created'
@@ -449,7 +450,11 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
         payload: req.payload,
         categories: item?.data?.categories,
       })
-      const images = normalizeImages(item?.data?.images)
+      const images = await uploadProductImagesToR2({
+        images: normalizeImages(item?.data?.images),
+        sku,
+        sourceId,
+      })
       const published = getBoolean(item?.data?.published)
 
       await req.payload.create({
