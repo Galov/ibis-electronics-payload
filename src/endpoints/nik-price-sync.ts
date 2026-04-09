@@ -296,6 +296,7 @@ const normalizeImages = (images: unknown) => {
 
 const updatePriceAndStock = async ({
   images,
+  published,
   payload,
   productId,
   sourcePrice,
@@ -303,6 +304,7 @@ const updatePriceAndStock = async ({
   markupPercent,
 }: {
   images?: NormalizedImage[]
+  published?: boolean | null
   payload: Payload
   productId: number | string
   sourcePrice: number
@@ -324,6 +326,7 @@ const updatePriceAndStock = async ({
           }
         : {}),
       ...(images ? { images } : {}),
+      ...(typeof published === 'boolean' ? { published } : {}),
     },
     overrideAccess: true,
   })
@@ -525,6 +528,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
       const sourcePrice = getPositiveNumber(item?.data?.sourcePrice)
       const stockQty = getNonNegativeNumber(item?.data?.stockQty)
       const shouldUpdateImages = Array.isArray(item?.data?.images)
+      const published = getBoolean(item?.data?.published)
 
       if (sourcePrice === null) {
         result.invalid += 1
@@ -547,6 +551,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
 
       const price = await updatePriceAndStock({
         images,
+        published,
         payload: req.payload,
         productId: product.id,
         sourcePrice,

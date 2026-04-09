@@ -167,6 +167,7 @@
 
 - `data.stockQty`
 - `data.images`
+- `data.published`
 
 `price` в `Ibis` се преизчислява автоматично от `sourcePrice` + текущата `markupPercent`.
 
@@ -180,6 +181,11 @@
 Ако `data.images` липсва:
 
 - снимките не се пипат
+
+Ако `data.published` присъства:
+
+- `Ibis` обновява състоянието на продукта
+- така продуктът може да бъде и активиран, и деактивиран през същия update event
 
 ## product.deactivated
 
