@@ -35,6 +35,10 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
 
   let payloadItems: unknown
 
+  if (typeof req.json !== 'function') {
+    return Response.json({ message: 'Request body is not available.' }, { status: 400 })
+  }
+
   try {
     payloadItems = await req.json()
   } catch {
