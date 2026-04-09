@@ -24,6 +24,7 @@ import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
 import { Partners } from '@/collections/Partners'
 import { Users } from '@/collections/Users'
+import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
 import { econtOfficesHandler } from '@/endpoints/econt-offices'
 import { speedyOfficesHandler } from '@/endpoints/speedy-offices'
@@ -126,6 +127,11 @@ export default buildConfig({
       handler: speedyOfficesHandler,
       method: 'get',
       path: '/integrations/speedy/offices',
+    },
+    {
+      handler: nikPriceSyncHandler,
+      method: 'post',
+      path: '/integrations/nik/products/price-sync',
     },
   ],
   globals: [Header, Footer, TermsPage, PrivacyPage, ContactPage, ShopPage, PricingSettings],
