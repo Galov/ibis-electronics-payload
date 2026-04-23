@@ -1,10 +1,6 @@
 import type { Block } from 'payload'
 
-import {
-  FixedToolbarFeature,
-  InlineToolbarFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
+import { fullLexicalEditor } from '@/fields/fullLexicalEditor'
 
 export const Banner: Block = {
   slug: 'banner',
@@ -24,11 +20,7 @@ export const Banner: Block = {
     {
       name: 'content',
       type: 'richText',
-      editor: lexicalEditor({
-        features: ({ rootFeatures }) => {
-          return [...rootFeatures, FixedToolbarFeature(), InlineToolbarFeature()]
-        },
-      }),
+      editor: fullLexicalEditor(),
       label: false,
       required: true,
     },

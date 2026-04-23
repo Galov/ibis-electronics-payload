@@ -1,8 +1,8 @@
 import type { GlobalConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
+import { fullLexicalEditor } from '@/fields/fullLexicalEditor'
 import { buildSEOFields } from '@/fields/seo'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
 
 export const TermsPage: GlobalConfig = {
   slug: 'terms-page',
@@ -25,7 +25,7 @@ export const TermsPage: GlobalConfig = {
     {
       name: 'content',
       type: 'richText',
-      editor: lexicalEditor(),
+      editor: fullLexicalEditor(),
       label: 'Съдържание',
       required: true,
     },

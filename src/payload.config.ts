@@ -2,17 +2,6 @@ import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { bg as payloadBg } from '@payloadcms/translations/languages/bg'
 import { bg as ecommerceBg } from '@payloadcms/plugin-ecommerce/translations/languages/bg'
 
-import {
-  BoldFeature,
-  EXPERIMENTAL_TableFeature,
-  IndentFeature,
-  ItalicFeature,
-  LinkFeature,
-  OrderedListFeature,
-  UnderlineFeature,
-  UnorderedListFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -28,6 +17,7 @@ import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
 import { econtOfficesHandler } from '@/endpoints/econt-offices'
 import { speedyOfficesHandler } from '@/endpoints/speedy-offices'
+import { fullLexicalEditor } from '@/fields/fullLexicalEditor'
 import { ContactPage } from '@/globals/ContactPage'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
@@ -60,41 +50,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  editor: lexicalEditor({
-    features: () => {
-      return [
-        UnderlineFeature(),
-        BoldFeature(),
-        ItalicFeature(),
-        OrderedListFeature(),
-        UnorderedListFeature(),
-        LinkFeature({
-          enabledCollections: ['products', 'categories', 'brands'],
-          fields: ({ defaultFields }) => {
-            const defaultFieldsWithoutUrl = defaultFields.filter((field) => {
-              if ('name' in field && field.name === 'url') return false
-              return true
-            })
-
-            return [
-              ...defaultFieldsWithoutUrl,
-              {
-                name: 'url',
-                type: 'text',
-                admin: {
-                  condition: ({ linkType }) => linkType !== 'internal',
-                },
-                label: ({ t }) => t('fields:enterURL'),
-                required: true,
-              },
-            ]
-          },
-        }),
-        IndentFeature(),
-        EXPERIMENTAL_TableFeature(),
-      ]
-    },
-  }),
+  editor: fullLexicalEditor(),
   i18n: {
     fallbackLanguage: 'bg',
     supportedLanguages: {
