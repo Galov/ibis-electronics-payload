@@ -76,7 +76,7 @@ export const CheckoutForm: React.FC<Props> = ({
             ...(deliveryMethod === 'econt-office' && econtOffice ? { econtOffice } : {}),
             shippingFee,
             ...(deliveryMethod === 'speedy-office' && speedyOffice ? { speedyOffice } : {}),
-            ...(deliveryMethod === 'address' ? { shippingAddress } : {}),
+            ...(shippingAddress ? { shippingAddress } : {}),
           },
         })
 

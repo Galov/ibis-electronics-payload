@@ -168,6 +168,13 @@ export const CheckoutPage: React.FC = () => {
         (deliveryMethod === 'econt-office' && econtOffice)),
   )
 
+  const customerContactAddress: Partial<Address> = {
+    country: 'BG',
+    firstName,
+    lastName,
+    phone,
+  }
+
   const resolvedBillingAddress = billingAddress
     ? {
         ...billingAddress,
@@ -175,7 +182,7 @@ export const CheckoutPage: React.FC = () => {
         lastName,
         phone,
       }
-    : undefined
+    : customerContactAddress
 
   const resolvedShippingAddress =
     deliveryMethod === 'address'
@@ -189,7 +196,7 @@ export const CheckoutPage: React.FC = () => {
               phone,
             }
           : undefined
-      : undefined
+      : customerContactAddress
 
   return (
     <div className="my-8 flex grow flex-col items-stretch justify-stretch gap-10 md:flex-row md:gap-6 lg:gap-8">
