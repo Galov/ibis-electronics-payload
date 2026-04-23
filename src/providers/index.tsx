@@ -8,6 +8,7 @@ import { HeaderThemeProvider } from './HeaderTheme'
 import { ThemeProvider } from './Theme'
 import { SonnerProvider } from '@/providers/Sonner'
 import { manualAdapterClient } from '@/ecommerce/manualAdapter'
+import { useAuth } from '@/providers/Auth'
 
 const ecommerceCurrenciesConfig = {
   defaultCurrency: 'EUR',
@@ -22,8 +23,12 @@ const ecommerceCurrenciesConfig = {
 }
 
 const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth()
+  const authState = user ? `auth-${user.id}` : user === null ? 'guest' : 'loading'
+
   return (
     <EcommerceProvider
+      key={authState}
       enableVariants={false}
       currenciesConfig={ecommerceCurrenciesConfig}
       api={{
@@ -44,9 +49,7 @@ const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }
         },
       }}
       paymentMethods={[manualAdapterClient()]}
-      syncLocalStorage={{
-        key: 'cart-eur',
-      }}
+      syncLocalStorage={user === null ? { key: 'cart-eur' } : false}
     >
       {children}
     </EcommerceProvider>
