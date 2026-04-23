@@ -1,14 +1,13 @@
 'use client'
 
 import { AuthProvider } from '@/providers/Auth'
-import { EcommerceProvider, useEcommerce } from '@payloadcms/plugin-ecommerce/client/react'
+import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
 import React from 'react'
 
 import { HeaderThemeProvider } from './HeaderTheme'
 import { ThemeProvider } from './Theme'
 import { SonnerProvider } from '@/providers/Sonner'
 import { manualAdapterClient } from '@/ecommerce/manualAdapter'
-import { useAuth } from '@/providers/Auth'
 
 const ecommerceCurrenciesConfig = {
   defaultCurrency: 'EUR',
@@ -23,12 +22,8 @@ const ecommerceCurrenciesConfig = {
 }
 
 const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth()
-  const authState = user ? `auth-${user.id}` : user === null ? 'guest' : 'loading'
-
   return (
     <EcommerceProvider
-      key={authState}
       enableVariants={false}
       currenciesConfig={ecommerceCurrenciesConfig}
       api={{
@@ -49,39 +44,13 @@ const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }
         },
       }}
       paymentMethods={[manualAdapterClient()]}
-      syncLocalStorage={user === null ? { key: 'cart-eur' } : false}
+      syncLocalStorage={{
+        key: 'cart-eur',
+      }}
     >
-      <EcommerceAuthBridge />
       {children}
     </EcommerceProvider>
   )
-}
-
-const EcommerceAuthBridge: React.FC = () => {
-  const { user } = useAuth()
-  const { onLogin, onLogout } = useEcommerce()
-  const syncedAuthState = React.useRef<string | null | undefined>(undefined)
-
-  React.useEffect(() => {
-    const nextAuthState = user ? String(user.id) : user === null ? null : undefined
-
-    if (syncedAuthState.current === nextAuthState) {
-      return
-    }
-
-    syncedAuthState.current = nextAuthState
-
-    if (nextAuthState) {
-      void onLogin().catch(() => undefined)
-      return
-    }
-
-    if (nextAuthState === null) {
-      onLogout()
-    }
-  }, [onLogin, onLogout, user])
-
-  return null
 }
 
 export const Providers: React.FC<{
