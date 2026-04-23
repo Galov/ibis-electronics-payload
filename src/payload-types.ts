@@ -403,6 +403,7 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1355,6 +1356,7 @@ export interface ContactInquiriesSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

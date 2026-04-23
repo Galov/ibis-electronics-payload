@@ -11,6 +11,13 @@ import { isDocumentOwner } from '@/access/isDocumentOwner'
 import { ProductsCollection } from '@/collections/Products'
 import { manualAdapter } from '@/ecommerce/manualAdapter'
 
+const hasR2Config = Boolean(
+  process.env.R2_BUCKET &&
+    process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY &&
+    process.env.R2_ENDPOINT,
+)
+
 const normalizeMoneyAdminFields = (fields: any[]): any[] => {
   return fields.map((field) => {
     const nextField = { ...field }
@@ -285,25 +292,20 @@ export const plugins: Plugin[] = [
       }),
     },
   }),
-  ...(process.env.R2_BUCKET &&
-  process.env.R2_ACCESS_KEY_ID &&
-  process.env.R2_SECRET_ACCESS_KEY &&
-  process.env.R2_ENDPOINT
-    ? [
-        s3Storage({
-          collections: {
-            media: true,
-          },
-          bucket: process.env.R2_BUCKET,
-          config: {
-            credentials: {
-              accessKeyId: process.env.R2_ACCESS_KEY_ID,
-              secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-            },
-            endpoint: process.env.R2_ENDPOINT,
-            region: process.env.R2_REGION || 'auto',
-          },
-        }),
-      ]
-    : []),
+  s3Storage({
+    alwaysInsertFields: true,
+    collections: {
+      media: true,
+    },
+    enabled: hasR2Config,
+    bucket: process.env.R2_BUCKET || 'ibis-media-placeholder',
+    config: {
+      credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID || 'placeholder',
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || 'placeholder',
+      },
+      endpoint: process.env.R2_ENDPOINT || 'http://localhost',
+      region: process.env.R2_REGION || 'auto',
+    },
+  }),
 ]
