@@ -1,7 +1,7 @@
 'use client'
 
 import { AuthProvider } from '@/providers/Auth'
-import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
+import { EcommerceProvider, useEcommerce } from '@payloadcms/plugin-ecommerce/client/react'
 import React from 'react'
 
 import { HeaderThemeProvider } from './HeaderTheme'
@@ -51,9 +51,37 @@ const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }
       paymentMethods={[manualAdapterClient()]}
       syncLocalStorage={user === null ? { key: 'cart-eur' } : false}
     >
+      <EcommerceAuthBridge />
       {children}
     </EcommerceProvider>
   )
+}
+
+const EcommerceAuthBridge: React.FC = () => {
+  const { user } = useAuth()
+  const { onLogin, onLogout } = useEcommerce()
+  const syncedAuthState = React.useRef<string | null | undefined>(undefined)
+
+  React.useEffect(() => {
+    const nextAuthState = user ? String(user.id) : user === null ? null : undefined
+
+    if (syncedAuthState.current === nextAuthState) {
+      return
+    }
+
+    syncedAuthState.current = nextAuthState
+
+    if (nextAuthState) {
+      void onLogin().catch(() => undefined)
+      return
+    }
+
+    if (nextAuthState === null) {
+      onLogout()
+    }
+  }, [onLogin, onLogout, user])
+
+  return null
 }
 
 export const Providers: React.FC<{

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import clsx from 'clsx'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
 type CategoryNode = {
   id: string
@@ -107,13 +107,17 @@ export const CategoryItem: React.FC<ItemProps> = ({
           <button
             type="button"
             aria-label={isExpanded ? 'Свий категорията' : 'Разгърни категорията'}
-            className="mt-0.5 w-5 shrink-0 text-xs text-muted-foreground hover:text-primary"
+            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[rgb(1,55,186)]/70 transition hover:bg-[rgb(1,55,186)]/8 hover:text-[rgb(1,55,186)]"
             onClick={() => onToggleCategory(category.id)}
           >
-            {isExpanded ? '−' : '+'}
+            <ChevronRight
+              className={clsx('h-4 w-4 transition-transform duration-300', {
+                'rotate-90': isExpanded,
+              })}
+            />
           </button>
         ) : (
-          <span className="w-5 shrink-0" />
+          <span className="w-6 shrink-0" />
         )}
 
         <button
