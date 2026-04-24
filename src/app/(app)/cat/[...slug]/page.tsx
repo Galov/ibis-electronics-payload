@@ -83,7 +83,7 @@ export default async function CategoryPage({ params }: Args) {
       </div>
 
       <div className="mb-8 max-w-3xl">
-        <h1 className="text-3xl font-normal text-primary/85">{category.title}</h1>
+        <h1 className="type-page-title text-primary">{category.title}</h1>
       </div>
 
       {products.length > 0 ? (

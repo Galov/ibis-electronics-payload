@@ -49,12 +49,12 @@ export default async function AccountPage() {
   return (
     <>
       <div className="bg-muted/20 px-5 py-6 md:px-7 md:py-8">
-        <h1 className="mb-8 text-3xl font-normal text-primary/85">Настройки на профила</h1>
+        <h1 className="type-page-title mb-8 text-primary">Настройки на профила</h1>
         <AccountForm />
       </div>
 
       <div className="bg-muted/20 px-5 py-6 md:px-7 md:py-8">
-        <h2 className="mb-8 text-3xl font-normal text-primary/85">Последни поръчки</h2>
+        <h2 className="type-section-title mb-8 text-primary">Последни поръчки</h2>
 
         <div className="mb-8 max-w-none text-primary/65">
           <p>

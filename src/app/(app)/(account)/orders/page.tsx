@@ -40,7 +40,7 @@ export default async function Orders() {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h1 className="text-3xl font-normal text-primary/85">Поръчки</h1>
+        <h1 className="type-page-title text-primary">Поръчки</h1>
       </div>
 
       <div className="bg-muted/20 px-5 py-6 md:px-7 md:py-8">

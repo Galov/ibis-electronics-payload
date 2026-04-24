@@ -21,7 +21,7 @@ export default async function AddressesPage() {
 
   return (
     <div className="bg-muted/20 px-5 py-6 md:px-7 md:py-8">
-      <h1 className="mb-8 text-3xl font-normal text-primary/85">Адреси</h1>
+      <h1 className="type-page-title mb-8 text-primary">Адреси</h1>
 
       <div className="mb-8">
         <AddressListing />

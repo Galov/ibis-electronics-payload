@@ -23,7 +23,7 @@ export default async function CreateAccount() {
     <div className="container">
       <div className="mx-auto my-12 max-w-xl bg-muted/20 px-5 py-6 md:px-7 md:py-8">
         <RenderParams />
-        <h1 className="mb-4 text-3xl font-normal text-primary/85">Създай профил</h1>
+        <h1 className="type-page-title mb-4 text-primary">Създай профил</h1>
         <p className="mb-8 text-sm leading-7 text-primary/65">
           Създай профил, за да следиш поръчките си и да управляваш настройките и адресите си по-удобно.
         </p>

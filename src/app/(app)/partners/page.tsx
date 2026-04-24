@@ -24,7 +24,7 @@ export default async function PartnersPage({ searchParams }: PartnersPageProps) 
   return (
     <div className="container py-12 md:py-14">
       <div className="mb-10 max-w-3xl">
-        <h1 className="text-3xl font-normal text-primary/85">Партньори</h1>
+        <h1 className="type-page-title text-primary">Партньори</h1>
       </div>
 
       {partners.docs.length > 0 ? (

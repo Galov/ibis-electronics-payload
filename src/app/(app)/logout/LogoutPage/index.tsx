@@ -26,7 +26,7 @@ export const LogoutPage: React.FC = () => {
     <Fragment>
       {(error || success) && (
         <div>
-          <h1 className="mb-4 text-3xl font-normal text-primary/85">{error || success}</h1>
+          <h1 className="type-page-title mb-4 text-primary">{error || success}</h1>
           <p className="text-sm leading-7 text-primary/65">
             Какво искате да направите сега?
             <Fragment>
