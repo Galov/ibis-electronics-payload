@@ -285,7 +285,10 @@
   }
 
   .prose.type-richtext :where(h1):not(:where([class~='not-prose'] *)) {
-    font-size: 1.5rem;
+    width: 100%;
+    max-width: none;
+    color: rgb(1 55 186);
+    font-size: 2rem;
     line-height: 1.2;
     font-weight: 400;
     letter-spacing: -0.03em;
@@ -294,6 +297,7 @@
   }
 
   .prose.type-richtext :where(h2):not(:where([class~='not-prose'] *)) {
+    color: rgb(1 55 186);
     font-size: 1.5rem;
     line-height: 1.2;
     font-weight: 400;
@@ -363,7 +367,7 @@
     }
 
     .prose.type-richtext :where(h1):not(:where([class~='not-prose'] *)) {
-      font-size: 1.875rem;
+      font-size: 3rem;
       margin-bottom: 1rem;
     }
 
