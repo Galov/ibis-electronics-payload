@@ -70,32 +70,38 @@ export const SearchableSelect: React.FC<Props> = ({
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  keywords={option.keywords}
-                  onSelect={(selectedValue) => {
-                    onValueChange(selectedValue)
-                    setOpen(false)
-                  }}
-                  value={option.value}
-                >
-                  <CheckIcon
-                    className={cn(
-                      'size-4 text-[rgb(1,55,186)]',
-                      value === option.value ? 'opacity-100' : 'opacity-0',
-                    )}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate">{option.label}</div>
-                    {option.description ? (
-                      <div className="mt-0.5 truncate text-xs text-primary/55">
-                        {option.description}
-                      </div>
-                    ) : null}
-                  </div>
-                </CommandItem>
-              ))}
+              {options.map((option) => {
+                const filterValue = [option.label, option.description, ...(option.keywords || [])]
+                  .filter(Boolean)
+                  .join(' ')
+
+                return (
+                  <CommandItem
+                    key={option.value}
+                    keywords={option.keywords}
+                    onSelect={() => {
+                      onValueChange(option.value)
+                      setOpen(false)
+                    }}
+                    value={filterValue}
+                  >
+                    <CheckIcon
+                      className={cn(
+                        'size-4 text-[rgb(1,55,186)]',
+                        value === option.value ? 'opacity-100' : 'opacity-0',
+                      )}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate">{option.label}</div>
+                      {option.description ? (
+                        <div className="mt-0.5 truncate text-xs text-primary/55">
+                          {option.description}
+                        </div>
+                      ) : null}
+                    </div>
+                  </CommandItem>
+                )
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

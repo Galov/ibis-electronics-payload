@@ -109,14 +109,14 @@ export const CategoryItem: React.FC<ItemProps> = ({
           <button
             type="button"
             aria-label={isExpanded ? 'Свий категорията' : 'Разгърни категорията'}
-            className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[rgb(1,55,186)]/14 bg-[rgb(1,55,186)]/8 text-[rgb(1,55,186)]/88 shadow-[0_4px_10px_rgba(1,55,186,0.08)] transition hover:bg-[rgb(1,55,186)]/14 hover:text-[rgb(1,55,186)]"
+            className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[rgb(1,55,186)]/88 transition hover:text-[rgb(1,55,186)]"
             onClick={() => onToggleCategory(category.id)}
           >
             <ChevronRight
-              className={clsx('h-[18px] w-[18px] transition-transform duration-300', {
+              className={clsx('h-4 w-4 transition-transform duration-300', {
                 'rotate-90': isExpanded,
               })}
-              strokeWidth={2.6}
+              strokeWidth={2.8}
             />
           </button>
         ) : (
