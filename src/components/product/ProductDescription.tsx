@@ -30,7 +30,7 @@ export function ProductDescription({ product }: { product: Product }) {
     <div className="flex flex-col gap-5">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <h1 className="type-product-title text-primary/85">{product.title}</h1>
-        <div className="text-base font-normal text-primary/60 lg:text-lg">
+        <div className="text-base font-normal text-[rgb(1,55,186)] lg:text-lg">
           <Price amount={product.price} />
         </div>
       </div>
