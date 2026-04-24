@@ -140,7 +140,7 @@ export default async function Order({ params, searchParams }: PageProps) {
           <div></div>
         )}
 
-        <h1 className="bg-[rgb(1,55,186)]/10 px-2.5 py-1 text-sm font-medium uppercase tracking-[0.07em] text-[rgb(1,55,186)]">
+        <h1 className="type-eyebrow bg-[rgb(1,55,186)]/10 px-2.5 py-1 text-[rgb(1,55,186)]">
           <span className="">{`Поръчка #${order.id}`}</span>
         </h1>
       </div>
@@ -148,7 +148,7 @@ export default async function Order({ params, searchParams }: PageProps) {
       <div className="flex flex-col gap-10 bg-muted/20 px-5 py-6 md:px-7 md:py-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
           <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Дата</p>
+            <p className="type-eyebrow mb-1 text-primary/45">Дата</p>
             <p className="text-lg text-primary/80">
               <time dateTime={order.createdAt}>
                 {formatDateTime({ date: order.createdAt })}
@@ -157,20 +157,20 @@ export default async function Order({ params, searchParams }: PageProps) {
           </div>
 
           <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Общо</p>
+            <p className="type-eyebrow mb-1 text-primary/45">Общо</p>
             {order.amount && <Price className="text-lg text-primary/80" amount={order.amount} currencyCode="EUR" />}
           </div>
 
           {typeof order.shippingFee === 'number' ? (
             <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Доставка</p>
+              <p className="type-eyebrow mb-1 text-primary/45">Доставка</p>
               <Price className="text-lg text-primary/80" amount={order.shippingFee} currencyCode="EUR" />
             </div>
           ) : null}
 
           {order.status && (
             <div className="grow max-w-1/3">
-              <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Статус</p>
+              <p className="type-eyebrow mb-1 text-primary/45">Статус</p>
               <OrderStatus className="text-sm" status={order.status} />
             </div>
           )}
@@ -178,7 +178,7 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.items && (
           <div>
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Артикули</h2>
+            <h2 className="type-eyebrow mb-4 text-primary/45">Артикули</h2>
             <ul className="flex flex-col gap-6">
               {order.items?.map((item, index) => {
                 if (typeof item.product === 'string') {
@@ -201,22 +201,22 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.deliveryMethod === 'econt-office' && (order.econtOfficeName || order.econtOfficeAddress) ? (
           <div>
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
+            <h2 className="type-eyebrow mb-4 text-primary/45">
               Офис на Econt
             </h2>
 
             <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
               {order.econtOfficeName ? (
-                <p className="font-medium text-primary/85">{order.econtOfficeName}</p>
+                <p className="type-subsection-title text-primary/85">{order.econtOfficeName}</p>
               ) : null}
               {order.econtOfficeAddress ? (
-                <p className="mt-2 text-sm text-primary/60">{order.econtOfficeAddress}</p>
+                <p className="type-body-small mt-2 text-primary/60">{order.econtOfficeAddress}</p>
               ) : null}
               {order.econtOfficeCode ? (
-                <p className="mt-2 text-xs text-primary/45">Офис код: {order.econtOfficeCode}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">Офис код: {order.econtOfficeCode}</p>
               ) : null}
               {order.econtOfficeId ? (
-                <p className="mt-2 text-xs text-primary/45">Офис ID: {order.econtOfficeId}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">Офис ID: {order.econtOfficeId}</p>
               ) : null}
             </div>
           </div>
@@ -224,19 +224,19 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.deliveryMethod === 'speedy-office' && (order.speedyOfficeName || order.speedyOfficeAddress) ? (
           <div>
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
+            <h2 className="type-eyebrow mb-4 text-primary/45">
               Офис на Speedy
             </h2>
 
             <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
               {order.speedyOfficeName ? (
-                <p className="font-medium text-primary/85">{order.speedyOfficeName}</p>
+                <p className="type-subsection-title text-primary/85">{order.speedyOfficeName}</p>
               ) : null}
               {order.speedyOfficeAddress ? (
-                <p className="mt-2 text-sm text-primary/60">{order.speedyOfficeAddress}</p>
+                <p className="type-body-small mt-2 text-primary/60">{order.speedyOfficeAddress}</p>
               ) : null}
               {order.speedyOfficeId ? (
-                <p className="mt-2 text-xs text-primary/45">Офис ID: {order.speedyOfficeId}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">Офис ID: {order.speedyOfficeId}</p>
               ) : null}
             </div>
           </div>
@@ -244,7 +244,7 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.deliveryMethod === 'address' && order.shippingAddress && (
           <div>
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Адрес за доставка</h2>
+            <h2 className="type-eyebrow mb-4 text-primary/45">Адрес за доставка</h2>
 
             {/* @ts-expect-error - some kind of type hell */}
             <AddressItem address={order.shippingAddress} hideActions />
@@ -253,12 +253,12 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.customerNotes ? (
           <div>
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
+            <h2 className="type-eyebrow mb-4 text-primary/45">
               Бележки към поръчката
             </h2>
 
             <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
-              <p className="whitespace-pre-line text-sm text-primary/70">{order.customerNotes}</p>
+              <p className="type-body-small whitespace-pre-line text-primary/70">{order.customerNotes}</p>
             </div>
           </div>
         ) : null}

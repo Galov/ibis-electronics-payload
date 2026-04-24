@@ -157,7 +157,7 @@ export const PartnersDirectory: React.FC<PartnersDirectoryProps> = ({
               >
                 <div className="space-y-2">
                   <div className="space-y-1">
-                    <p className="text-xl font-normal tracking-[-0.02em] text-primary">
+                    <p className="type-card-title text-primary">
                       {partner.city}
                     </p>
                     <p className="text-sm font-normal text-[rgb(1,55,186)]">{partner.title}</p>

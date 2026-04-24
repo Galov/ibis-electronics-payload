@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import React, { useEffect, useState } from 'react'
 
 type SpeedyState = {
@@ -43,7 +36,7 @@ type Props = {
 const FieldLabel: React.FC<{
   label: string
 }> = ({ label }) => (
-  <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary/45">{label}</p>
+  <p className="type-eyebrow text-primary/45">{label}</p>
 )
 
 export const SpeedyOfficeSelector: React.FC<Props> = ({
@@ -232,58 +225,48 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <FieldLabel label="Област" />
-          <Select
+          <SearchableSelect
             disabled={disabled || isLoading || states.length === 0}
+            emptyText="Няма намерени области"
             onValueChange={(stateId) => {
               const nextState = states.find((state) => state.id === stateId) || null
               setActiveState(nextState)
             }}
+            options={states.map((state) => ({
+              label: state.name,
+              value: state.id,
+            }))}
+            placeholder={statePlaceholder}
+            searchPlaceholder="Търси област..."
             value={activeState?.id}
-          >
-            <SelectTrigger className="mb-0 h-11 w-full rounded-md border-black/8 bg-white px-4 text-left text-sm text-primary/80">
-              <SelectValue placeholder={statePlaceholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {states.map((state) => (
-                  <SelectItem key={state.id} value={state.id}>
-                    {state.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <FieldLabel label="Населено място" />
-          <Select
+          <SearchableSelect
             disabled={disabled || isLoading || !activeState || sites.length === 0}
+            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени населени места'}
             onValueChange={(siteId) => {
               const nextSite = sites.find((site) => site.id === siteId) || null
               setActiveSite(nextSite)
             }}
+            options={sites.map((site) => ({
+              keywords: [site.region],
+              label: site.name,
+              value: site.id,
+            }))}
+            placeholder={sitePlaceholder}
+            searchPlaceholder="Търси населено място..."
             value={activeSite?.id}
-          >
-            <SelectTrigger className="mb-0 h-11 w-full rounded-md border-black/8 bg-white px-4 text-left text-sm text-primary/80">
-              <SelectValue placeholder={sitePlaceholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {sites.map((site) => (
-                  <SelectItem key={site.id} value={site.id}>
-                    {site.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <FieldLabel label="Офис" />
-          <Select
+          <SearchableSelect
             disabled={disabled || isLoading || !activeSite || offices.length === 0}
+            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени офиси'}
             onValueChange={(officeId) => {
               const nextOffice = offices.find((office) => office.id === officeId) || null
               setActiveOffice(nextOffice)
@@ -296,21 +279,16 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
                 state: activeState,
               })
             }}
+            options={offices.map((office) => ({
+              description: office.address,
+              keywords: [office.address, office.siteId],
+              label: office.name,
+              value: office.id,
+            }))}
+            placeholder={officePlaceholder}
+            searchPlaceholder="Търси офис..."
             value={activeOffice?.id}
-          >
-            <SelectTrigger className="mb-0 h-11 w-full rounded-md border-black/8 bg-white px-4 text-left text-sm text-primary/80">
-              <SelectValue placeholder={officePlaceholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {offices.map((office) => (
-                  <SelectItem key={office.id} value={office.id}>
-                    {office.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         {isLoading ? <p className="text-sm text-primary/55">Зареждане на наличните опции...</p> : null}
@@ -322,10 +300,8 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
 
       {activeOffice ? (
         <div className="mt-4 rounded-[10px] border border-[rgb(1,55,186)]/18 bg-white px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
-            Избран офис
-          </p>
-          <p className="mt-2 text-sm font-medium text-primary/85">{activeOffice.name}</p>
+          <p className="type-eyebrow text-primary/45">Избран офис</p>
+          <p className="type-subsection-title mt-2 text-primary/85">{activeOffice.name}</p>
           <p className="mt-1 text-sm text-primary/65">
             {activeState?.name}
             {activeSite?.name ? `, ${activeSite.name}` : ''}

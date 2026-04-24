@@ -52,9 +52,7 @@ export async function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-base font-normal tracking-[0.08em] uppercase text-white/95">
-              Контакти
-            </h3>
+            <h3 className="type-eyebrow mb-4 text-white/95">Контакти</h3>
 
             <div className="mb-4 text-sm leading-6 text-white/92">
               <p>{location.label}</p>
@@ -81,9 +79,7 @@ export async function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-base font-normal tracking-[0.08em] uppercase text-white/95">
-              Навигация
-            </h3>
+            <h3 className="type-eyebrow mb-4 text-white/95">Навигация</h3>
 
             <nav>
               <ul className="space-y-3">

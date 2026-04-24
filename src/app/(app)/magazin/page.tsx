@@ -1,3 +1,4 @@
+import { CatalogPagination } from '@/components/catalog/CatalogPagination'
 import { Grid } from '@/components/Grid'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import { Search } from '@/components/Search'
@@ -16,8 +17,8 @@ type Props = {
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { brand, category, limit, q, sort } = await searchParams
-  const hasFilters = Boolean(brand || category || limit || q || sort)
+  const { brand, category, limit, page, q, sort } = await searchParams
+  const hasFilters = Boolean(brand || category || limit || page || q || sort)
 
   const metadata = await generateMeta({
     fallbackDescription: 'Разгледайте продуктите в каталога.',
@@ -39,10 +40,12 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function MagazinPage({ searchParams }: Props) {
-  const { brand, category, limit: rawLimit, q: rawSearchValue, sort } = await searchParams
+  const resolvedSearchParams = await searchParams
+  const { brand, category, limit: rawLimit, page: rawPage, q: rawSearchValue, sort } = resolvedSearchParams
   const searchValue = String(rawSearchValue || '').trim()
   const searchTerms = tokenizeSearchTerms(searchValue)
   const pageSize = normalizePageSize(rawLimit)
+  const currentPage = pageSize === 'all' ? 1 : normalizePage(rawPage)
   const payload = await getPayload({ config: configPromise })
   const shopPage = await payload.findGlobal({
     slug: 'shopPage',
@@ -56,6 +59,7 @@ export default async function MagazinPage({ searchParams }: Props) {
     collection: 'products',
     draft: false,
     limit: pageSize === 'all' ? 1000 : pageSize,
+    page: currentPage,
     overrideAccess: false,
     select: {
       inventory: true,
@@ -101,7 +105,9 @@ export default async function MagazinPage({ searchParams }: Props) {
     },
   })
 
-  const resultsText = products.docs.length > 1 ? 'резултата' : 'резултат'
+  const visibleResults = products.docs.length
+  const totalResults = products.totalDocs
+  const resultsText = totalResults === 1 ? 'резултат' : 'резултата'
   const hasActiveFilters = Boolean(searchValue || category || brand)
   const availableBrands = Array.from(
     new Map(
@@ -132,9 +138,9 @@ export default async function MagazinPage({ searchParams }: Props) {
         {searchValue ? (
           <div className="pt-5">
             <p className="text-sm leading-7 text-[rgb(1,55,186)]">
-              {products.docs?.length === 0
+              {visibleResults === 0
                 ? 'Няма продукти, които съвпадат с избраните критерии.'
-                : `Показваме ${products.docs.length} ${resultsText} за избраните критерии.`}
+                : `Показваме ${visibleResults} от ${totalResults} ${resultsText} за избраните критерии.`}
             </p>
           </div>
         ) : null}
@@ -165,6 +171,12 @@ export default async function MagazinPage({ searchParams }: Props) {
               return <ProductGridItem key={product.id} product={product} />
             })}
           </Grid>
+          <CatalogPagination
+            currentPage={currentPage}
+            pathname="/shop"
+            searchParams={resolvedSearchParams}
+            totalPages={pageSize === 'all' ? 1 : products.totalPages}
+          />
           <ShopBanner banner={shopPage?.bottomBanner} className="mt-8" />
         </>
       ) : null}
@@ -193,6 +205,17 @@ const normalizePageSize = (value: string | string[] | undefined): number | 'all'
   }
 
   return 16
+}
+
+const normalizePage = (value: string | string[] | undefined): number => {
+  const rawValue = Array.isArray(value) ? value[0] : value
+  const numericValue = Number(rawValue)
+
+  if (Number.isInteger(numericValue) && numericValue > 0) {
+    return numericValue
+  }
+
+  return 1
 }
 
 const getCategoryIDsForFilter = async (

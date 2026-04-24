@@ -87,7 +87,7 @@ export function normalizeProducts(source: LegacySourceData, options: ImportOptio
       manageStock: meta.get('_manage_stock') === 'yes',
       manufacturerCode: emptyToUndefined(meta.get('product_manufacturer')),
       originalSku: emptyToUndefined(meta.get('product_original_sku')),
-      price: 0,
+      price: toNumber(meta.get('_price')) || 0,
       published: post.status === 'publish',
       shortDescription: emptyToUndefined(post.excerpt),
       sku: emptyToUndefined(meta.get('_sku')),
@@ -101,6 +101,7 @@ export function normalizeProducts(source: LegacySourceData, options: ImportOptio
 }
 
 export function buildImportReport(
+  source: LegacySourceData,
   categories: NormalizedCategory[],
   brands: NormalizedBrand[],
   products: NormalizedProduct[],
@@ -112,9 +113,20 @@ export function buildImportReport(
     products: products.length,
     productsMissingImages: products.filter((product) => product.images.length === 0).length,
     productsMissingSku: products.filter((product) => !product.sku).length,
+    productsWithLookupPriceMismatch: products.filter((product) => {
+      const lookup = source.productLookup.get(product.sourceId)
+
+      if (typeof lookup?.minPrice !== 'number') return false
+
+      return !pricesMatch(product.price, lookup.minPrice)
+    }).length,
     productsWithZeroPrice: products.filter((product) => product.price <= 0).length,
     succeededProducts: 0,
   }
+}
+
+function pricesMatch(left: number, right: number): boolean {
+  return Math.abs(left - right) < 0.001
 }
 
 function resolveImages({

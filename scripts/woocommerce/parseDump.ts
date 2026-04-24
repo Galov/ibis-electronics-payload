@@ -5,21 +5,26 @@ import { decodeSQLValue, parseInsertStatement } from './sql'
 import type {
   LegacyAttachmentRecord,
   LegacyPostRecord,
+  LegacyProductLookupRecord,
   LegacySourceData,
   LegacyTermRecord,
   LegacyTermTaxonomyRecord,
 } from './types'
 
-const TARGET_TABLES = new Set([
-  'nk_posts',
-  'nk_postmeta',
-  'nk_terms',
-  'nk_term_taxonomy',
-  'nk_term_relationships',
-])
+const TARGET_TABLE_SUFFIXES = [
+  'posts',
+  'postmeta',
+  'terms',
+  'term_taxonomy',
+  'term_relationships',
+  'wc_product_meta_lookup',
+] as const
 
 const PRODUCT_META_KEYS = new Set([
   '_sku',
+  '_price',
+  '_regular_price',
+  '_sale_price',
   '_stock',
   '_stock_status',
   '_manage_stock',
@@ -36,6 +41,7 @@ export async function parseWooCommerceDump(filePath: string): Promise<LegacySour
   const source: LegacySourceData = {
     attachments: new Map(),
     postMeta: new Map(),
+    productLookup: new Map(),
     posts: new Map(),
     termRelationships: new Map(),
     termTaxonomies: new Map(),
@@ -53,7 +59,7 @@ export async function parseWooCommerceDump(filePath: string): Promise<LegacySour
       const insertMatch = line.match(/^INSERT INTO `([^`]+)`/)
       const table = insertMatch?.[1]
 
-      if (!table || !TARGET_TABLES.has(table)) continue
+      if (!table || !getTargetTableSuffix(table)) continue
 
       activeTable = table
       statement = line
@@ -77,31 +83,42 @@ export async function parseWooCommerceDump(filePath: string): Promise<LegacySour
 }
 
 function ingestStatement(source: LegacySourceData, table: string, columns: string[], rows: string[][]): void {
+  const tableSuffix = getTargetTableSuffix(table)
+
+  if (!tableSuffix) return
+
   for (const row of rows) {
     const record = toRecord(columns, row)
 
     if (!record) continue
 
-    switch (table) {
-      case 'nk_posts':
+    switch (tableSuffix) {
+      case 'posts':
         ingestPostRow(source, record)
         break
-      case 'nk_postmeta':
+      case 'postmeta':
         ingestPostMetaRow(source, record)
         break
-      case 'nk_terms':
+      case 'terms':
         ingestTermRow(source, record)
         break
-      case 'nk_term_taxonomy':
+      case 'term_taxonomy':
         ingestTermTaxonomyRow(source, record)
         break
-      case 'nk_term_relationships':
+      case 'term_relationships':
         ingestRelationshipRow(source, record)
+        break
+      case 'wc_product_meta_lookup':
+        ingestProductLookupRow(source, record)
         break
       default:
         break
     }
   }
+}
+
+function getTargetTableSuffix(table: string): (typeof TARGET_TABLE_SUFFIXES)[number] | undefined {
+  return TARGET_TABLE_SUFFIXES.find((suffix) => table === suffix || table.endsWith(`_${suffix}`))
 }
 
 function toRecord(columns: string[], row: string[]): Record<string, string | null> | null {
@@ -211,6 +228,23 @@ function ingestRelationshipRow(source: LegacySourceData, record: Record<string, 
   const relationships = source.termRelationships.get(objectId) || []
   relationships.push(taxonomyId)
   source.termRelationships.set(objectId, relationships)
+}
+
+function ingestProductLookupRow(source: LegacySourceData, record: Record<string, string | null>): void {
+  const productId = toNumber(record.product_id)
+
+  if (!productId) return
+
+  const lookup: LegacyProductLookupRecord = {
+    maxPrice: toNumber(record.max_price),
+    minPrice: toNumber(record.min_price),
+    productId,
+    sku: record.sku || undefined,
+    stockQuantity: toNumber(record.stock_quantity),
+    stockStatus: record.stock_status || undefined,
+  }
+
+  source.productLookup.set(productId, lookup)
 }
 
 function toNumber(value: string | null | undefined): number | undefined {

@@ -5,9 +5,11 @@ import { checkRole } from '@/access/utilities'
 import { buildSEOFields } from '@/fields/seo'
 
 const normalizeCatalogCompatibilityFields = ({
+  context,
   data,
   originalDoc,
 }: {
+  context?: Record<string, unknown>
   data?: Record<string, unknown>
   originalDoc?: Record<string, unknown> | null
 }) => {
@@ -27,7 +29,9 @@ const normalizeCatalogCompatibilityFields = ({
       ? data.sourcePrice
       : typeof originalDoc?.sourcePrice === 'number' && originalDoc.sourcePrice > 0
         ? originalDoc.sourcePrice
-        : price
+        : context?.preserveMissingSourcePrice
+          ? undefined
+          : price
 
   const stockQty =
     typeof data.stockQty === 'number'
@@ -36,7 +40,9 @@ const normalizeCatalogCompatibilityFields = ({
         ? originalDoc.stockQty
         : 0
 
-  data.sourcePrice = sourcePrice
+  if (typeof sourcePrice === 'number') {
+    data.sourcePrice = sourcePrice
+  }
   data.priceInUSD = price
   data.priceInEUR = price
   data.priceInUSDEnabled = price > 0
@@ -57,10 +63,6 @@ const ensureCatalogCompatibilityFields = ({
 
   const price = typeof doc.price === 'number' ? doc.price : 0
   const stockQty = typeof doc.stockQty === 'number' ? doc.stockQty : 0
-
-  if (typeof doc.sourcePrice !== 'number' || doc.sourcePrice <= 0) {
-    doc.sourcePrice = price
-  }
 
   if (typeof doc.priceInEUR !== 'number') {
     doc.priceInEUR = price

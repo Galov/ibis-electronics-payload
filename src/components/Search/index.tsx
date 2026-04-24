@@ -271,6 +271,8 @@ export const Search: React.FC<Props> = ({
       newParams.delete('sku')
     }
 
+    newParams.delete('page')
+
     router.push(createUrl('/shop', newParams))
   }
 
@@ -302,6 +304,8 @@ export const Search: React.FC<Props> = ({
       setIsBrandDropdownOpen(false)
     }
 
+    nextParams.delete('page')
+
     router.push(createUrl('/shop', nextParams))
   }
 
@@ -313,6 +317,7 @@ export const Search: React.FC<Props> = ({
     if (!nextTitle.trim() && searchParams.get('brand')) {
       const nextParams = new URLSearchParams(searchParams.toString())
       nextParams.delete('brand')
+      nextParams.delete('page')
       router.push(createUrl('/shop', nextParams))
     }
   }
@@ -323,6 +328,7 @@ export const Search: React.FC<Props> = ({
 
     const nextParams = new URLSearchParams(searchParams.toString())
     nextParams.set('brand', brand.slug)
+    nextParams.delete('page')
 
     router.push(createUrl('/shop', nextParams))
   }
@@ -333,6 +339,7 @@ export const Search: React.FC<Props> = ({
 
     const nextParams = new URLSearchParams(searchParams.toString())
     nextParams.delete('brand')
+    nextParams.delete('page')
 
     router.push(createUrl('/shop', nextParams))
   }

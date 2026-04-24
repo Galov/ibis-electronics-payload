@@ -29,9 +29,7 @@ export function ProductDescription({ product }: { product: Product }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-xl font-normal leading-tight text-primary/85 lg:text-2xl">
-          {product.title}
-        </h1>
+        <h1 className="type-product-title text-primary/85">{product.title}</h1>
         <div className="text-base font-normal text-primary/60 lg:text-lg">
           <Price amount={product.price} />
         </div>
@@ -84,11 +82,7 @@ export function ProductDescription({ product }: { product: Product }) {
           </p>
         ) : null}
       </div>
-      {description ? (
-        <div className="whitespace-pre-line text-sm leading-7 text-primary/65">
-          {description}
-        </div>
-      ) : null}
+      {description ? <div className="type-body-small whitespace-pre-line text-primary/65">{description}</div> : null}
       <div className="space-y-4 border-t border-black/5 pt-5">
         <Suspense fallback={null}>
           <StockIndicator product={product} />

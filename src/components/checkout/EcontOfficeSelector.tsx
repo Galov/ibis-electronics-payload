@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import React, { useEffect, useState } from 'react'
 
 type EcontRegion = {
@@ -43,7 +36,7 @@ type Props = {
 }
 
 const FieldLabel: React.FC<{ label: string }> = ({ label }) => (
-  <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary/45">{label}</p>
+  <p className="type-eyebrow text-primary/45">{label}</p>
 )
 
 export const EcontOfficeSelector: React.FC<Props> = ({
@@ -227,70 +220,48 @@ export const EcontOfficeSelector: React.FC<Props> = ({
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <FieldLabel label="Област" />
-          <Select
+          <SearchableSelect
             disabled={disabled}
+            emptyText="Няма намерени области"
             onValueChange={(regionId) => {
               const nextRegion = regions.find((region) => region.id === regionId) || null
               setActiveRegion(nextRegion)
             }}
+            options={regions.map((region) => ({
+              label: region.name,
+              value: region.id,
+            }))}
+            placeholder={regionPlaceholder}
+            searchPlaceholder="Търси област..."
             value={activeRegion?.id}
-          >
-            <SelectTrigger className="mb-0 h-11 w-full rounded-md border-black/8 bg-white px-4 text-left text-sm text-primary/80">
-              <SelectValue placeholder={regionPlaceholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {regions.length > 0 ? (
-                  regions.map((region) => (
-                    <SelectItem key={region.id} value={region.id}>
-                      {region.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem disabled value="__no-regions">
-                    Няма налични области
-                  </SelectItem>
-                )}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <FieldLabel label="Населено място" />
-          <Select
+          <SearchableSelect
             disabled={disabled || !activeRegion}
+            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени населени места'}
             onValueChange={(cityId) => {
               const nextCity = cities.find((city) => city.id === cityId) || null
               setActiveCity(nextCity)
             }}
+            options={cities.map((city) => ({
+              keywords: [city.region],
+              label: city.name,
+              value: city.id,
+            }))}
+            placeholder={cityPlaceholder}
+            searchPlaceholder="Търси населено място..."
             value={activeCity?.id}
-          >
-            <SelectTrigger className="mb-0 h-11 w-full rounded-md border-black/8 bg-white px-4 text-left text-sm text-primary/80">
-              <SelectValue placeholder={cityPlaceholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {cities.length > 0 ? (
-                  cities.map((city) => (
-                    <SelectItem key={city.id} value={city.id}>
-                      {city.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem disabled value="__no-cities">
-                    {isLoading ? 'Зареждане...' : 'Няма налични населени места'}
-                  </SelectItem>
-                )}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <FieldLabel label="Офис" />
-          <Select
+          <SearchableSelect
             disabled={disabled || !activeCity}
+            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени офиси'}
             onValueChange={(officeId) => {
               const nextOffice = offices.find((office) => office.id === officeId) || null
               setActiveOffice(nextOffice)
@@ -303,27 +274,16 @@ export const EcontOfficeSelector: React.FC<Props> = ({
                 region: activeRegion,
               })
             }}
+            options={offices.map((office) => ({
+              description: office.address,
+              keywords: [office.address, office.code],
+              label: office.name,
+              value: office.id,
+            }))}
+            placeholder={officePlaceholder}
+            searchPlaceholder="Търси офис..."
             value={activeOffice?.id}
-          >
-            <SelectTrigger className="mb-0 h-11 w-full rounded-md border-black/8 bg-white px-4 text-left text-sm text-primary/80">
-              <SelectValue placeholder={officePlaceholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {offices.length > 0 ? (
-                  offices.map((office) => (
-                    <SelectItem key={office.id} value={office.id}>
-                      {office.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem disabled value="__no-offices">
-                    {isLoading ? 'Зареждане...' : 'Няма налични офиси'}
-                  </SelectItem>
-                )}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         {isLoading ? <p className="text-sm text-primary/55">Зареждане на наличните опции...</p> : null}
@@ -335,10 +295,8 @@ export const EcontOfficeSelector: React.FC<Props> = ({
 
       {activeOffice ? (
         <div className="mt-4 rounded-[10px] border border-[rgb(1,55,186)]/18 bg-white px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
-            Избран офис
-          </p>
-          <p className="mt-2 text-sm font-medium text-primary/85">{activeOffice.name}</p>
+          <p className="type-eyebrow text-primary/45">Избран офис</p>
+          <p className="type-subsection-title mt-2 text-primary/85">{activeOffice.name}</p>
           <p className="mt-1 text-sm text-primary/65">
             {activeRegion?.name}
             {activeCity?.name ? `, ${activeCity.name}` : ''}

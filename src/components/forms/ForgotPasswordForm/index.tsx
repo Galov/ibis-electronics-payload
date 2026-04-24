@@ -87,10 +87,10 @@ export const ForgotPasswordForm: React.FC = () => {
       {success && (
         <React.Fragment>
           <div className="space-y-4">
-            <h2 className="text-2xl font-normal tracking-[-0.02em] text-primary">
+            <h2 className="type-section-title text-primary">
               Заявката е изпратена
             </h2>
-            <p className="max-w-xl text-base leading-7 text-primary/68">
+            <p className="type-body max-w-xl text-primary/68">
               Провери имейла си за линк, чрез който сигурно да смениш паролата си.
             </p>
             <Button

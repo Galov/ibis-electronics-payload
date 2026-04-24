@@ -96,6 +96,7 @@ export const Partners: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     group: 'Съдържание',
+    hidden: true,
     defaultColumns: ['title', 'phone', 'website'],
   },
   labels: {

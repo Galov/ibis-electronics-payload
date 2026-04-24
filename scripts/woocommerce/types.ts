@@ -35,10 +35,20 @@ export type LegacyTermTaxonomyRecord = {
 export type LegacySourceData = {
   attachments: Map<number, LegacyAttachmentRecord>
   postMeta: Map<number, Map<string, string>>
+  productLookup: Map<number, LegacyProductLookupRecord>
   posts: Map<number, LegacyPostRecord>
   termRelationships: Map<number, number[]>
   termTaxonomies: Map<number, LegacyTermTaxonomyRecord>
   terms: Map<number, LegacyTermRecord>
+}
+
+export type LegacyProductLookupRecord = {
+  productId: number
+  sku?: string
+  minPrice?: number
+  maxPrice?: number
+  stockQuantity?: number
+  stockStatus?: string
 }
 
 export type NormalizedCategory = {
@@ -95,6 +105,7 @@ export type ImportReport = {
   products: number
   productsMissingImages: number
   productsMissingSku: number
+  productsWithLookupPriceMismatch: number
   productsWithZeroPrice: number
   succeededProducts?: number
 }
@@ -116,5 +127,6 @@ export type ImportOptions = {
   dryRun: boolean
   dumpFile: string
   legacySiteUrl?: string
+  replaceCatalog: boolean
   uploadsBaseUrl?: string
 }

@@ -14,11 +14,11 @@ export default function NotFound() {
 
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.85fr)] lg:items-start">
           <div className="flex h-full flex-col">
-            <h1 className="max-w-3xl text-3xl font-normal tracking-[-0.03em] text-primary md:text-4xl">
+            <h1 className="type-page-title max-w-3xl text-primary">
               Тази страница не съществува или адресът вече е променен.
             </h1>
 
-            <p className="mt-5 max-w-2xl text-base leading-8 text-primary/65 md:text-lg">
+            <p className="type-body mt-5 max-w-2xl text-primary/65 md:text-lg">
               Възможно е линкът да е остарял, страницата да е преместена или адресът да е
               въведен неточно. Най-бързият път е да продължите към каталога и да намерите
               търсения продукт оттам.
@@ -39,17 +39,17 @@ export default function NotFound() {
           </div>
 
           <aside className="rounded-md border border-black/6 bg-[rgb(248,250,252)] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-            <p className="text-sm uppercase tracking-[0.12em] text-primary/45">Полезни страници</p>
+            <p className="type-eyebrow text-primary/45">Полезни страници</p>
 
             <div className="mt-6 space-y-5">
               <Link
                 className="group block border-b border-black/6 pb-5 last:border-b-0 last:pb-0"
                 href="/shop"
               >
-                <p className="text-lg text-primary transition group-hover:text-[rgb(1,55,186)]">
+                <p className="type-subsection-title text-primary transition group-hover:text-[rgb(1,55,186)]">
                   Каталог
                 </p>
-                <p className="mt-1 text-sm leading-6 text-primary/60">
+                <p className="type-body-small mt-1 text-primary/60">
                   Разгледайте всички налични продукти и филтрирайте по категория или марка.
                 </p>
               </Link>
@@ -58,19 +58,19 @@ export default function NotFound() {
                 className="group block border-b border-black/6 pb-5 last:border-b-0 last:pb-0"
                 href="/partners"
               >
-                <p className="text-lg text-primary transition group-hover:text-[rgb(1,55,186)]">
+                <p className="type-subsection-title text-primary transition group-hover:text-[rgb(1,55,186)]">
                   Партньори
                 </p>
-                <p className="mt-1 text-sm leading-6 text-primary/60">
+                <p className="type-body-small mt-1 text-primary/60">
                   Намерете най-близкия партньорски обект на Ibis Electronics.
                 </p>
               </Link>
 
               <Link className="group block" href="/contact">
-                <p className="text-lg text-primary transition group-hover:text-[rgb(1,55,186)]">
+                <p className="type-subsection-title text-primary transition group-hover:text-[rgb(1,55,186)]">
                   Контакт
                 </p>
-                <p className="mt-1 text-sm leading-6 text-primary/60">
+                <p className="type-body-small mt-1 text-primary/60">
                   Вижте адресите на магазина и склада или ни изпратете запитване.
                 </p>
               </Link>

@@ -21,7 +21,7 @@ export const PricingSettings: GlobalConfig = {
       defaultValue: 15,
       admin: {
         step: 0.01,
-        description: 'Използва се за преизчисляване на продажната цена спрямо базовата цена от Ibis Electronics.',
+        description: 'Използва се за преизчисляване на продажната цена спрямо базовата цена от Ник Електрик.',
       },
     },
     {

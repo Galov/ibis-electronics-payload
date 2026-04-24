@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   const categories = normalizeCategories(dump)
   const brands = normalizeBrands(dump)
   const products = normalizeProducts(dump, options)
-  const report = buildImportReport(categories, brands, products)
+  const report = buildImportReport(dump, categories, brands, products)
 
   printReport(report, options)
 
@@ -31,6 +31,7 @@ async function main(): Promise<void> {
     brands,
     categories,
     products,
+    replaceCatalog: options.replaceCatalog,
   })
 
   report.failedProducts = result.failedProducts.length
@@ -51,11 +52,13 @@ function parseArgs(args: string[]): ImportOptions & { help: boolean } {
     dumpFile: path.resolve(process.cwd(), '../nikelect_woocdb2019.sql'),
     help: false,
     legacySiteUrl: process.env.LEGACY_SITE_URL,
+    replaceCatalog: false,
     uploadsBaseUrl: process.env.LEGACY_UPLOADS_BASE_URL,
   }
 
   for (const arg of args) {
     if (arg === '--dry-run') defaults.dryRun = true
+    else if (arg === '--replace-catalog') defaults.replaceCatalog = true
     else if (arg === '--help' || arg === '-h') defaults.help = true
     else if (arg.startsWith('--dump=')) defaults.dumpFile = path.resolve(process.cwd(), arg.slice(7))
     else if (arg.startsWith('--batch-size=')) defaults.batchSize = Number(arg.slice(13)) || defaults.batchSize
@@ -76,6 +79,7 @@ Usage:
 
 Options:
   --dry-run                 Parse and normalize only, do not write to Payload.
+  --replace-catalog         Delete existing products, categories and brands before importing.
   --dump=<path>             SQL dump path. Defaults to ../nikelect_woocdb2019.sql
   --batch-size=<number>     Product import batch size. Defaults to 250
   --legacy-site-url=<url>   Used to build image URLs when attachment guid is missing
@@ -88,12 +92,14 @@ function printReport(report: ReturnType<typeof buildImportReport>, options: Impo
   console.log(`\nWooCommerce import report`)
   console.log(`Dump: ${options.dumpFile}`)
   console.log(`Mode: ${options.dryRun ? 'dry-run' : 'import'}`)
+  console.log(`Replace catalog: ${options.replaceCatalog ? 'yes' : 'no'}`)
   console.log(`Categories: ${report.categories}`)
   console.log(`Brands: ${report.brands}`)
   console.log(`Products: ${report.products}`)
   console.log(`Products missing SKU: ${report.productsMissingSku}`)
   console.log(`Products missing images: ${report.productsMissingImages}`)
   console.log(`Products with zero price: ${report.productsWithZeroPrice}`)
+  console.log(`Products with lookup price mismatch: ${report.productsWithLookupPriceMismatch}`)
   if (typeof report.succeededProducts === 'number') {
     console.log(`Succeeded products: ${report.succeededProducts}`)
   }

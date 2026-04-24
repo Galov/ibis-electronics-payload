@@ -27,10 +27,10 @@ export const ContactLocations: React.FC<ContactLocationsProps> = ({ location }) 
       <div className="rounded-xl bg-white p-5 shadow-[0_14px_34px_rgba(17,24,39,0.06)]">
         <div className="space-y-3">
           <div className="space-y-1">
-            <p className="text-xl font-normal tracking-[-0.02em] text-primary">{location.label}</p>
+            <p className="type-card-title text-primary">{location.label}</p>
           </div>
 
-          <div className="space-y-2 text-sm leading-6 text-primary/66">
+          <div className="type-body-small space-y-2 text-primary/66">
             <div className="flex items-start gap-3">
               <MapPin className="mt-1 h-4 w-4 shrink-0 text-[rgb(1,55,186)]/75" />
               <span>{location.address}</span>

@@ -28,6 +28,8 @@ export const SortToolbar: React.FC<Props> = ({ pageSize }) => {
       nextParams.delete('sort')
     }
 
+    nextParams.delete('page')
+
     router.push(createUrl(pathname, nextParams))
   }
 
@@ -40,6 +42,8 @@ export const SortToolbar: React.FC<Props> = ({ pageSize }) => {
     } else {
       nextParams.delete('limit')
     }
+
+    nextParams.delete('page')
 
     router.push(createUrl(pathname, nextParams))
   }

@@ -28,9 +28,9 @@ export const InfoStepsBlock: React.FC<
     <section className={cn('container', className)}>
       <div className="grid gap-8 rounded-[24px] bg-[rgb(1,55,186)] px-5 py-8 text-white md:grid-cols-[0.9fr_1.1fr] md:px-7 md:py-10">
         <div className="max-w-xl">
-          {eyebrow ? <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-white/70">{eyebrow}</p> : null}
-          {title ? <h2 className="text-3xl font-normal tracking-[-0.03em] text-white">{title}</h2> : null}
-          {description ? <p className="mt-4 text-sm leading-7 text-white/78 md:text-base">{description}</p> : null}
+          {eyebrow ? <p className="type-eyebrow mb-3 text-white/70">{eyebrow}</p> : null}
+          {title ? <h2 className="type-page-title text-white">{title}</h2> : null}
+          {description ? <p className="type-body-small mt-4 text-white/78 md:text-base">{description}</p> : null}
         </div>
 
         <div className="grid gap-4">
@@ -43,11 +43,11 @@ export const InfoStepsBlock: React.FC<
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-sm font-medium text-[rgb(1,55,186)]">
                   {String(index + 1).padStart(2, '0')}
                 </span>
-                <h3 className="text-xl font-normal tracking-[-0.02em] text-white">{item.title}</h3>
+                <h3 className="type-card-title text-white">{item.title}</h3>
               </div>
 
-              {item.summary ? <p className="text-sm font-medium uppercase tracking-[0.08em] text-white/72">{item.summary}</p> : null}
-              {item.description ? <p className="mt-3 text-sm leading-7 text-white/84">{item.description}</p> : null}
+              {item.summary ? <p className="type-eyebrow text-white/72">{item.summary}</p> : null}
+              {item.description ? <p className="type-body-small mt-3 text-white/84">{item.description}</p> : null}
             </article>
           ))}
         </div>

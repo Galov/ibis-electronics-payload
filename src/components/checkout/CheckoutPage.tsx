@@ -201,13 +201,13 @@ export const CheckoutPage: React.FC = () => {
   return (
     <div className="my-8 flex grow flex-col items-stretch justify-stretch gap-10 md:flex-row md:gap-6 lg:gap-8">
       <div className="flex basis-full flex-col justify-stretch gap-8 lg:basis-2/3">
-        <h2 className="text-2xl font-normal text-primary/85">Контакт</h2>
+        <h2 className="type-section-title text-primary/85">Контакт</h2>
 
         <div className="rounded-[10px] bg-muted/20 px-5 py-5 md:px-6">
           {!user && (
             <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
-              <p className="text-sm font-medium text-primary/85">Поръчваш като гост</p>
-              <p className="mt-2 text-sm leading-6 text-primary/60">
+              <p className="type-subsection-title text-primary/85">Поръчваш като гост</p>
+              <p className="type-body-small mt-2 text-primary/60">
                 Можеш да завършиш поръчката и без профил. Ако влезеш или създадеш акаунт, ще имаш
                 по-лесен достъп до адресите и историята на поръчките си.
               </p>
@@ -224,8 +224,8 @@ export const CheckoutPage: React.FC = () => {
 
           {user ? (
             <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
-              <p className="text-sm font-medium text-primary/85">Продължаваш като {user.email}</p>
-              <p className="mt-2 text-sm leading-6 text-primary/60">
+              <p className="type-subsection-title text-primary/85">Продължаваш като {user.email}</p>
+              <p className="type-body-small mt-2 text-primary/60">
                 Попълни данните за контакт и избери начин на доставка, за да изпратим заявката за
                 поръчка.
               </p>
@@ -237,8 +237,8 @@ export const CheckoutPage: React.FC = () => {
             </div>
           ) : (
             <div className="mb-6">
-              <p className="text-sm font-medium text-primary/85">Данни за контакт</p>
-              <p className="mt-2 text-sm leading-6 text-primary/60">
+              <p className="type-subsection-title text-primary/85">Данни за контакт</p>
+              <p className="type-body-small mt-2 text-primary/60">
                 Телефонът е задължителен, за да можем да се свържем с теб при нужда. Имейлът е
                 по желание.
               </p>
@@ -310,7 +310,7 @@ export const CheckoutPage: React.FC = () => {
                 }}
                 type="button"
               >
-                <p className="text-sm font-medium text-primary/85">Адрес</p>
+                <p className="type-subsection-title text-primary/85">Адрес</p>
                 <p className="mt-1 text-sm text-primary/60">
                   Използвай въведения адрес за доставка. +6 EUR
                 </p>
@@ -328,7 +328,7 @@ export const CheckoutPage: React.FC = () => {
                 }}
                 type="button"
               >
-                <p className="text-sm font-medium text-primary/85">Офис на Econt</p>
+                <p className="type-subsection-title text-primary/85">Офис на Econt</p>
                 <p className="mt-1 text-sm text-primary/60">Избери удобен офис. +5 EUR</p>
               </button>
 
@@ -344,7 +344,7 @@ export const CheckoutPage: React.FC = () => {
                 }}
                 type="button"
               >
-                <p className="text-sm font-medium text-primary/85">Офис на Speedy</p>
+                <p className="type-subsection-title text-primary/85">Офис на Speedy</p>
                 <p className="mt-1 text-sm text-primary/60">Избери удобен офис. +5 EUR</p>
               </button>
             </div>
@@ -543,7 +543,7 @@ export const CheckoutPage: React.FC = () => {
       </div>
 
       <div className="flex basis-full flex-col gap-6 bg-muted/20 px-5 pb-6 pt-1 md:px-7 md:pb-8 md:pt-1 lg:basis-1/3">
-        <h2 className="text-2xl font-normal text-primary/85">Твоята количка</h2>
+        <h2 className="type-section-title text-primary/85">Твоята количка</h2>
 
         {cart?.items?.map((item, index) => {
           if (typeof item.product !== 'object' || !item.quantity) {
@@ -587,13 +587,11 @@ export const CheckoutPage: React.FC = () => {
 
         <div className="border-t border-black/5 pt-6">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <span className="text-xs font-medium uppercase tracking-[0.12em] text-primary/45">
-              Доставка
-            </span>
+            <span className="type-eyebrow text-primary/45">Доставка</span>
             <Price amount={activeShippingFee} className="text-base font-medium text-primary/70" currencyCode="EUR" />
           </div>
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium uppercase tracking-[0.12em] text-primary/45">Общо</span>
+            <span className="type-eyebrow text-primary/45">Общо</span>
             <Price amount={orderTotal} className="text-2xl font-medium text-primary/80" currencyCode="EUR" />
           </div>
         </div>

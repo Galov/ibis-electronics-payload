@@ -49,9 +49,7 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
         </div>
 
         <div className="flex flex-1 flex-col">
-          <div className="min-h-[2.5rem] font-medium leading-[1.2] tracking-[-0.01em] text-black">
-            {title}
-          </div>
+          <div className="type-product-card-title min-h-[2.5rem] text-black">{title}</div>
 
           <div className="mt-1 min-h-[3.75rem] space-y-0 text-sm leading-5 text-primary/35">
             {primaryCategory ? <p>{primaryCategory}</p> : null}

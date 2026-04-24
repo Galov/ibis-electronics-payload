@@ -25,14 +25,20 @@ export async function importIntoPayload({
   brands,
   categories,
   products,
+  replaceCatalog,
 }: {
   batchSize: number
   brands: NormalizedBrand[]
   categories: NormalizedCategory[]
   products: NormalizedProduct[]
+  replaceCatalog: boolean
 }): Promise<ImportResult> {
   const payload = await getPayload({ config })
   const failedProducts: ProductImportFailure[] = []
+
+  if (replaceCatalog) {
+    await deleteExistingCatalog(payload)
+  }
 
   const existingCategories = await fetchAll<ExistingCategory>({
     collection: 'categories',
@@ -84,6 +90,49 @@ export async function importIntoPayload({
   }
 }
 
+async function deleteExistingCatalog(payload: Awaited<ReturnType<typeof getPayload>>): Promise<void> {
+  console.log('Deleting existing catalog...')
+  await deleteAll(payload, 'products')
+  await deleteAll(payload, 'categories')
+  await deleteAll(payload, 'brands')
+  console.log('Existing catalog deleted.')
+}
+
+async function deleteAll(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  collection: 'brands' | 'categories' | 'products',
+): Promise<void> {
+  let deleted = 0
+
+  while (true) {
+    const result = await payload.find({
+      collection,
+      depth: 0,
+      limit: 200,
+      overrideAccess: true,
+      pagination: true,
+    })
+
+    if (!result.docs.length) break
+
+    for (const doc of result.docs) {
+      await payload.delete({
+        id: doc.id,
+        collection,
+        overrideAccess: true,
+      })
+
+      deleted += 1
+
+      if (deleted % 100 === 0) {
+        console.log(`Deleted ${deleted} existing ${collection}...`)
+      }
+    }
+  }
+
+  console.log(`Deleted ${deleted} existing ${collection}.`)
+}
+
 async function upsertCategories(
   payload: Awaited<ReturnType<typeof getPayload>>,
   categories: NormalizedCategory[],
@@ -99,7 +148,8 @@ async function upsertCategories(
     }
   }
 
-  for (const category of categories) {
+  for (const [index, category] of categories.entries()) {
+    const processed = index + 1
     const existingCategory = existingBySourceTaxonomyId.get(category.sourceTaxonomyId)
     const data = {
       parent: null as string | null,
@@ -118,6 +168,9 @@ async function upsertCategories(
         overrideAccess: true,
       })
       idBySourceTaxonomyId.set(category.sourceTaxonomyId, existingCategory.id)
+      if (processed % 100 === 0) {
+        console.log(`Imported ${processed}/${categories.length} categories...`)
+      }
       continue
     }
 
@@ -128,6 +181,10 @@ async function upsertCategories(
     })
 
     idBySourceTaxonomyId.set(category.sourceTaxonomyId, created.id)
+
+    if (processed % 100 === 0) {
+      console.log(`Imported ${processed}/${categories.length} categories...`)
+    }
   }
 
   const categoryIdBySourceTermId = new Map<number, string>()
@@ -137,7 +194,8 @@ async function upsertCategories(
     if (id) categoryIdBySourceTermId.set(category.sourceTermId, id)
   }
 
-  for (const category of categories) {
+  for (const [index, category] of categories.entries()) {
+    const processed = index + 1
     if (!category.parentSourceTermId) continue
 
     const childId = idBySourceTaxonomyId.get(category.sourceTaxonomyId)
@@ -153,7 +211,13 @@ async function upsertCategories(
       },
       overrideAccess: true,
     })
+
+    if (processed % 100 === 0) {
+      console.log(`Linked category parents through ${processed}/${categories.length} categories...`)
+    }
   }
+
+  console.log(`Imported ${categories.length} categories.`)
 
   return idBySourceTaxonomyId
 }
@@ -173,7 +237,8 @@ async function upsertBrands(
     }
   }
 
-  for (const brand of brands) {
+  for (const [index, brand] of brands.entries()) {
+    const processed = index + 1
     const existingBrand = existingBySourceTaxonomyId.get(brand.sourceTaxonomyId)
     const data = {
       productCount: brand.productCount,
@@ -191,6 +256,9 @@ async function upsertBrands(
         overrideAccess: true,
       })
       idBySourceTaxonomyId.set(brand.sourceTaxonomyId, existingBrand.id)
+      if (processed % 100 === 0) {
+        console.log(`Imported ${processed}/${brands.length} brands...`)
+      }
       continue
     }
 
@@ -201,7 +269,13 @@ async function upsertBrands(
     })
 
     idBySourceTaxonomyId.set(brand.sourceTaxonomyId, created.id)
+
+    if (processed % 100 === 0) {
+      console.log(`Imported ${processed}/${brands.length} brands...`)
+    }
   }
+
+  console.log(`Imported ${brands.length} brands.`)
 
   return idBySourceTaxonomyId
 }
@@ -233,7 +307,8 @@ async function upsertProducts(
   for (let index = 0; index < products.length; index += batchSize) {
     const batch = products.slice(index, index + batchSize)
 
-    for (const product of batch) {
+    for (const [batchIndex, product] of batch.entries()) {
+      const processed = index + batchIndex + 1
       const existingProduct = existingBySourceId.get(product.sourceId)
 
       const data = {
@@ -271,14 +346,23 @@ async function upsertProducts(
           await payload.update({
             id: existingProduct.id,
             collection: 'products',
+            context: {
+              preserveMissingSourcePrice: true,
+            },
             data,
             overrideAccess: true,
           })
+          if (processed % 100 === 0) {
+            console.log(`Imported ${processed}/${products.length} products...`)
+          }
           continue
         }
 
         const created = await payload.create({
           collection: 'products',
+          context: {
+            preserveMissingSourcePrice: true,
+          },
           data,
           overrideAccess: true,
         })
@@ -288,6 +372,10 @@ async function upsertProducts(
           slug: created.slug,
           sourceId: created.sourceId,
         })
+
+        if (processed % 100 === 0) {
+          console.log(`Imported ${processed}/${products.length} products...`)
+        }
       } catch (error) {
         const preview = (product.description || '').replace(/\s+/g, ' ').slice(0, 300)
         const failure = {
@@ -310,6 +398,8 @@ async function upsertProducts(
       }
     }
   }
+
+  console.log(`Imported ${products.length - failedProducts.length}/${products.length} products.`)
 }
 
 function extractErrorMessage(error: unknown): string {

@@ -54,7 +54,7 @@ export function RecalculateRetailPricesButton() {
         {isLoading ? 'Преизчисляване...' : 'Преизчисли всички цени'}
       </button>
       <p style={{ marginTop: '0.75rem', color: '#52606d', maxWidth: '42rem' }}>
-        Използва текущата надценка и обновява всички продажни цени според базовата цена от Ibis Electronics.
+        Използва текущата надценка и обновява всички продажни цени според базовата цена от Ник Електрик.
       </p>
       {message ? <p style={{ marginTop: '0.5rem', color: '#137333' }}>{message}</p> : null}
       {error ? <p style={{ marginTop: '0.5rem', color: '#b42318' }}>{error}</p> : null}
