@@ -23,12 +23,16 @@ export const Gallery: React.FC<Props> = ({ gallery, productTitle }) => {
     <div>
       <div className="relative mb-8 aspect-square w-full overflow-hidden rounded-md border border-black/8 bg-white">
         {currentUrl ? (
-          <Image
-            alt={getProductImageAlt({
-              imageAlt: currentImage?.alt,
-              index: current,
-              productTitle,
-            })}
+            <Image
+              alt={getProductImageAlt({
+                mediaAlt:
+                  currentImage?.image && typeof currentImage.image !== 'string'
+                    ? (currentImage.image.alt ?? null)
+                    : null,
+                imageAlt: currentImage?.alt,
+                index: current,
+                productTitle,
+              })}
             className="object-contain"
             fill
             sizes="(min-width: 1024px) 40rem, 100vw"
@@ -59,6 +63,8 @@ export const Gallery: React.FC<Props> = ({ gallery, productTitle }) => {
                 >
                   <Image
                     alt={getProductImageAlt({
+                      mediaAlt:
+                        item.image && typeof item.image !== 'string' ? (item.image.alt ?? null) : null,
                       imageAlt: item.alt,
                       index: i,
                       productTitle,

@@ -188,10 +188,19 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               },
               fields: [
                 {
+                  name: 'image',
+                  label: 'Файл',
+                  type: 'upload',
+                  relationTo: 'media',
+                },
+                {
                   name: 'legacyUrl',
                   label: 'Изходен URL',
                   type: 'text',
-                  required: true,
+                  admin: {
+                    description:
+                      'Техническо поле за вече импортирани снимки от стария сайт. За нови продукти използвайте качване на файл.',
+                  },
                 },
                 {
                   name: 'storageKey',
@@ -205,6 +214,10 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
                   name: 'alt',
                   label: 'Alt текст',
                   type: 'text',
+                  admin: {
+                    description:
+                      'Ако го оставите празно, системата ще използва alt текста на качения файл или името на продукта.',
+                  },
                 },
               ],
             },

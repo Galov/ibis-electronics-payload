@@ -283,8 +283,15 @@ export interface Product {
   shortDescription?: string | null;
   images?:
     | {
-        legacyUrl: string;
+        image?: (string | null) | Media;
+        /**
+         * Техническо поле за вече импортирани снимки от стария сайт. За нови продукти използвайте качване на файл.
+         */
+        legacyUrl?: string | null;
         storageKey?: string | null;
+        /**
+         * Ако го оставите празно, системата ще използва alt текста на качения файл или името на продукта.
+         */
         alt?: string | null;
         id?: string | null;
       }[]
@@ -342,6 +349,41 @@ export interface Product {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  alt: string;
+  caption?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  prefix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "brands".
  */
 export interface Brand {
@@ -380,41 +422,6 @@ export interface Category {
   slug?: string | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  alt: string;
-  caption?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  prefix?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1400,6 +1407,7 @@ export interface ProductsSelect<T extends boolean = true> {
   images?:
     | T
     | {
+        image?: T;
         legacyUrl?: T;
         storageKey?: T;
         alt?: T;
@@ -1781,7 +1789,7 @@ export interface ShopPage {
 export interface PricingSetting {
   id: string;
   /**
-   * Използва се за преизчисляване на продажната цена спрямо базовата цена от Ibis Electronics.
+   * Използва се за преизчисляване на продажната цена спрямо базовата цена от Ник Електрик.
    */
   markupPercent: number;
   updatedAt?: string | null;

@@ -11,16 +11,22 @@ const clampText = (value: string, maxLength: number) => {
 }
 
 export const getProductImageAlt = ({
+  mediaAlt,
   imageAlt,
   index = 0,
   productTitle,
 }: {
+  mediaAlt?: null | string
   imageAlt?: null | string
   index?: number
   productTitle?: null | string
 }) => {
   if (imageAlt?.trim()) {
     return imageAlt.trim()
+  }
+
+  if (mediaAlt?.trim()) {
+    return mediaAlt.trim()
   }
 
   if (productTitle?.trim()) {
@@ -63,9 +69,14 @@ export const getProductSEODescription = (product?: Partial<Product> | null) => {
 }
 
 export const resolveProductImageURL = (image?: {
+  image?: { url?: null | string } | null | string
   legacyUrl?: null | string
   storageKey?: null | string
 }) => {
+  if (image?.image && typeof image.image !== 'string' && image.image.url) {
+    return image.image.url
+  }
+
   if (image?.storageKey && publicStorageBase) {
     return `${publicStorageBase.replace(/\/$/, '')}/${image.storageKey.replace(/^\//, '')}`
   }
@@ -81,7 +92,12 @@ export const getProductPrimaryImage = (product?: Partial<Product> | null) => {
   }
 
   return {
-    alt: getProductImageAlt({ imageAlt: image.alt, productTitle: product?.title }),
+    alt: getProductImageAlt({
+      mediaAlt:
+        image.image && typeof image.image !== 'string' ? (image.image.alt ?? null) : null,
+      imageAlt: image.alt,
+      productTitle: product?.title,
+    }),
     url: resolveProductImageURL(image),
   }
 }
