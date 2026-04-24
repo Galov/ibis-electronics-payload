@@ -25,6 +25,7 @@ import { PricingSettings } from '@/globals/PricingSettings'
 import { PrivacyPage } from '@/globals/PrivacyPage'
 import { ShopPage } from '@/globals/ShopPage'
 import { TermsPage } from '@/globals/TermsPage'
+import { pluginSeoBg } from '@/i18n/pluginSeoBg'
 import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
@@ -59,6 +60,7 @@ export default buildConfig({
         translations: {
           ...payloadBg.translations,
           ...ecommerceBg.translations,
+          ...pluginSeoBg,
           general: {
             ...payloadBg.translations.general,
             noResults: 'Няма намерени {{label}}. {{label}} не съществуват или не отговарят на зададените филтри.',
