@@ -1,4 +1,5 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { bg as payloadBg } from '@payloadcms/translations/languages/bg'
 import { bg as ecommerceBg } from '@payloadcms/plugin-ecommerce/translations/languages/bg'
 
@@ -30,6 +31,9 @@ import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const resendApiKey = process.env.RESEND_API_KEY || ''
+const defaultFromAddress = process.env.EMAIL_FROM_ADDRESS || 'noreply@ibis-electronics.com'
+const defaultFromName = process.env.EMAIL_FROM_NAME || 'Ibis Electronics'
 
 export default buildConfig({
   admin: {
@@ -52,6 +56,15 @@ export default buildConfig({
     url: process.env.DATABASE_URL || '',
   }),
   editor: fullLexicalEditor(),
+  ...(resendApiKey
+    ? {
+        email: resendAdapter({
+          apiKey: resendApiKey,
+          defaultFromAddress,
+          defaultFromName,
+        }),
+      }
+    : {}),
   i18n: {
     fallbackLanguage: 'bg',
     supportedLanguages: {
@@ -69,7 +82,6 @@ export default buildConfig({
       },
     },
   },
-  //email: nodemailerAdapter(),
   endpoints: [
     {
       handler: recalculateRetailPricesHandler,
