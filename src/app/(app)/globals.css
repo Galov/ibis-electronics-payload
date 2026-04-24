@@ -339,6 +339,10 @@
     margin-bottom: 0.5rem;
   }
 
+  .prose.type-richtext :where(h1, h2):not(:where([class~='not-prose'] *)) {
+    padding-inline-start: 0 !important;
+  }
+
   .prose.type-richtext :where(p, ul, ol, blockquote, pre, table):not(:where([class~='not-prose'] *)) {
     margin-top: 0;
     margin-bottom: 1rem;
