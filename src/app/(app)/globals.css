@@ -279,9 +279,31 @@
     letter-spacing: -0.01em;
   }
 
+  @media (width >= 48rem) {
+    .type-page-title {
+      font-size: 2.25rem;
+    }
+
+    .type-section-title {
+      font-size: 1.875rem;
+    }
+  }
+
+  @media (width >= 64rem) {
+    .type-product-title {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+@layer utilities {
   .type-richtext {
     font-size: 1rem;
     line-height: 1.75;
+  }
+
+  .prose.type-richtext {
+    max-width: none;
   }
 
   .prose.type-richtext :where(h1):not(:where([class~='not-prose'] *)) {
@@ -294,6 +316,7 @@
     letter-spacing: -0.03em;
     margin-top: 0;
     margin-bottom: 0.875rem;
+    padding-inline-start: 0 !important;
   }
 
   .prose.type-richtext :where(h2):not(:where([class~='not-prose'] *)) {
@@ -304,6 +327,7 @@
     letter-spacing: -0.02em;
     margin-top: 2rem;
     margin-bottom: 1rem;
+    padding-inline-start: 0 !important;
   }
 
   .prose.type-richtext :where(h3):not(:where([class~='not-prose'] *)) {
@@ -339,10 +363,6 @@
     margin-bottom: 0.5rem;
   }
 
-  .prose.type-richtext :where(h1, h2):not(:where([class~='not-prose'] *)) {
-    padding-inline-start: 0 !important;
-  }
-
   .prose.type-richtext :where(p, ul, ol, blockquote, pre, table):not(:where([class~='not-prose'] *)) {
     margin-top: 0;
     margin-bottom: 1rem;
@@ -362,16 +382,8 @@
   }
 
   @media (width >= 48rem) {
-    .type-page-title {
-      font-size: 2.25rem;
-    }
-
-    .type-section-title {
-      font-size: 1.875rem;
-    }
-
     .prose.type-richtext :where(h1):not(:where([class~='not-prose'] *)) {
-      font-size: 3rem;
+      font-size: 2.25rem;
       margin-bottom: 1rem;
     }
 
@@ -379,12 +391,6 @@
       font-size: 1.875rem;
       margin-top: 2.5rem;
       margin-bottom: 1.25rem;
-    }
-  }
-
-  @media (width >= 64rem) {
-    .type-product-title {
-      font-size: 1.5rem;
     }
   }
 }
