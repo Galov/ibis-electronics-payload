@@ -49,12 +49,12 @@ export const SortToolbar: React.FC<Props> = ({ pageSize }) => {
   }
 
   return (
-    <div className="flex flex-col gap-4 pt-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="flex items-center gap-3 text-[13px] text-primary/60">
+    <div className="flex flex-col gap-4 pt-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <label className="grid grid-cols-[auto_1fr] items-center gap-3 text-[13px] text-primary/60 md:flex">
           <span>Покажи</span>
           <select
-            className="h-10 min-w-[92px] rounded-xl border bg-white px-4 text-[13px] text-primary/80 outline-none transition focus:border-[rgb(1,55,186)]"
+            className="h-10 w-[min(12rem,50vw)] justify-self-end rounded-xl border bg-white px-4 text-right text-[13px] text-primary/80 outline-none transition focus:border-[rgb(1,55,186)] md:w-[220px] md:min-w-[220px]"
             onChange={onPageSizeChange}
             value={String(pageSize)}
           >
@@ -66,13 +66,13 @@ export const SortToolbar: React.FC<Props> = ({ pageSize }) => {
           </select>
         </label>
 
-        <label className="flex items-center gap-3 text-[13px] text-primary/60">
+        <label className="grid grid-cols-[auto_1fr] items-center gap-3 text-[13px] text-primary/60 md:flex">
           <span className="inline-flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4" />
             Сортиране
           </span>
           <select
-            className="h-10 min-w-[220px] rounded-xl border bg-white px-4 text-[13px] text-primary/80 outline-none transition focus:border-[rgb(1,55,186)]"
+            className="h-10 w-[min(12rem,50vw)] justify-self-end rounded-xl border bg-white px-4 text-right text-[13px] text-primary/80 outline-none transition focus:border-[rgb(1,55,186)] md:w-[220px] md:min-w-[220px]"
             onChange={onSortChange}
             value={currentSort}
           >

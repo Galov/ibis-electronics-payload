@@ -366,7 +366,7 @@ export const Search: React.FC<Props> = ({
         <div className="relative">
           <input
             autoComplete="off"
-            className="h-12 w-full rounded-md border bg-white px-5 pr-12 text-sm text-black placeholder:text-neutral-500 dark:border-neutral-800 dark:bg-black dark:text-white dark:placeholder:text-neutral-400"
+            className="h-12 w-full rounded-md border bg-white px-5 pr-12 text-[16px] text-black placeholder:text-neutral-500 md:text-sm dark:border-neutral-800 dark:bg-black dark:text-white dark:placeholder:text-neutral-400"
             defaultValue={searchQuery}
             key={searchQuery}
             name="searchQuery"
@@ -376,7 +376,7 @@ export const Search: React.FC<Props> = ({
           />
           <div
             className={cn(
-              'pointer-events-none absolute inset-y-0 left-5 right-12 flex items-center text-sm text-neutral-500 transition-opacity duration-1000 ease-in-out dark:text-neutral-400',
+              'pointer-events-none absolute inset-y-0 left-5 right-12 flex items-center text-[16px] text-neutral-500 transition-opacity duration-1000 ease-in-out md:text-sm dark:text-neutral-400',
               isPlaceholderVisible && !searchInputValue.trim() ? 'opacity-100' : 'opacity-0',
             )}
           >
@@ -394,17 +394,17 @@ export const Search: React.FC<Props> = ({
         </Button>
         <div
           className={cn(
-            'overflow-hidden transition-[opacity,transform] ease-in-out',
+            'overflow-hidden transition-[opacity,transform] ease-in-out md:block',
             hasActiveFilters
               ? 'translate-x-0 opacity-100'
-              : 'pointer-events-none translate-x-3 opacity-0',
+              : 'pointer-events-none hidden translate-x-3 opacity-0 md:block',
           )}
           style={{
             transitionDuration: hasActiveFilters ? '500ms' : '1240ms',
           }}
         >
           <Button
-            className="h-12 w-[13.5rem] rounded-md px-5 text-sm font-normal"
+            className="h-12 w-full rounded-md px-5 text-sm font-normal md:w-[13.5rem]"
             onClick={onResetFilters}
             type="button"
             variant="outline"
@@ -446,7 +446,7 @@ export const Search: React.FC<Props> = ({
               <div className="relative md:col-start-1">
                 <input
                   autoComplete="off"
-                  className="h-11 w-full rounded-md border bg-white px-4 pr-11 text-sm text-black placeholder:text-neutral-500 dark:border-neutral-800 dark:bg-black dark:text-white dark:placeholder:text-neutral-400"
+                  className="h-11 w-full rounded-md border bg-white px-4 pr-11 text-[16px] text-black placeholder:text-neutral-500 md:text-sm dark:border-neutral-800 dark:bg-black dark:text-white dark:placeholder:text-neutral-400"
                   name="brandQuery"
                   onChange={onBrandFilterChange}
                   onFocus={() => setIsBrandDropdownOpen(true)}

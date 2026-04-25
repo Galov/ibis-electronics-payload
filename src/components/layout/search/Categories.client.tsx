@@ -222,16 +222,16 @@ export const CategoriesPanel: React.FC<PanelProps> = ({ categories }) => {
   }, [categories, isOpen])
 
   return (
-    <section className="rounded-[6px] bg-[rgb(250,251,253)] px-5 py-5 md:px-6">
+    <section className="rounded-[6px] border border-[rgb(1,55,186)]/10 bg-[rgb(250,251,253)] px-5 py-5 md:border-transparent md:px-6">
       <button
         type="button"
         aria-expanded={isOpen}
-        className="flex w-full items-center justify-between gap-4 text-left"
+        className="flex w-full items-center justify-between gap-4 rounded-[4px] text-left transition hover:text-[rgb(1,55,186)]"
         onClick={() => setIsOpen((current) => !current)}
       >
         <div className="flex items-center gap-3">
-          <span className="h-px w-8 bg-[rgb(1,55,186)]/55" />
-          <h3 className="text-sm font-normal tracking-[0.04em] text-[rgb(1,55,186)]">
+          <span className="h-px w-8 bg-[rgb(1,55,186)]/70" />
+          <h3 className="text-sm font-medium tracking-[0.04em] text-[rgb(1,55,186)]">
             Категории
           </h3>
         </div>

@@ -1,7 +1,9 @@
 import { CatalogPagination } from '@/components/catalog/CatalogPagination'
+import { MobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
 import { Grid } from '@/components/Grid'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import { Search } from '@/components/Search'
+import { Categories } from '@/components/layout/search/Categories'
 import { SortToolbar } from '@/components/layout/search/SortToolbar'
 import { ShopBanner } from '@/components/shop/ShopBanner'
 import { generateMeta } from '@/utilities/generateMeta'
@@ -130,10 +132,12 @@ export default async function MagazinPage({ searchParams }: Props) {
   return (
     <div>
       <section className="mb-6 rounded-[6px] bg-[rgb(250,251,253)] px-4 py-5 md:px-5 md:py-6">
-        <Search
-          availableBrands={availableBrands}
-          showBrandFilter={Boolean(searchValue) && products.docs.length > 0}
-        />
+        <div className="hidden md:block">
+          <Search
+            availableBrands={availableBrands}
+            showBrandFilter={Boolean(searchValue) && products.docs.length > 0}
+          />
+        </div>
 
         {searchValue ? (
           <div className="pt-5">
@@ -161,8 +165,21 @@ export default async function MagazinPage({ searchParams }: Props) {
           </div>
         ) : null}
 
-        {products?.docs.length > 0 ? <SortToolbar pageSize={pageSize} /> : null}
+        {products?.docs.length > 0 ? (
+          <div className="hidden md:block">
+            <SortToolbar pageSize={pageSize} />
+          </div>
+        ) : null}
       </section>
+
+      <MobileCatalogControls>
+        <Search
+          availableBrands={availableBrands}
+          showBrandFilter={Boolean(searchValue) && products.docs.length > 0}
+        />
+        <Categories />
+        {products?.docs.length > 0 ? <SortToolbar pageSize={pageSize} /> : null}
+      </MobileCatalogControls>
 
       {products?.docs.length > 0 ? (
         <>
