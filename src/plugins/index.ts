@@ -127,6 +127,33 @@ const applyReadOnlyOrderItemsField = (fields: any[]): any[] => {
   })
 }
 
+const clarifyOrderCustomerField = (fields: any[]): any[] => {
+  return fields.map((field) => {
+    const nextField = { ...field }
+
+    if (Array.isArray(nextField.fields)) {
+      nextField.fields = clarifyOrderCustomerField(nextField.fields)
+    }
+
+    if (Array.isArray(nextField.tabs)) {
+      nextField.tabs = nextField.tabs.map((tab: any) => ({
+        ...tab,
+        fields: Array.isArray(tab.fields) ? clarifyOrderCustomerField(tab.fields) : tab.fields,
+      }))
+    }
+
+    if (nextField.name === 'customer') {
+      nextField.label = 'Регистриран клиент'
+      nextField.admin = {
+        ...nextField.admin,
+        readOnly: true,
+      }
+    }
+
+    return nextField
+  })
+}
+
 const hasAdminValue = (value: unknown) => {
   if (Array.isArray(value)) return value.length > 0
   if (typeof value === 'string') return value.trim().length > 0
@@ -321,7 +348,9 @@ export const plugins: Plugin[] = [
         fields: [
           ...arrangeOrderAdminTabs(
             applyReadOnlyOrderItemsField(
-              addOrderItemSKUField(normalizeMoneyAdminFields(defaultCollection.fields)),
+              addOrderItemSKUField(
+                clarifyOrderCustomerField(normalizeMoneyAdminFields(defaultCollection.fields)),
+              ),
             ),
           ),
           {
