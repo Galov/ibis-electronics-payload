@@ -322,6 +322,7 @@ const arrangeOrderAdminTabs = (fields: any[]): any[] => {
           return {
             ...tab,
             fields: [
+              orderShippingNameField,
               ...tab.fields.map((tabField: any) => {
                 if (tabField.name !== 'shippingAddress' || !Array.isArray(tabField.fields)) {
                   return tabField
@@ -329,7 +330,7 @@ const arrangeOrderAdminTabs = (fields: any[]): any[] => {
 
                 return {
                   ...tabField,
-                  fields: [orderShippingNameField, ...hideEmptyShippingAddressFields(tabField.fields)],
+                  fields: hideEmptyShippingAddressFields(tabField.fields),
                 }
               }),
               ...deliveryDetailFields,

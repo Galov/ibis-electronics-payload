@@ -29,10 +29,9 @@ export function OrderShippingNameField() {
 
     const loadOrder = async () => {
       try {
-        const response = await fetch(
-          `/api/orders/${encodeURIComponent(String(id))}?depth=0&select[shippingAddress]=true`,
-          { credentials: 'include' },
-        )
+        const response = await fetch(`/api/orders/${encodeURIComponent(String(id))}?depth=0`, {
+          credentials: 'include',
+        })
 
         if (!response.ok) return
 
