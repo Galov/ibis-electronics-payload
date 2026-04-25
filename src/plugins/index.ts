@@ -94,6 +94,39 @@ const addOrderItemSKUField = (fields: any[]): any[] => {
   })
 }
 
+const useReadOnlyOrderItemsField = (fields: any[]): any[] => {
+  return fields.map((field) => {
+    const nextField = { ...field }
+
+    if (Array.isArray(nextField.fields)) {
+      nextField.fields = useReadOnlyOrderItemsField(nextField.fields)
+    }
+
+    if (Array.isArray(nextField.tabs)) {
+      nextField.tabs = nextField.tabs.map((tab: any) => ({
+        ...tab,
+        fields: Array.isArray(tab.fields) ? useReadOnlyOrderItemsField(tab.fields) : tab.fields,
+      }))
+    }
+
+    if (nextField.name === 'items') {
+      nextField.admin = {
+        ...nextField.admin,
+        components: {
+          ...nextField.admin?.components,
+          Field: {
+            path: '@/components/admin/OrderItemsReadOnlyField',
+            exportName: 'OrderItemsReadOnlyField',
+          },
+        },
+        readOnly: true,
+      }
+    }
+
+    return nextField
+  })
+}
+
 export const plugins: Plugin[] = [
   ecommercePlugin({
     access: {
@@ -139,7 +172,9 @@ export const plugins: Plugin[] = [
           group: 'Търговия',
         },
         fields: [
-          ...addOrderItemSKUField(normalizeMoneyAdminFields(defaultCollection.fields)),
+          ...useReadOnlyOrderItemsField(
+            addOrderItemSKUField(normalizeMoneyAdminFields(defaultCollection.fields)),
+          ),
           {
             name: 'deliveryMethod',
             type: 'select',

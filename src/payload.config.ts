@@ -50,6 +50,7 @@ export default buildConfig({
         },
       },
     },
+    dateFormat: 'dd.MM.yyyy, HH:mm',
     user: Users.slug,
   },
   collections: [Users, Brands, Categories, Pages, Partners, ContactInquiries, Media],
