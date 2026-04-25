@@ -1,24 +1,63 @@
 'use client'
 
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
+import { useEffect, useState } from 'react'
 
 const getStringValue = (value: unknown) => {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+type OrderResponse = {
+  shippingAddress?: {
+    firstName?: string | null
+    lastName?: string | null
+  } | null
+}
+
 export function OrderShippingNameField() {
-  const { data } = useDocumentInfo()
+  const { id } = useDocumentInfo()
   const formName = useFormFields(([fields]) => ({
     firstName: getStringValue(fields['shippingAddress.firstName']?.value),
     lastName: getStringValue(fields['shippingAddress.lastName']?.value),
   }))
-  const shippingAddress =
-    data && typeof data.shippingAddress === 'object' && data.shippingAddress !== null
-      ? (data.shippingAddress as Record<string, unknown>)
-      : null
+  const [documentName, setDocumentName] = useState({ firstName: '', lastName: '' })
 
-  const firstName = formName.firstName || getStringValue(shippingAddress?.firstName)
-  const lastName = formName.lastName || getStringValue(shippingAddress?.lastName)
+  useEffect(() => {
+    if (!id) return
+
+    let isCancelled = false
+
+    const loadOrder = async () => {
+      try {
+        const response = await fetch(
+          `/api/orders/${encodeURIComponent(String(id))}?depth=0&select[shippingAddress]=true`,
+          { credentials: 'include' },
+        )
+
+        if (!response.ok) return
+
+        const order = (await response.json()) as OrderResponse
+
+        if (isCancelled) return
+
+        setDocumentName({
+          firstName: getStringValue(order.shippingAddress?.firstName),
+          lastName: getStringValue(order.shippingAddress?.lastName),
+        })
+      } catch {
+        return
+      }
+    }
+
+    void loadOrder()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [id])
+
+  const firstName = formName.firstName || documentName.firstName
+  const lastName = formName.lastName || documentName.lastName
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
 
   if (!fullName) return null
