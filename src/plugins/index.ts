@@ -164,6 +164,15 @@ const hideEmptyShippingAddressFields = (fields: any[]): any[] => {
   return fields.map((field) => {
     const nextField = { ...field }
 
+    if (nextField.name === 'firstName' || nextField.name === 'lastName') {
+      nextField.admin = {
+        ...nextField.admin,
+        hidden: true,
+      }
+
+      return nextField
+    }
+
     if (nextField.name === 'title') {
       nextField.admin = {
         ...nextField.admin,
@@ -181,6 +190,19 @@ const hideEmptyShippingAddressFields = (fields: any[]): any[] => {
 
     return nextField
   })
+}
+
+const orderShippingNameField = {
+  name: 'orderShippingName',
+  type: 'ui',
+  admin: {
+    components: {
+      Field: {
+        path: '@/components/admin/OrderShippingNameField',
+        exportName: 'OrderShippingNameField',
+      },
+    },
+  },
 }
 
 const customerNotesField = {
@@ -287,7 +309,7 @@ const arrangeOrderAdminTabs = (fields: any[]): any[] => {
 
                 return {
                   ...tabField,
-                  fields: hideEmptyShippingAddressFields(tabField.fields),
+                  fields: [orderShippingNameField, ...hideEmptyShippingAddressFields(tabField.fields)],
                 }
               }),
               ...deliveryDetailFields,
