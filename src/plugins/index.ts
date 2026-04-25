@@ -94,18 +94,18 @@ const addOrderItemSKUField = (fields: any[]): any[] => {
   })
 }
 
-const useReadOnlyOrderItemsField = (fields: any[]): any[] => {
+const applyReadOnlyOrderItemsField = (fields: any[]): any[] => {
   return fields.map((field) => {
     const nextField = { ...field }
 
     if (Array.isArray(nextField.fields)) {
-      nextField.fields = useReadOnlyOrderItemsField(nextField.fields)
+      nextField.fields = applyReadOnlyOrderItemsField(nextField.fields)
     }
 
     if (Array.isArray(nextField.tabs)) {
       nextField.tabs = nextField.tabs.map((tab: any) => ({
         ...tab,
-        fields: Array.isArray(tab.fields) ? useReadOnlyOrderItemsField(tab.fields) : tab.fields,
+        fields: Array.isArray(tab.fields) ? applyReadOnlyOrderItemsField(tab.fields) : tab.fields,
       }))
     }
 
@@ -172,7 +172,7 @@ export const plugins: Plugin[] = [
           group: 'Търговия',
         },
         fields: [
-          ...useReadOnlyOrderItemsField(
+          ...applyReadOnlyOrderItemsField(
             addOrderItemSKUField(normalizeMoneyAdminFields(defaultCollection.fields)),
           ),
           {
