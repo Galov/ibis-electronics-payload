@@ -127,6 +127,153 @@ const applyReadOnlyOrderItemsField = (fields: any[]): any[] => {
   })
 }
 
+const hasAdminValue = (value: unknown) => {
+  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === 'string') return value.trim().length > 0
+  return value !== null && value !== undefined
+}
+
+const hideEmptyShippingAddressFields = (fields: any[]): any[] => {
+  return fields.map((field) => {
+    const nextField = { ...field }
+
+    if (nextField.name === 'title') {
+      nextField.admin = {
+        ...nextField.admin,
+        hidden: true,
+      }
+
+      return nextField
+    }
+
+    nextField.admin = {
+      ...nextField.admin,
+      condition: (_: unknown, siblingData: Record<string, unknown> = {}) =>
+        hasAdminValue(siblingData[nextField.name]),
+    }
+
+    return nextField
+  })
+}
+
+const customerNotesField = {
+  name: 'customerNotes',
+  type: 'textarea',
+  admin: {
+    readOnly: true,
+  },
+  label: 'Бележки към поръчката',
+}
+
+const deliveryDetailFields = [
+  {
+    name: 'econtOfficeId',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'econt-office',
+      readOnly: true,
+    },
+    label: 'Econt офис ID',
+  },
+  {
+    name: 'econtOfficeCode',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'econt-office',
+      readOnly: true,
+    },
+    label: 'Econt офис код',
+  },
+  {
+    name: 'econtOfficeName',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'econt-office',
+      readOnly: true,
+    },
+    label: 'Име на офис',
+  },
+  {
+    name: 'econtOfficeAddress',
+    type: 'textarea',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'econt-office',
+      readOnly: true,
+    },
+    label: 'Адрес на офис',
+  },
+  {
+    name: 'speedyOfficeId',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'speedy-office',
+      readOnly: true,
+    },
+    label: 'Speedy офис ID',
+  },
+  {
+    name: 'speedyOfficeName',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'speedy-office',
+      readOnly: true,
+    },
+    label: 'Име на офис',
+  },
+  {
+    name: 'speedyOfficeAddress',
+    type: 'textarea',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'speedy-office',
+      readOnly: true,
+    },
+    label: 'Адрес на офис',
+  },
+]
+
+const arrangeOrderAdminTabs = (fields: any[]): any[] => {
+  return fields.map((field) => {
+    if (field.type !== 'tabs' || !Array.isArray(field.tabs)) {
+      return field
+    }
+
+    return {
+      ...field,
+      tabs: field.tabs.map((tab: any, index: number) => {
+        if (!Array.isArray(tab.fields)) return tab
+
+        if (index === 0) {
+          return {
+            ...tab,
+            fields: [...tab.fields, customerNotesField],
+          }
+        }
+
+        if (index === 1) {
+          return {
+            ...tab,
+            fields: [
+              ...tab.fields.map((tabField: any) => {
+                if (tabField.name !== 'shippingAddress' || !Array.isArray(tabField.fields)) {
+                  return tabField
+                }
+
+                return {
+                  ...tabField,
+                  fields: hideEmptyShippingAddressFields(tabField.fields),
+                }
+              }),
+              ...deliveryDetailFields,
+            ],
+          }
+        }
+
+        return tab
+      }),
+    }
+  })
+}
+
 export const plugins: Plugin[] = [
   ecommercePlugin({
     access: {
@@ -172,8 +319,10 @@ export const plugins: Plugin[] = [
           group: 'Търговия',
         },
         fields: [
-          ...applyReadOnlyOrderItemsField(
-            addOrderItemSKUField(normalizeMoneyAdminFields(defaultCollection.fields)),
+          ...arrangeOrderAdminTabs(
+            applyReadOnlyOrderItemsField(
+              addOrderItemSKUField(normalizeMoneyAdminFields(defaultCollection.fields)),
+            ),
           ),
           {
             name: 'deliveryMethod',
@@ -200,89 +349,13 @@ export const plugins: Plugin[] = [
             ],
           },
           {
-            name: 'econtOfficeId',
-            type: 'text',
-            admin: {
-              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
-              position: 'sidebar',
-              readOnly: true,
-            },
-            label: 'Econt офис ID',
-          },
-          {
-            name: 'econtOfficeCode',
-            type: 'text',
-            admin: {
-              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
-              position: 'sidebar',
-              readOnly: true,
-            },
-            label: 'Econt офис код',
-          },
-          {
-            name: 'econtOfficeName',
-            type: 'text',
-            admin: {
-              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
-              position: 'sidebar',
-              readOnly: true,
-            },
-            label: 'Име на офис',
-          },
-          {
-            name: 'econtOfficeAddress',
-            type: 'textarea',
-            admin: {
-              condition: (_, siblingData) => siblingData?.deliveryMethod === 'econt-office',
-              readOnly: true,
-            },
-            label: 'Адрес на офис',
-          },
-          {
-            name: 'speedyOfficeId',
-            type: 'text',
-            admin: {
-              condition: (_, siblingData) => siblingData?.deliveryMethod === 'speedy-office',
-              position: 'sidebar',
-              readOnly: true,
-            },
-            label: 'Speedy офис ID',
-          },
-          {
-            name: 'speedyOfficeName',
-            type: 'text',
-            admin: {
-              condition: (_, siblingData) => siblingData?.deliveryMethod === 'speedy-office',
-              position: 'sidebar',
-              readOnly: true,
-            },
-            label: 'Име на офис',
-          },
-          {
-            name: 'speedyOfficeAddress',
-            type: 'textarea',
-            admin: {
-              condition: (_, siblingData) => siblingData?.deliveryMethod === 'speedy-office',
-              readOnly: true,
-            },
-            label: 'Адрес на офис',
-          },
-          {
             name: 'shippingFee',
             type: 'number',
             admin: {
               position: 'sidebar',
               readOnly: true,
             },
-            label: 'Доставка',
-          },
-          {
-            name: 'customerNotes',
-            type: 'textarea',
-            admin: {
-              readOnly: true,
-            },
-            label: 'Бележки към поръчката',
+            label: 'Цена на доставка',
           },
           {
             name: 'accessToken',
@@ -290,6 +363,8 @@ export const plugins: Plugin[] = [
             unique: true,
             index: true,
             admin: {
+              description:
+                'Клиентът може да види поръчката чрез линка, който получава по имейл: https://ibis-electronics.com/orders/{ID}?email={EMAIL}&accessToken={ACCESS_TOKEN}',
               position: 'sidebar',
               readOnly: true,
             },
