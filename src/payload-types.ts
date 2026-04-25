@@ -126,6 +126,7 @@ export interface Config {
     'contact-page': ContactPage;
     shopPage: ShopPage;
     'pricing-settings': PricingSetting;
+    'order-settings': OrderSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -135,6 +136,7 @@ export interface Config {
     'contact-page': ContactPageSelect<false> | ContactPageSelect<true>;
     shopPage: ShopPageSelect<false> | ShopPageSelect<true>;
     'pricing-settings': PricingSettingsSelect<false> | PricingSettingsSelect<true>;
+    'order-settings': OrderSettingsSelect<false> | OrderSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -1797,6 +1799,24 @@ export interface PricingSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-settings".
+ */
+export interface OrderSetting {
+  id: string;
+  /**
+   * На тези имейл адреси ще се изпраща известие при успешно направена поръчка.
+   */
+  notificationRecipients?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -1937,6 +1957,21 @@ export interface ShopPageSelect<T extends boolean = true> {
  */
 export interface PricingSettingsSelect<T extends boolean = true> {
   markupPercent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "order-settings_select".
+ */
+export interface OrderSettingsSelect<T extends boolean = true> {
+  notificationRecipients?:
+    | T
+    | {
+        email?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

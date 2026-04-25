@@ -1,9 +1,19 @@
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import fs from 'fs/promises'
+import os from 'os'
 import path from 'path'
+
+const execFileAsync = promisify(execFile)
 
 type ProductImageInput = {
   alt?: string
   legacyUrl: string
+  sourceResolveAddress?: string
+  sourceResolveHost?: string
+  sourceHeaders?: HeadersInit
+  sourceUrl?: string
 }
 
 type ProductImageOutput = {
@@ -53,6 +63,81 @@ const getFilenameFromURL = (url: string, fallbackBase: string) => {
   return `${fallbackBase}.jpg`
 }
 
+const getContentTypeFromFilename = (filename: string) => {
+  const ext = path.extname(filename).toLowerCase()
+
+  switch (ext) {
+    case '.avif':
+      return 'image/avif'
+    case '.gif':
+      return 'image/gif'
+    case '.jpeg':
+    case '.jpg':
+      return 'image/jpeg'
+    case '.png':
+      return 'image/png'
+    case '.svg':
+      return 'image/svg+xml'
+    case '.webp':
+      return 'image/webp'
+    default:
+      return 'application/octet-stream'
+  }
+}
+
+const downloadImage = async ({
+  filename,
+  image,
+}: {
+  filename: string
+  image: ProductImageInput
+}) => {
+  if (image.sourceResolveHost && image.sourceResolveAddress && image.sourceUrl) {
+    const url = new URL(image.sourceUrl)
+    const port = url.port || (url.protocol === 'https:' ? '443' : '80')
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ibis-r2-'))
+    const outputPath = path.join(tmpDir, filename)
+
+    try {
+      await execFileAsync('curl', [
+        '--fail',
+        '--silent',
+        '--show-error',
+        '--location',
+        '--output',
+        outputPath,
+        '--resolve',
+        `${image.sourceResolveHost}:${port}:${image.sourceResolveAddress}`,
+        image.sourceUrl,
+      ])
+
+      const buffer = await fs.readFile(outputPath)
+
+      return {
+        body: buffer,
+        contentType: getContentTypeFromFilename(filename),
+      }
+    } finally {
+      await fs.rm(tmpDir, { force: true, recursive: true })
+    }
+  }
+
+  const response = await fetch(image.sourceUrl || image.legacyUrl, {
+    headers: image.sourceHeaders,
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const bytes = await response.arrayBuffer()
+
+  return {
+    body: Buffer.from(bytes),
+    contentType: response.headers.get('content-type') || getContentTypeFromFilename(filename),
+  }
+}
+
 export const uploadProductImagesToR2 = async ({
   images,
   sku,
@@ -79,21 +164,21 @@ export const uploadProductImagesToR2 = async ({
     const storageKey = `${storagePrefix}/${index + 1}-${normalizedFilename}`
 
     try {
-      const response = await fetch(image.legacyUrl)
+      const file = await downloadImage({
+        filename: normalizedFilename,
+        image,
+      })
 
-      if (!response.ok) {
+      if (!file) {
         outputs.push(image)
         continue
       }
 
-      const bytes = await response.arrayBuffer()
-      const contentType = response.headers.get('content-type') || 'application/octet-stream'
-
       await r2Client.send(
         new PutObjectCommand({
-          Body: Buffer.from(bytes),
+          Body: file.body,
           Bucket: bucket,
-          ContentType: contentType,
+          ContentType: file.contentType,
           Key: storageKey,
         }),
       )

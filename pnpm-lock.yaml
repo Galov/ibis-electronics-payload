@@ -21,7 +21,7 @@ importers:
         specifier: 3.79.0
         version: 3.79.0(payload@3.79.0(graphql@16.13.1)(typescript@5.7.2))
       '@payloadcms/email-resend':
-        specifier: ^3.79.0
+        specifier: 3.79.0
         version: 3.79.0(payload@3.79.0(graphql@16.13.1)(typescript@5.7.2))
       '@payloadcms/live-preview-react':
         specifier: 3.79.0

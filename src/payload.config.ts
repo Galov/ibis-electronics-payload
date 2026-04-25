@@ -22,6 +22,7 @@ import { fullLexicalEditor } from '@/fields/fullLexicalEditor'
 import { ContactPage } from '@/globals/ContactPage'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
+import { OrderSettings } from '@/globals/OrderSettings'
 import { PricingSettings } from '@/globals/PricingSettings'
 import { PrivacyPage } from '@/globals/PrivacyPage'
 import { ShopPage } from '@/globals/ShopPage'
@@ -104,7 +105,7 @@ export default buildConfig({
       path: '/integrations/nik/products/price-sync',
     },
   ],
-  globals: [Header, Footer, TermsPage, PrivacyPage, ContactPage, ShopPage, PricingSettings],
+  globals: [Header, Footer, TermsPage, PrivacyPage, ContactPage, ShopPage, PricingSettings, OrderSettings],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
