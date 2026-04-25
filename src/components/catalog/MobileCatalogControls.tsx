@@ -32,6 +32,7 @@ export function MobileCatalogControls({ children }: Props) {
         <SheetContent
           side="bottom"
           className="max-h-[86vh] gap-0 overflow-y-auto rounded-t-3xl border-t border-[rgb(1,55,186)]/12 bg-white px-4 pb-6 pt-2"
+          onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <SheetHeader className="px-0 pb-4 pt-3 text-left">
             <SheetTitle className="text-xl font-normal text-primary/85">

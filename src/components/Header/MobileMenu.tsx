@@ -47,59 +47,86 @@ export function MobileMenu({ menu }: Props) {
         <MenuIcon className="h-4" />
       </SheetTrigger>
 
-      <SheetContent side="left" className="px-4">
-        <SheetHeader className="px-0 pt-4 pb-0">
-          <SheetTitle>Меню</SheetTitle>
+      <SheetContent side="left" className="w-[86vw] max-w-[360px] px-5">
+        <SheetHeader className="px-0 pt-4 pb-2">
+          <SheetTitle className="text-xl font-normal text-[rgb(1,55,186)]">Меню</SheetTitle>
 
           <SheetDescription />
         </SheetHeader>
 
-        <div className="py-4">
+        <nav className="py-3" aria-label="Основна навигация">
+          <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-primary/45">
+            Навигация
+          </p>
           {menu?.length ? (
-            <ul className="flex w-full flex-col">
+            <ul className="flex w-full flex-col divide-y divide-primary/8">
               {menu.map((item) => (
-                <li className="py-2" key={item.id}>
-                  <CMSLink {...item.link} appearance="link" />
+                <li key={item.id}>
+                  <CMSLink
+                    {...item.link}
+                    appearance="link"
+                    className="flex w-full justify-start rounded-none px-0 py-3 text-left text-[17px] font-normal text-primary/78 transition hover:text-[rgb(1,55,186)]"
+                  />
                 </li>
               ))}
             </ul>
           ) : null}
-        </div>
+        </nav>
 
         {user ? (
-          <div className="mt-4">
-            <h2 className="text-xl mb-4">Моят профил</h2>
-            <hr className="my-2" />
-            <ul className="flex flex-col gap-2">
+          <section className="mt-5 rounded-2xl border border-[rgb(1,55,186)]/10 bg-[rgb(250,251,253)] px-4 py-4">
+            <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-primary/45">
+              Моят профил
+            </p>
+            <ul className="flex flex-col divide-y divide-primary/8">
               <li>
-                <Link href="/orders">Поръчки</Link>
+                <Link
+                  className="block py-3 text-[16px] font-normal text-primary/75 transition hover:text-[rgb(1,55,186)]"
+                  href="/orders"
+                >
+                  Поръчки
+                </Link>
               </li>
               <li>
-                <Link href="/account/addresses">Адреси</Link>
+                <Link
+                  className="block py-3 text-[16px] font-normal text-primary/75 transition hover:text-[rgb(1,55,186)]"
+                  href="/account/addresses"
+                >
+                  Адреси
+                </Link>
               </li>
               <li>
-                <Link href="/account">Настройки на профила</Link>
+                <Link
+                  className="block py-3 text-[16px] font-normal text-primary/75 transition hover:text-[rgb(1,55,186)]"
+                  href="/account"
+                >
+                  Настройки на профила
+                </Link>
               </li>
-              <li className="mt-6">
-                <Button asChild variant="outline">
+              <li className="pt-4">
+                <Button asChild className="w-full font-normal" variant="outline">
                   <Link href="/logout">Изход</Link>
                 </Button>
               </li>
             </ul>
-          </div>
+          </section>
         ) : (
-          <div>
-            <h2 className="text-xl mb-4">Моят профил</h2>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Button asChild className="w-full sm:flex-1" variant="outline">
+          <section className="mt-5 rounded-2xl border border-[rgb(1,55,186)]/10 bg-[rgb(250,251,253)] px-4 py-4">
+            <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-primary/45">
+              Моят профил
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button asChild className="w-full font-normal" variant="outline">
                 <Link href="/login">Вход</Link>
               </Button>
-              <span className="text-center text-sm text-muted-foreground sm:text-base">или</span>
-              <Button asChild className="w-full sm:flex-1">
+              <span className="text-center text-xs uppercase tracking-[0.14em] text-primary/38">
+                или
+              </span>
+              <Button asChild className="w-full bg-[rgb(1,55,186)] font-normal hover:bg-[rgb(0,46,158)]">
                 <Link href="/create-account">Създай профил</Link>
               </Button>
             </div>
-          </div>
+          </section>
         )}
       </SheetContent>
     </Sheet>

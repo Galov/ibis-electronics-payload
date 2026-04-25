@@ -70,6 +70,7 @@ export function Header() {
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
   const profileMenuRef = useRef<HTMLDivElement>(null)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [isMobileCompact, setIsMobileCompact] = useState(false)
   const [indicatorStyle, setIndicatorStyle] = useState({ opacity: 0, width: 0, x: 0 })
 
   useEffect(() => {
@@ -116,8 +117,19 @@ export function Header() {
     return () => document.removeEventListener('mousedown', onPointerDown)
   }, [])
 
+  useEffect(() => {
+    const onScroll = () => {
+      setIsMobileCompact(window.scrollY > 24)
+    }
+
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <header className="relative z-20 border-b border-[rgb(1,55,186)]/28 bg-[rgb(248,252,255)] shadow-[0_10px_24px_rgba(1,55,186,0.03)]">
+    <header className="sticky top-0 z-40 border-b border-[rgb(1,55,186)]/28 bg-[rgb(248,252,255)] shadow-[0_10px_24px_rgba(1,55,186,0.03)] md:relative md:z-20">
       <div className="relative z-30 border-b border-white/12 bg-[rgb(1,55,186)]">
         <div className="container hidden h-11 items-center justify-end md:flex">
           <div className="flex items-center gap-2">
@@ -180,7 +192,12 @@ export function Header() {
       </div>
 
       <div className="container md:hidden">
-        <div className="grid h-20 grid-cols-[auto_1fr_auto] items-center gap-4">
+        <div
+          className={clsx(
+            'grid grid-cols-[auto_1fr_auto] items-center gap-4 transition-[height] duration-300 ease-out',
+            isMobileCompact ? 'h-14' : 'h-20',
+          )}
+        >
           <MobileMenu
             menu={navItems.map((item) => ({
               id: item.href,
@@ -194,7 +211,13 @@ export function Header() {
 
           <div className="flex justify-center">
             <Link className="flex items-center" href="/magazin">
-              <SiteLogo className="h-auto w-36" priority />
+              <SiteLogo
+                className={clsx(
+                  'h-auto transition-[width] duration-300 ease-out',
+                  isMobileCompact ? 'w-18' : 'w-36',
+                )}
+                priority
+              />
             </Link>
           </div>
 
