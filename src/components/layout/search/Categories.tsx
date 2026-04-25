@@ -69,7 +69,20 @@ async function CategoryList() {
     }
   }
 
+  const aggregateProductCounts = (treeNodes: CategoryNode[]) => {
+    for (const node of treeNodes) {
+      aggregateProductCounts(node.children)
+
+      const childCount = node.children.reduce((total, child) => {
+        return total + (child.productCount ?? 0)
+      }, 0)
+
+      node.productCount = (node.productCount ?? 0) + childCount
+    }
+  }
+
   sortTree(rootNodes)
+  aggregateProductCounts(rootNodes)
 
   return <CategoriesPanel categories={rootNodes} />
 }
