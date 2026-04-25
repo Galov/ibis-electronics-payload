@@ -1,21 +1,24 @@
 'use client'
 
-import { useForm, useFormFields } from '@payloadcms/ui'
+import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 
 const getStringValue = (value: unknown) => {
   return typeof value === 'string' ? value.trim() : ''
 }
 
 export function OrderShippingNameField() {
-  const { getDataByPath } = useForm()
-
-  useFormFields(([fields]) => ({
-    firstName: fields['shippingAddress.firstName'],
-    lastName: fields['shippingAddress.lastName'],
+  const { data } = useDocumentInfo()
+  const formName = useFormFields(([fields]) => ({
+    firstName: getStringValue(fields['shippingAddress.firstName']?.value),
+    lastName: getStringValue(fields['shippingAddress.lastName']?.value),
   }))
+  const shippingAddress =
+    data && typeof data.shippingAddress === 'object' && data.shippingAddress !== null
+      ? (data.shippingAddress as Record<string, unknown>)
+      : null
 
-  const firstName = getStringValue(getDataByPath('shippingAddress.firstName'))
-  const lastName = getStringValue(getDataByPath('shippingAddress.lastName'))
+  const firstName = formName.firstName || getStringValue(shippingAddress?.firstName)
+  const lastName = formName.lastName || getStringValue(shippingAddress?.lastName)
   const fullName = [firstName, lastName].filter(Boolean).join(' ')
 
   if (!fullName) return null

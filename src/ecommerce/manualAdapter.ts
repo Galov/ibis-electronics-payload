@@ -316,6 +316,7 @@ export const manualAdapter = (): PaymentAdapter => ({
       return {
         ...item,
         productSKU: product?.sku || undefined,
+        productUnitPrice: typeof product?.price === 'number' ? product.price : undefined,
       }
     })
 

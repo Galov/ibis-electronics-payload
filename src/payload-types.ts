@@ -231,10 +231,12 @@ export interface Order {
     | {
         product?: (string | null) | Product;
         productSKU?: string | null;
+        productUnitPrice?: number | null;
         quantity: number;
         id?: string | null;
       }[]
     | null;
+  customerNotes?: string | null;
   shippingAddress?: {
     title?: string | null;
     firstName?: string | null;
@@ -248,13 +250,6 @@ export interface Order {
     country?: string | null;
     phone?: string | null;
   };
-  customer?: (string | null) | User;
-  customerEmail?: string | null;
-  transactions?: (string | Transaction)[] | null;
-  status?: OrderStatus;
-  amount?: number | null;
-  currency?: 'EUR' | null;
-  deliveryMethod?: ('address' | 'econt-office' | 'speedy-office') | null;
   econtOfficeId?: string | null;
   econtOfficeCode?: string | null;
   econtOfficeName?: string | null;
@@ -262,8 +257,17 @@ export interface Order {
   speedyOfficeId?: string | null;
   speedyOfficeName?: string | null;
   speedyOfficeAddress?: string | null;
+  customer?: (string | null) | User;
+  customerEmail?: string | null;
+  transactions?: (string | Transaction)[] | null;
+  status?: OrderStatus;
+  amount?: number | null;
+  currency?: 'EUR' | null;
+  deliveryMethod?: ('address' | 'econt-office' | 'speedy-office') | null;
   shippingFee?: number | null;
-  customerNotes?: string | null;
+  /**
+   * Клиентът може да види поръчката чрез линка, който получава по имейл: https://ibis-electronics.com/orders/{ID}?email={EMAIL}&accessToken={ACCESS_TOKEN}
+   */
   accessToken?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1482,9 +1486,11 @@ export interface OrdersSelect<T extends boolean = true> {
     | {
         product?: T;
         productSKU?: T;
+        productUnitPrice?: T;
         quantity?: T;
         id?: T;
       };
+  customerNotes?: T;
   shippingAddress?:
     | T
     | {
@@ -1500,13 +1506,6 @@ export interface OrdersSelect<T extends boolean = true> {
         country?: T;
         phone?: T;
       };
-  customer?: T;
-  customerEmail?: T;
-  transactions?: T;
-  status?: T;
-  amount?: T;
-  currency?: T;
-  deliveryMethod?: T;
   econtOfficeId?: T;
   econtOfficeCode?: T;
   econtOfficeName?: T;
@@ -1514,8 +1513,14 @@ export interface OrdersSelect<T extends boolean = true> {
   speedyOfficeId?: T;
   speedyOfficeName?: T;
   speedyOfficeAddress?: T;
+  customer?: T;
+  customerEmail?: T;
+  transactions?: T;
+  status?: T;
+  amount?: T;
+  currency?: T;
+  deliveryMethod?: T;
   shippingFee?: T;
-  customerNotes?: T;
   accessToken?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -36,6 +36,7 @@ const normalizeMoneyAdminFields = (fields: any[]): any[] => {
     if (nextField.name === 'amount' || nextField.name === 'subtotal') {
       nextField.admin = {
         ...nextField.admin,
+        readOnly: true,
       }
 
       if (nextField.admin?.components) {
@@ -66,26 +67,45 @@ const addOrderItemSKUField = (fields: any[]): any[] => {
       const hasProductSKUField = nextField.fields.some(
         (itemField: any) => itemField?.name === 'productSKU',
       )
+      const hasProductUnitPriceField = nextField.fields.some(
+        (itemField: any) => itemField?.name === 'productUnitPrice',
+      )
+
+      const fieldsToInsert = []
 
       if (!hasProductSKUField) {
-        const productFieldIndex = nextField.fields.findIndex(
-          (itemField: any) => itemField?.name === 'product',
-        )
-
-        const skuField = {
+        fieldsToInsert.push({
           name: 'productSKU',
           type: 'text',
           label: 'Код',
           admin: {
             readOnly: true,
           },
-        }
+        })
+      }
+
+      if (!hasProductUnitPriceField) {
+        fieldsToInsert.push({
+          name: 'productUnitPrice',
+          type: 'number',
+          label: 'Ед. цена',
+          admin: {
+            readOnly: true,
+          },
+        })
+      }
+
+      if (fieldsToInsert.length > 0) {
+        const productFieldIndex = nextField.fields.findIndex(
+          (itemField: any) => itemField?.name === 'product',
+        )
+
+        nextField.fields = [...nextField.fields]
 
         if (productFieldIndex >= 0) {
-          nextField.fields = [...nextField.fields]
-          nextField.fields.splice(productFieldIndex + 1, 0, skuField)
+          nextField.fields.splice(productFieldIndex + 1, 0, ...fieldsToInsert)
         } else {
-          nextField.fields = [...nextField.fields, skuField]
+          nextField.fields.push(...fieldsToInsert)
         }
       }
     }

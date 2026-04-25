@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 type OrderItem = {
   product?: string | { id?: string | null; title?: string | null } | null
   productSKU?: string | null
+  productUnitPrice?: number | null
   quantity?: number | null
 }
 
@@ -27,6 +28,17 @@ const normalizeItems = (value: unknown): OrderItem[] => {
   if (!Array.isArray(value)) return []
 
   return value.filter((item): item is OrderItem => Boolean(item && typeof item === 'object'))
+}
+
+const formatMoney = (value?: number | null) => {
+  if (typeof value !== 'number') return '-'
+
+  return new Intl.NumberFormat('bg-BG', {
+    currency: 'EUR',
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    style: 'currency',
+  }).format(value)
 }
 
 export function OrderItemsReadOnlyField({ path = 'items' }: Props) {
@@ -117,18 +129,32 @@ export function OrderItemsReadOnlyField({ path = 'items' }: Props) {
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Продукт</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left', width: '12rem' }}>Код</th>
                 <th style={{ padding: '0.75rem', textAlign: 'right', width: '8rem' }}>Количество</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right', width: '8rem' }}>Ед. цена</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right', width: '8rem' }}>Общо</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => (
-                <tr key={index} style={{ borderTop: '1px solid var(--theme-elevation-150)' }}>
-                  <td style={{ padding: '0.75rem' }}>
-                    {getProductLabel(item.product, productTitlesByID)}
-                  </td>
-                  <td style={{ padding: '0.75rem' }}>{item.productSKU || '-'}</td>
-                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>{item.quantity || 0}</td>
-                </tr>
-              ))}
+              {items.map((item, index) => {
+                const quantity = item.quantity || 0
+                const lineTotal =
+                  typeof item.productUnitPrice === 'number' ? item.productUnitPrice * quantity : null
+
+                return (
+                  <tr key={index} style={{ borderTop: '1px solid var(--theme-elevation-150)' }}>
+                    <td style={{ padding: '0.75rem' }}>
+                      {getProductLabel(item.product, productTitlesByID)}
+                    </td>
+                    <td style={{ padding: '0.75rem' }}>{item.productSKU || '-'}</td>
+                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>{quantity}</td>
+                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                      {formatMoney(item.productUnitPrice)}
+                    </td>
+                    <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                      {formatMoney(lineTotal)}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
