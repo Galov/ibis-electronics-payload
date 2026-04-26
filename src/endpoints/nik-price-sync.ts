@@ -350,6 +350,26 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
     return Response.json({ message: 'Unauthorized' }, { status: 401 })
   }
 
+  if (process.env.NIK_SYNC_FORCE_DISABLED === 'true') {
+    return Response.json(
+      { message: 'Nik sync is disabled by environment.' },
+      { status: 503 },
+    )
+  }
+
+  const pricingSettings = await req.payload.findGlobal({
+    slug: 'pricing-settings',
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  if (pricingSettings?.nikSyncEnabled !== true) {
+    return Response.json(
+      { message: 'Nik sync is disabled.' },
+      { status: 503 },
+    )
+  }
+
   if (typeof req.json !== 'function') {
     return Response.json({ message: 'Request body is not available.' }, { status: 400 })
   }
@@ -373,12 +393,6 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
       { status: 400 },
     )
   }
-
-  const pricingSettings = await req.payload.findGlobal({
-    slug: 'pricing-settings',
-    depth: 0,
-    overrideAccess: true,
-  })
 
   const markupPercent =
     typeof pricingSettings?.markupPercent === 'number' ? pricingSettings.markupPercent : 15

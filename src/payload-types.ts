@@ -1795,6 +1795,10 @@ export interface ShopPage {
 export interface PricingSetting {
   id: string;
   /**
+   * Включва или изключва автоматичната синхронизация на продукти от Ник Електрик към Ibis.
+   */
+  nikSyncEnabled?: boolean | null;
+  /**
    * Използва се за преизчисляване на продажната цена спрямо базовата цена от Ник Електрик.
    */
   markupPercent: number;
@@ -1954,6 +1958,7 @@ export interface ShopPageSelect<T extends boolean = true> {
  * via the `definition` "pricing-settings_select".
  */
 export interface PricingSettingsSelect<T extends boolean = true> {
+  nikSyncEnabled?: T;
   markupPercent?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -14,6 +14,16 @@ export const PricingSettings: GlobalConfig = {
   },
   fields: [
     {
+      name: 'nikSyncEnabled',
+      label: 'Синхронизация Nik -> Ibis',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description:
+          'Включва или изключва автоматичната синхронизация на продукти от Ник Електрик към Ibis.',
+      },
+    },
+    {
       name: 'markupPercent',
       label: 'Надценка (%)',
       type: 'number',
