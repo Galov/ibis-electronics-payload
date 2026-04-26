@@ -1,5 +1,6 @@
 import path from 'node:path'
 
+import { ensureLegacySlug } from '@/utilities/legacySlugs'
 import type {
   ImportOptions,
   ImportReport,
@@ -22,7 +23,7 @@ export function normalizeCategories(source: LegacySourceData): NormalizedCategor
       return {
         parentSourceTermId: taxonomy.parent || undefined,
         productCount: taxonomy.count,
-        slug: ensureSlug(term.slug, term.name, taxonomy.id),
+        slug: ensureLegacySlug(term.slug, term.name, taxonomy.id),
         sourceTaxonomyId: taxonomy.id,
         sourceTermId: taxonomy.termId,
         title: term.name,
@@ -41,7 +42,7 @@ export function normalizeBrands(source: LegacySourceData): NormalizedBrand[] {
 
       return {
         productCount: taxonomy.count,
-        slug: ensureSlug(term.slug, term.name, taxonomy.id),
+        slug: ensureLegacySlug(term.slug, term.name, taxonomy.id),
         sourceTaxonomyId: taxonomy.id,
         sourceTermId: taxonomy.termId,
         title: term.name,
@@ -91,7 +92,7 @@ export function normalizeProducts(source: LegacySourceData, options: ImportOptio
       published: post.status === 'publish',
       shortDescription: emptyToUndefined(post.excerpt),
       sku: emptyToUndefined(meta.get('_sku')),
-      slug: ensureSlug(post.slug, post.title, post.id),
+      slug: ensureLegacySlug(post.slug, post.title, post.id),
       sourceId: post.id,
       stockQty: toNumber(meta.get('_stock')) || 0,
       stockStatus: normalizeStockStatus(meta.get('_stock_status')),
@@ -210,19 +211,6 @@ function toNumber(value?: string): number | undefined {
   if (!value) return undefined
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : undefined
-}
-
-function ensureSlug(value: string, fallback: string, sourceId: number): string {
-  const candidate = value || fallback
-  const normalized = candidate
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-
-  return normalized || `legacy-${sourceId}`
 }
 
 function emptyToUndefined(value?: string): string | undefined {

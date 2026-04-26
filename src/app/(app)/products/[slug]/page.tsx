@@ -5,13 +5,14 @@ import { RecentlyViewedProducts } from '@/components/product/RecentlyViewedProdu
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import React, { Suspense } from 'react'
 import { Metadata } from 'next'
 import { getProductPrimaryImage, getProductSEODescription } from '@/utilities/product'
 import { generateMeta } from '@/utilities/generateMeta'
 import { buildCategoryPath } from '@/utilities/category'
 import { buildBreadcrumbSchema, buildProductBreadcrumbItems, buildProductSchema } from '@/utilities/schema'
+import { decodeMangledLegacySlug } from '@/utilities/legacySlugs'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +27,9 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const product = await queryProductBySlug({ slug })
 
   if (!product) return notFound()
+  if (product.slug && product.slug !== slug) {
+    redirect(`/products/${encodeURIComponent(product.slug)}`)
+  }
 
   const primaryImage = getProductPrimaryImage(product)
   const metadata = await generateMeta({
@@ -44,7 +48,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     },
     fallbackDescription: getProductSEODescription(product),
     fallbackTitle: product.title,
-    path: `/products/${slug}`,
+    path: `/products/${product.slug || slug}`,
   })
 
   return {
@@ -191,6 +195,8 @@ export default async function ProductPage({ params }: Args) {
 
 const queryProductBySlug = async ({ slug }: { slug: string }) => {
   const payload = await getPayload({ config: configPromise })
+  const decodedSlug = decodeMangledLegacySlug(slug)
+  const slugs = decodedSlug && decodedSlug !== slug ? [slug, decodedSlug] : [slug]
 
   const result = await payload.find({
     collection: 'products',
@@ -203,7 +209,7 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
       and: [
         {
           slug: {
-            equals: slug,
+            in: slugs,
           },
         },
         {
