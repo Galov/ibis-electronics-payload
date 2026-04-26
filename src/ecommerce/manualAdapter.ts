@@ -4,13 +4,20 @@ import type {
 } from '@payloadcms/plugin-ecommerce/types'
 import type { Payload } from 'payload'
 
+import {
+  buildAdminOrderEmailHTML,
+  buildCustomerOrderEmailHTML,
+  type OrderEmailAddress,
+  type OrderEmailDeliveryMethod,
+  type OrderEmailItem,
+} from './orderEmailTemplates'
 import { getServerSideURL } from '@/utilities/getURL'
 
 type ManualOrderData = {
   billingAddress?: Record<string, unknown>
   customerEmail?: string
   customerNotes?: string
-  deliveryMethod?: 'address' | 'speedy-office' | 'econt-office'
+  deliveryMethod?: OrderEmailDeliveryMethod
   econtOffice?: {
     address?: string
     cityId?: string
@@ -32,97 +39,6 @@ type ManualOrderData = {
     stateId?: string
     stateName?: string
   }
-}
-
-type OrderEmailItem = {
-  product?: unknown
-  productSKU?: string | null
-  quantity?: number | null
-}
-
-type OrderEmailAddress = {
-  addressLine1?: string | null
-  addressLine2?: string | null
-  city?: string | null
-  country?: string | null
-  firstName?: string | null
-  lastName?: string | null
-  phone?: string | null
-  postalCode?: string | null
-  state?: string | null
-}
-
-const escapeHTML = (value: unknown) =>
-  String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-
-const formatMoney = (value?: null | number, currency = 'EUR') => {
-  if (typeof value !== 'number') return '-'
-
-  return new Intl.NumberFormat('bg-BG', {
-    currency,
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2,
-    style: 'currency',
-  }).format(value)
-}
-
-const getProductTitle = (product: unknown) => {
-  if (product && typeof product === 'object' && 'title' in product) {
-    return String((product as { title?: unknown }).title || '')
-  }
-
-  return ''
-}
-
-const formatAddress = (address?: OrderEmailAddress | null) => {
-  if (!address) return ''
-
-  return [
-    [address.firstName, address.lastName].filter(Boolean).join(' '),
-    address.phone,
-    address.addressLine1,
-    address.addressLine2,
-    [address.postalCode, address.city].filter(Boolean).join(' '),
-    address.state,
-    address.country,
-  ]
-    .filter(Boolean)
-    .map(escapeHTML)
-    .join('<br />')
-}
-
-const getDeliveryLabel = (deliveryMethod?: ManualOrderData['deliveryMethod']) => {
-  switch (deliveryMethod) {
-    case 'econt-office':
-      return 'Офис на Econt'
-    case 'speedy-office':
-      return 'Офис на Speedy'
-    default:
-      return 'До адрес'
-  }
-}
-
-const buildOrderItemsHTML = (items?: null | OrderEmailItem[]) => {
-  if (!items?.length) return '<p>Няма артикули.</p>'
-
-  return `
-    <ul>
-      ${items
-        .map((item) => {
-          const title = getProductTitle(item.product)
-          const sku = item.productSKU ? ` (${escapeHTML(item.productSKU)})` : ''
-          const label = title || item.productSKU || 'Продукт'
-
-          return `<li>${escapeHTML(label)}${sku} - ${item.quantity || 0} бр.</li>`
-        })
-        .join('')}
-    </ul>
-  `
 }
 
 const sendOrderEmails = async ({
@@ -162,40 +78,25 @@ const sendOrderEmails = async ({
   speedyOfficeAddress?: string
   speedyOfficeName?: string
 }) => {
-  const deliveryLabel = getDeliveryLabel(deliveryMethod)
-  const officeInfo =
-    deliveryMethod === 'econt-office'
-      ? [econtOfficeName, econtOfficeAddress].filter(Boolean).join(', ')
-      : deliveryMethod === 'speedy-office'
-        ? [speedyOfficeName, speedyOfficeAddress].filter(Boolean).join(', ')
-        : ''
-  const notes = customerNotes?.trim()
-  const itemsHTML = buildOrderItemsHTML(items)
-
-  const customerHTML = `
-    <h1>Поръчката е приета</h1>
-    <p>Благодарим ви. Получихме поръчка #${escapeHTML(orderID)}.</p>
-    <p><strong>Сума:</strong> ${escapeHTML(formatMoney(amount, currency))}</p>
-    <p><strong>Доставка:</strong> ${escapeHTML(deliveryLabel)}</p>
-    ${officeInfo ? `<p><strong>Офис:</strong> ${escapeHTML(officeInfo)}</p>` : ''}
-    ${shippingFee ? `<p><strong>Цена на доставка:</strong> ${escapeHTML(formatMoney(shippingFee, currency))}</p>` : ''}
-    <h2>Артикули</h2>
-    ${itemsHTML}
-    <p><a href="${escapeHTML(orderURL)}">Преглед на поръчката</a></p>
-  `
-
-  const adminHTML = `
-    <h1>Нова поръчка #${escapeHTML(orderID)}</h1>
-    <p><strong>Клиентски имейл:</strong> ${escapeHTML(customerEmail || '-')}</p>
-    <p><strong>Сума:</strong> ${escapeHTML(formatMoney(amount, currency))}</p>
-    <p><strong>Доставка:</strong> ${escapeHTML(deliveryLabel)}</p>
-    ${officeInfo ? `<p><strong>Офис:</strong> ${escapeHTML(officeInfo)}</p>` : ''}
-    ${shippingAddress ? `<p><strong>Адрес:</strong><br />${formatAddress(shippingAddress)}</p>` : ''}
-    ${notes ? `<p><strong>Бележки:</strong><br />${escapeHTML(notes)}</p>` : ''}
-    <h2>Артикули</h2>
-    ${itemsHTML}
-    <p><a href="${escapeHTML(orderAdminURL)}">Преглед в админа</a></p>
-  `
+  const templateArgs = {
+    amount,
+    currency,
+    customerEmail,
+    customerNotes,
+    deliveryMethod,
+    econtOfficeAddress,
+    econtOfficeName,
+    items,
+    orderAdminURL,
+    orderID,
+    orderURL,
+    shippingAddress,
+    shippingFee,
+    speedyOfficeAddress,
+    speedyOfficeName,
+  }
+  const customerHTML = buildCustomerOrderEmailHTML(templateArgs)
+  const adminHTML = buildAdminOrderEmailHTML(templateArgs)
 
   const emailTasks: Promise<unknown>[] = []
 
