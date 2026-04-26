@@ -100,6 +100,25 @@ export const buildProductSchema = (args: {
   slug: string
 }) => {
   const { brand, category, description, image, inStock, name, price, sku, slug } = args
+  const shippingDestination = {
+    '@type': 'DefinedRegion',
+    addressCountry: 'BG',
+  }
+  const deliveryTime = {
+    '@type': 'ShippingDeliveryTime',
+    handlingTime: {
+      '@type': 'QuantitativeValue',
+      minValue: 0,
+      maxValue: 1,
+      unitCode: 'DAY',
+    },
+    transitTime: {
+      '@type': 'QuantitativeValue',
+      minValue: 1,
+      maxValue: 3,
+      unitCode: 'DAY',
+    },
+  }
 
   return {
     '@context': 'https://schema.org',
@@ -124,8 +143,37 @@ export const buildProductSchema = (args: {
     offers: {
       '@type': 'Offer',
       availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'BG',
+        merchantReturnDays: 14,
+        returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      },
       price,
       priceCurrency: 'EUR',
+      shippingDetails: [
+        {
+          '@type': 'OfferShippingDetails',
+          deliveryTime,
+          shippingDestination,
+          shippingRate: {
+            '@type': 'MonetaryAmount',
+            currency: 'EUR',
+            value: 6,
+          },
+        },
+        {
+          '@type': 'OfferShippingDetails',
+          deliveryTime,
+          shippingDestination,
+          shippingRate: {
+            '@type': 'MonetaryAmount',
+            currency: 'EUR',
+            value: 5,
+          },
+        },
+      ],
       url: toAbsoluteUrl(`/products/${slug}`),
     },
   }
