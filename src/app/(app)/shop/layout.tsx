@@ -13,11 +13,11 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
 
   return (
     <Suspense fallback={null}>
-      <div className="container flex flex-col gap-8 my-16 pb-4 ">
-        <ShopBanner banner={shopPage?.topBanner} />
+      <div className="container my-16 flex flex-col gap-8 pb-4">
+        <ShopBanner banner={shopPage?.topBanner} priority />
 
-        <div className="flex flex-col md:flex-row items-start justify-between gap-10 md:gap-4">
-          <div className="w-full flex-none flex flex-col gap-4 basis-1/5">
+        <div className="flex flex-col items-start justify-between gap-10 md:flex-row md:gap-4">
+          <div className="flex w-full basis-1/5 flex-none flex-col gap-4">
             <Categories />
           </div>
           <div className="min-h-screen w-full">{children}</div>

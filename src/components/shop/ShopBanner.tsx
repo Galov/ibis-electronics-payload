@@ -12,9 +12,10 @@ type BannerData = {
 type Props = {
   banner?: BannerData | null
   className?: string
+  priority?: boolean
 }
 
-export const ShopBanner: React.FC<Props> = ({ banner, className }) => {
+export const ShopBanner: React.FC<Props> = ({ banner, className, priority = false }) => {
   if (!banner?.image || typeof banner.image === 'string') {
     return null
   }
@@ -34,7 +35,9 @@ export const ShopBanner: React.FC<Props> = ({ banner, className }) => {
       <Image
         alt={image.alt || ''}
         className="h-auto w-full"
+        fetchPriority={priority ? 'high' : undefined}
         height={image.height || 480}
+        priority={priority}
         sizes="(min-width: 1280px) 1100px, (min-width: 1024px) 900px, 100vw"
         src={image.url}
         width={image.width || 1600}

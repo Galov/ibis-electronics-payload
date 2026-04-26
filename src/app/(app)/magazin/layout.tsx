@@ -14,7 +14,7 @@ export default async function MagazinLayout({ children }: { children: React.Reac
   return (
     <Suspense fallback={null}>
       <div className="container my-16 flex flex-col gap-8 pb-4">
-        <ShopBanner banner={shopPage?.topBanner} />
+        <ShopBanner banner={shopPage?.topBanner} priority />
 
         <div className="flex flex-col items-start justify-between gap-10 md:flex-row md:gap-4">
           <div className="hidden w-full basis-1/5 flex-none flex-col gap-4 md:flex">
