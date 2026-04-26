@@ -22,6 +22,8 @@ type ProductImageOutput = {
   storageKey?: string
 }
 
+export const PRODUCT_IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable'
+
 const bucket = process.env.R2_BUCKET
 const accessKeyId = process.env.R2_ACCESS_KEY_ID
 const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
@@ -178,6 +180,7 @@ export const uploadProductImagesToR2 = async ({
         new PutObjectCommand({
           Body: file.body,
           Bucket: bucket,
+          CacheControl: PRODUCT_IMAGE_CACHE_CONTROL,
           ContentType: file.contentType,
           Key: storageKey,
         }),
