@@ -16,6 +16,14 @@ import { decodeMangledLegacySlug } from '@/utilities/legacySlugs'
 
 export const dynamic = 'force-dynamic'
 
+const decodeRouteSlug = (slug: string) => {
+  try {
+    return decodeURIComponent(slug)
+  } catch {
+    return slug
+  }
+}
+
 type Args = {
   params: Promise<{
     slug: string
@@ -27,9 +35,6 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const product = await queryProductBySlug({ slug })
 
   if (!product) return notFound()
-  if (product.slug && product.slug !== slug) {
-    redirect(`/products/${encodeURIComponent(product.slug)}`)
-  }
 
   const primaryImage = getProductPrimaryImage(product)
   const metadata = await generateMeta({
@@ -69,6 +74,9 @@ export default async function ProductPage({ params }: Args) {
   const product = await queryProductBySlug({ slug })
 
   if (!product) return notFound()
+  if (product.slug && product.slug !== decodeRouteSlug(slug)) {
+    redirect(`/products/${encodeURIComponent(product.slug)}`)
+  }
 
   const primaryCategory =
     product.categories?.find(
@@ -195,8 +203,9 @@ export default async function ProductPage({ params }: Args) {
 
 const queryProductBySlug = async ({ slug }: { slug: string }) => {
   const payload = await getPayload({ config: configPromise })
-  const decodedSlug = decodeMangledLegacySlug(slug)
-  const slugs = decodedSlug && decodedSlug !== slug ? [slug, decodedSlug] : [slug]
+  const routeSlug = decodeRouteSlug(slug)
+  const decodedSlug = decodeMangledLegacySlug(routeSlug)
+  const slugs = Array.from(new Set([slug, routeSlug, decodedSlug].filter(Boolean))) as string[]
 
   const result = await payload.find({
     collection: 'products',
