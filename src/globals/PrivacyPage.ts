@@ -2,7 +2,6 @@ import type { GlobalConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
 import { fullLexicalEditor } from '@/fields/fullLexicalEditor'
-import { buildSEOFields } from '@/fields/seo'
 
 export const PrivacyPage: GlobalConfig = {
   slug: 'privacy-page',
@@ -28,12 +27,6 @@ export const PrivacyPage: GlobalConfig = {
       editor: fullLexicalEditor(),
       label: 'Съдържание',
       required: true,
-    },
-    {
-      name: 'meta',
-      label: 'SEO',
-      type: 'group',
-      fields: buildSEOFields(),
     },
   ],
 }

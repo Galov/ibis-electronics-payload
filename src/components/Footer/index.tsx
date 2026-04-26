@@ -1,6 +1,5 @@
 import { CMSLink } from '@/components/Link'
 import { SiteLogo } from '@/components/Logo/SiteLogo'
-import { IBIS_CONTACT_LOCATION, IBIS_CONTACT_LOCATION_LABEL } from '@/constants/contact'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import type { ContactPage, Footer as FooterGlobal } from '@/payload-types'
 import { Clock3, MapPin, Phone } from 'lucide-react'
@@ -16,7 +15,7 @@ const locationRows = (location?: ContactPage['store'] | null) =>
     {
       icon: MapPin,
       label: 'Адрес',
-      value: IBIS_CONTACT_LOCATION.address,
+      value: location?.address,
     },
     {
       icon: Phone,
@@ -35,16 +34,13 @@ export async function Footer() {
   const footer = (await getCachedGlobal('footer', 1)()) as FooterGlobal
   const contactPage = (await getCachedGlobal('contact-page', 0)()) as ContactPage
 
-  const location = {
-    label: IBIS_CONTACT_LOCATION_LABEL,
-    value: contactPage.store,
-  }
+  const location = contactPage.store
 
   return (
     <footer className="bg-[rgb(1,55,186)] text-sm text-white">
       <div className="container">
-        <div className="grid gap-10 py-12 md:grid-cols-2 md:gap-12 lg:grid-cols-[1.1fr_1fr_1fr_0.82fr] lg:gap-10 lg:py-14">
-          <div className="md:pt-1">
+        <div className="grid gap-10 py-12 md:grid-cols-3 md:gap-12 lg:grid-cols-5 lg:gap-10 lg:py-14">
+          <div className="md:pt-1 lg:col-span-2">
             <Link className="inline-flex items-center gap-2" href="/">
               <SiteLogo className="h-auto w-36 brightness-0 invert lg:w-40" />
               <span className="sr-only">{SITE_NAME}</span>
@@ -54,16 +50,12 @@ export async function Footer() {
           <div>
             <h3 className="type-eyebrow mb-4 text-white/95">Контакти</h3>
 
-            <div className="mb-4 text-sm leading-6 text-white/92">
-              <p>{location.label}</p>
-            </div>
-
             <div className="space-y-3 text-sm leading-6 text-white/80">
-              {locationRows(location.value).map((row) => {
+              {locationRows(location).map((row) => {
                 const Icon = row.icon
 
                 return (
-                  <div key={`${location.label}-${row.label}`} className="flex items-start gap-3">
+                  <div key={`store-${row.label}`} className="flex items-start gap-3">
                     <Icon className="mt-1 h-4 w-4 shrink-0 text-white/70" />
                     {row.href ? (
                       <a className="hover:text-white" href={row.href}>
@@ -78,22 +70,14 @@ export async function Footer() {
             </div>
           </div>
 
+          <div className="hidden lg:block" aria-hidden="true" />
+
           <div>
             <h3 className="type-eyebrow mb-4 text-white/95">Навигация</h3>
 
             <nav>
               <ul className="space-y-3">
-                {(footer.navItems?.length
-                  ? footer.navItems
-                  : [
-                      { id: 'shop', link: { type: 'custom' as const, url: '/shop', label: 'Каталог' } },
-                      { id: 'partners', link: { type: 'custom' as const, url: '/partners', label: 'Партньори' } },
-                      { id: 'contact', link: { type: 'custom' as const, url: '/contact', label: 'Контакт' } },
-                      { id: 'account', link: { type: 'custom' as const, url: '/account', label: 'Профил' } },
-                      { id: 'terms', link: { type: 'custom' as const, url: '/terms', label: 'Условия за ползване' } },
-                      { id: 'privacy', link: { type: 'custom' as const, url: '/privacy', label: 'Политика за поверителност' } },
-                    ]
-                ).map((item) => (
+                {footer.navItems?.map((item) => (
                   <li key={item.id}>
                     <CMSLink
                       {...item.link}

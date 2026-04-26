@@ -6,6 +6,7 @@ import React from 'react'
 type Location = {
   address: string
   label: string
+  mapQuery?: string | null
   phone?: string
   workingHours?: string
 }
@@ -15,7 +16,7 @@ type ContactLocationsProps = {
 }
 
 const mapUrlForLocation = (location: Location) => {
-  const query = [location.label, location.address].filter(Boolean).join(', ')
+  const query = location.mapQuery?.trim() || [location.label, location.address].filter(Boolean).join(', ')
   return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(query)}`
 }
 

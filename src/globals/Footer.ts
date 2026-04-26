@@ -2,6 +2,7 @@ import type { GlobalConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
 import { link } from '@/fields/link'
+import { revalidateGlobal } from '@/hooks/revalidateGlobal'
 
 export const Footer: GlobalConfig = {
   slug: 'footer',
@@ -12,6 +13,9 @@ export const Footer: GlobalConfig = {
   },
   admin: {
     group: 'Сайт',
+  },
+  hooks: {
+    afterChange: [revalidateGlobal],
   },
   fields: [
     {

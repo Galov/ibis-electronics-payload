@@ -1,7 +1,6 @@
 import configPromise from '@payload-config'
 import { ContactLocations } from '@/components/contact/ContactLocations'
 import { ContactForm } from '@/components/forms/ContactForm'
-import { IBIS_CONTACT_LOCATION, IBIS_CONTACT_LOCATION_LABEL } from '@/constants/contact'
 import { generateMeta } from '@/utilities/generateMeta'
 import { buildLocalBusinessSchemas } from '@/utilities/schema'
 import { getPayload } from 'payload'
@@ -15,6 +14,7 @@ type ContactPageData = {
   } | null
   store?: {
     address: string
+    mapQuery?: string | null
     phone: string
     workingHours: string
   }
@@ -44,8 +44,9 @@ export default async function KontaktiPage() {
 
   const localBusinessJsonLd = buildLocalBusinessSchemas(contactPage)
   const location = {
-    address: IBIS_CONTACT_LOCATION.address,
-    label: IBIS_CONTACT_LOCATION_LABEL,
+    address: contactPage.store?.address || '',
+    label: 'Ибис Електроникс',
+    mapQuery: contactPage.store?.mapQuery,
     phone: contactPage.store?.phone,
     workingHours: contactPage.store?.workingHours,
   }

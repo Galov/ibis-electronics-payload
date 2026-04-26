@@ -1,11 +1,11 @@
 import type { GlobalConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
-import { buildSEOFields } from '@/fields/seo'
+import { revalidateGlobal } from '@/hooks/revalidateGlobal'
 
-const locationFields = (label: string) => ({
-  name: label === 'Магазин' ? 'store' : 'warehouse',
-  label,
+const locationFields = () => ({
+  name: 'store',
+  label: 'Контактна информация',
   type: 'group' as const,
   fields: [
     {
@@ -26,6 +26,15 @@ const locationFields = (label: string) => ({
       type: 'textarea' as const,
       required: true,
     },
+    {
+      name: 'mapQuery',
+      label: 'Адрес за карта',
+      type: 'text' as const,
+      admin: {
+        description:
+          'Въведи адрес или текст за търсене в Google Maps. Не поставяй embed/iframe код. Ако е празно, ще се използва основният адрес.',
+      },
+    },
   ],
 })
 
@@ -39,6 +48,9 @@ export const ContactPage: GlobalConfig = {
   admin: {
     group: 'Съдържание',
   },
+  hooks: {
+    afterChange: [revalidateGlobal],
+  },
   fields: [
     {
       name: 'title',
@@ -47,13 +59,6 @@ export const ContactPage: GlobalConfig = {
       defaultValue: 'Контакт',
       required: true,
     },
-    locationFields('Магазин'),
-    locationFields('Склад'),
-    {
-      name: 'meta',
-      label: 'SEO',
-      type: 'group',
-      fields: buildSEOFields(),
-    },
+    locationFields(),
   ],
 }

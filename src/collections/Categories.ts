@@ -1,7 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
-import { buildSEOFields } from '@/fields/seo'
 import { buildCategorySlug } from '@/utilities/category'
 
 export const Categories: CollectionConfig = {
@@ -62,12 +61,6 @@ export const Categories: CollectionConfig = {
       admin: {
         readOnly: true,
       },
-    },
-    {
-      name: 'meta',
-      label: 'SEO',
-      type: 'group',
-      fields: buildSEOFields(),
     },
     {
       name: 'slug',

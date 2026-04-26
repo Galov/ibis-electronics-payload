@@ -1,5 +1,4 @@
 import { buildCategoryPath } from '@/utilities/category'
-import { IBIS_CONTACT_LOCATION, IBIS_CONTACT_LOCATION_LABEL } from '@/constants/contact'
 import { getBaseURL } from '@/utilities/getBaseURL'
 
 type BreadcrumbItem = {
@@ -71,8 +70,8 @@ export const buildOrganizationSchema = (contactPage?: ContactPageLike | null) =>
 
 export const buildLocalBusinessSchemas = (contactPage?: ContactPageLike | null) => {
   const location = {
-    address: IBIS_CONTACT_LOCATION.address,
-    label: IBIS_CONTACT_LOCATION_LABEL,
+    address: contactPage?.store?.address || '',
+    label: 'Ибис Електроникс',
     phone: contactPage?.store?.phone || '',
     workingHours: contactPage?.store?.workingHours || '',
   }

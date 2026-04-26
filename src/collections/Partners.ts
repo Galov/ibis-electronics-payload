@@ -1,5 +1,4 @@
 import { adminOnly } from '@/access/adminOnly'
-import { buildSEOFields } from '@/fields/seo'
 import type { CollectionConfig } from 'payload'
 
 const CYRILLIC_TO_LATIN_MAP: Record<string, string> = {
@@ -141,12 +140,6 @@ export const Partners: CollectionConfig = {
       admin: {
         description: 'Незадължително. Например: https://example.com',
       },
-    },
-    {
-      name: 'meta',
-      label: 'SEO',
-      type: 'group',
-      fields: buildSEOFields(),
     },
     {
       name: 'slug',

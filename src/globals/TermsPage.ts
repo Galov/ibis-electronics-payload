@@ -2,7 +2,6 @@ import type { GlobalConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
 import { fullLexicalEditor } from '@/fields/fullLexicalEditor'
-import { buildSEOFields } from '@/fields/seo'
 
 export const TermsPage: GlobalConfig = {
   slug: 'terms-page',
@@ -28,12 +27,6 @@ export const TermsPage: GlobalConfig = {
       editor: fullLexicalEditor(),
       label: 'Съдържание',
       required: true,
-    },
-    {
-      name: 'meta',
-      label: 'SEO',
-      type: 'group',
-      fields: buildSEOFields(),
     },
   ],
 }

@@ -2,7 +2,6 @@ import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import type { Access } from 'payload'
 import { slugField } from 'payload'
 import { checkRole } from '@/access/utilities'
-import { buildSEOFields } from '@/fields/seo'
 
 const normalizeCatalogCompatibilityFields = ({
   context,
@@ -449,11 +448,6 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               defaultValue: true,
             },
           ],
-        },
-        {
-          name: 'meta',
-          label: 'SEO',
-          fields: buildSEOFields(),
         },
       ],
     },

@@ -335,19 +335,19 @@ export interface Product {
   legacyProductUrl?: string | null;
   legacyModifiedAt?: string | null;
   published?: boolean | null;
-  meta?: {
-    title?: string | null;
-    /**
-     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
-     */
-    image?: (string | null) | Media;
-    description?: string | null;
-  };
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
   slug: string;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (string | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -417,15 +417,15 @@ export interface Category {
   title: string;
   parent?: (string | null) | Category;
   productCount?: number | null;
+  slug?: string | null;
   meta?: {
     title?: string | null;
+    description?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
     image?: (string | null) | Media;
-    description?: string | null;
   };
-  slug?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -620,11 +620,11 @@ export interface Page {
   )[];
   meta?: {
     title?: string | null;
+    description?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
     image?: (string | null) | Media;
-    description?: string | null;
   };
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
@@ -914,15 +914,15 @@ export interface Partner {
    * Незадължително. Например: https://example.com
    */
   website?: string | null;
+  slug?: string | null;
   meta?: {
     title?: string | null;
+    description?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
     image?: (string | null) | Media;
-    description?: string | null;
   };
-  slug?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1105,14 +1105,14 @@ export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
   parent?: T;
   productCount?: T;
+  slug?: T;
   meta?:
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
+        image?: T;
       };
-  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1162,8 +1162,8 @@ export interface PagesSelect<T extends boolean = true> {
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
+        image?: T;
       };
   generateSlug?: T;
   slug?: T;
@@ -1338,14 +1338,14 @@ export interface PartnersSelect<T extends boolean = true> {
   phone?: T;
   workingHours?: T;
   website?: T;
+  slug?: T;
   meta?:
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
+        image?: T;
       };
-  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1441,15 +1441,15 @@ export interface ProductsSelect<T extends boolean = true> {
   legacyProductUrl?: T;
   legacyModifiedAt?: T;
   published?: T;
+  generateSlug?: T;
+  slug?: T;
   meta?:
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
+        image?: T;
       };
-  generateSlug?: T;
-  slug?: T;
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;
@@ -1694,11 +1694,11 @@ export interface TermsPage {
   };
   meta?: {
     title?: string | null;
+    description?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
     image?: (string | null) | Media;
-    description?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -1727,11 +1727,11 @@ export interface PrivacyPage {
   };
   meta?: {
     title?: string | null;
+    description?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
     image?: (string | null) | Media;
-    description?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -1747,19 +1747,18 @@ export interface ContactPage {
     address: string;
     phone: string;
     workingHours: string;
-  };
-  warehouse: {
-    address: string;
-    phone: string;
-    workingHours: string;
+    /**
+     * Въведи адрес или текст за търсене в Google Maps. Не поставяй embed/iframe код. Ако е празно, ще се използва основният адрес.
+     */
+    mapQuery?: string | null;
   };
   meta?: {
     title?: string | null;
+    description?: string | null;
     /**
      * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
      */
     image?: (string | null) | Media;
-    description?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -1877,8 +1876,8 @@ export interface TermsPageSelect<T extends boolean = true> {
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
+        image?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -1895,8 +1894,8 @@ export interface PrivacyPageSelect<T extends boolean = true> {
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
+        image?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -1914,20 +1913,14 @@ export interface ContactPageSelect<T extends boolean = true> {
         address?: T;
         phone?: T;
         workingHours?: T;
-      };
-  warehouse?:
-    | T
-    | {
-        address?: T;
-        phone?: T;
-        workingHours?: T;
+        mapQuery?: T;
       };
   meta?:
     | T
     | {
         title?: T;
-        image?: T;
         description?: T;
+        image?: T;
       };
   updatedAt?: T;
   createdAt?: T;

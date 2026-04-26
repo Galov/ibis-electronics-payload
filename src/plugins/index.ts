@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import type { Plugin } from 'payload'
 import { ecommercePlugin, EUR } from '@payloadcms/plugin-ecommerce'
+import { seoPlugin } from '@payloadcms/plugin-seo'
 import { s3Storage } from '@payloadcms/storage-s3'
 
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
@@ -473,6 +474,12 @@ export const plugins: Plugin[] = [
         },
       }),
     },
+  }),
+  seoPlugin({
+    collections: ['categories', 'pages', 'partners', 'products'],
+    globals: ['contact-page', 'privacy-page', 'terms-page'],
+    tabbedUI: true,
+    uploadsCollection: 'media',
   }),
   s3Storage({
     alwaysInsertFields: true,
