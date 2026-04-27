@@ -1,16 +1,15 @@
 import { CatalogPagination } from '@/components/catalog/CatalogPagination'
 import { MobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
 import { Grid } from '@/components/Grid'
-import { ProductGridItem } from '@/components/ProductGridItem'
-import { Search } from '@/components/Search'
 import { Categories } from '@/components/layout/search/Categories'
 import { SortToolbar } from '@/components/layout/search/SortToolbar'
+import { ProductGridItem } from '@/components/ProductGridItem'
+import { Search } from '@/components/Search'
 import { ShopBanner } from '@/components/shop/ShopBanner'
 import { generateMeta } from '@/utilities/generateMeta'
-import type { Metadata } from 'next'
 import configPromise from '@payload-config'
+import type { Metadata } from 'next'
 import { getPayload, type Where } from 'payload'
-import React from 'react'
 
 type SearchParams = { [key: string]: string | string[] | undefined }
 
@@ -43,7 +42,14 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function MagazinPage({ searchParams }: Props) {
   const resolvedSearchParams = await searchParams
-  const { brand, category, limit: rawLimit, page: rawPage, q: rawSearchValue, sort } = resolvedSearchParams
+  const {
+    brand,
+    category,
+    limit: rawLimit,
+    page: rawPage,
+    q: rawSearchValue,
+    sort,
+  } = resolvedSearchParams
   const searchValue = String(rawSearchValue || '').trim()
   const searchTerms = tokenizeSearchTerms(searchValue)
   const pageSize = normalizePageSize(rawLimit)
@@ -173,11 +179,15 @@ export default async function MagazinPage({ searchParams }: Props) {
       </section>
 
       <MobileCatalogControls>
-        <Search
-          availableBrands={availableBrands}
-          showBrandFilter={Boolean(searchValue) && products.docs.length > 0}
-        />
-        <Categories />
+        <div className="max-h-[55dvh] overflow-y-auto pr-1">
+          <Categories />
+        </div>
+        <div className="sticky bottom-0 z-10 bg-white pt-2">
+          <Search
+            availableBrands={availableBrands}
+            showBrandFilter={Boolean(searchValue) && products.docs.length > 0}
+          />
+        </div>
         {products?.docs.length > 0 ? <SortToolbar pageSize={pageSize} /> : null}
       </MobileCatalogControls>
 
