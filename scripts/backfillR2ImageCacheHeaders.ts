@@ -1,8 +1,8 @@
 import 'dotenv/config'
 
 import { CopyObjectCommand, HeadObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import configPromise from '@payload-config'
 import { getPayload } from 'payload'
+import configPromise from '../src/payload.config'
 
 import { PRODUCT_IMAGE_CACHE_CONTROL } from '../src/utilities/uploadProductImagesToR2'
 
