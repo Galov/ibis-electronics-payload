@@ -3,11 +3,11 @@ import type { Product } from '@/payload-types'
 
 import { AddToCart } from '@/components/Cart/AddToCart'
 import { Price } from '@/components/Price'
+import { StockIndicator } from '@/components/product/StockIndicator'
+import { buildCategoryPath } from '@/utilities/category'
+import { formatLegacyProductDescription } from '@/utilities/formatLegacyProductDescription'
 import Link from 'next/link'
 import React, { Suspense } from 'react'
-import { StockIndicator } from '@/components/product/StockIndicator'
-import { formatLegacyProductDescription } from '@/utilities/formatLegacyProductDescription'
-import { buildCategoryPath } from '@/utilities/category'
 
 type ProductCategoryLink = {
   parent?: null | ProductCategoryLink
@@ -16,7 +16,9 @@ type ProductCategoryLink = {
 }
 
 export function ProductDescription({ product }: { product: Product }) {
-  const description = formatLegacyProductDescription(product.description || product.shortDescription)
+  const description = formatLegacyProductDescription(
+    product.description || product.shortDescription,
+  )
   const categories = (product.categories || []).reduce<ProductCategoryLink[]>((acc, category) => {
     if (!category || typeof category === 'string' || !category.title) return acc
 
@@ -28,7 +30,7 @@ export function ProductDescription({ product }: { product: Product }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col lg:flex-row gap-8 lg:items-center lg:justify-between">
         <h1 className="type-product-title text-primary/85">{product.title}</h1>
         <div className="text-base font-normal text-[rgb(1,55,186)] lg:text-lg">
           <Price amount={product.price} />
@@ -82,7 +84,9 @@ export function ProductDescription({ product }: { product: Product }) {
           </p>
         ) : null}
       </div>
-      {description ? <div className="type-body-small whitespace-pre-line text-primary/65">{description}</div> : null}
+      {description ? (
+        <div className="type-body-small whitespace-pre-line text-primary/65">{description}</div>
+      ) : null}
       <div className="space-y-4 border-t border-black/5 pt-5">
         <Suspense fallback={null}>
           <StockIndicator product={product} />
