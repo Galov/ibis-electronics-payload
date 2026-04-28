@@ -1,14 +1,10 @@
 import 'dotenv/config'
 
+import { CopyObjectCommand, HeadObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import configPromise from '@payload-config'
-import {
-  CopyObjectCommand,
-  HeadObjectCommand,
-  S3Client,
-} from '@aws-sdk/client-s3'
 import { getPayload } from 'payload'
 
-import { PRODUCT_IMAGE_CACHE_CONTROL } from '@/utilities/uploadProductImagesToR2'
+import { PRODUCT_IMAGE_CACHE_CONTROL } from '../src/utilities/uploadProductImagesToR2'
 
 type ProductImageLike = {
   storageKey?: null | string
@@ -42,7 +38,8 @@ const r2Client =
       })
     : null
 
-const normalizeImages = (images?: null | ProductImageLike[]) => (Array.isArray(images) ? images : [])
+const normalizeImages = (images?: null | ProductImageLike[]) =>
+  Array.isArray(images) ? images : []
 
 const encodeCopySource = (value: string) =>
   value
