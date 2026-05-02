@@ -48,12 +48,28 @@ type RevolutTransaction = {
 
 const transactionsSlug = 'transactions'
 
-const extractCheckoutData = (data?: RevolutAdapterData): CheckoutPaymentData => {
-  if (data?.additionalData && typeof data.additionalData === 'object') {
-    return data.additionalData
+const extractCheckoutData = (...candidates: Array<RevolutAdapterData | undefined>): CheckoutPaymentData => {
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object') {
+      continue
+    }
+
+    if (candidate.additionalData && typeof candidate.additionalData === 'object') {
+      return candidate.additionalData
+    }
+
+    if (
+      candidate.deliveryMethod ||
+      candidate.econtOffice ||
+      candidate.speedyOffice ||
+      candidate.customerNotes ||
+      typeof candidate.shippingFee === 'number'
+    ) {
+      return candidate as CheckoutPaymentData
+    }
   }
 
-  return (data || {}) as CheckoutPaymentData
+  return {}
 }
 
 const revolutGroupFields: Field[] = [
@@ -405,7 +421,8 @@ export const revolutAdapter = (): PaymentAdapter => ({
     const payload = req.payload
     const user = req.user
     const adapterData = data as RevolutAdapterData | undefined
-    const checkoutData = extractCheckoutData(adapterData)
+    const requestData = (req.data || {}) as RevolutAdapterData
+    const checkoutData = extractCheckoutData(requestData, adapterData)
     const cart = adapterData?.cart
 
     payload.logger.info({
