@@ -41,6 +41,8 @@ type OrderEmailTemplateArgs = {
 
 const brandBlue = 'rgb(1,55,186)'
 const logoURL = 'https://ibis-electronics.com/ibis_blue_logo.png'
+const deliveryPricingNote =
+  'Цената не включва доставката. Тя се определя по тарифата на избраната куриерска компания и се заплаща при получаване на пратката.'
 
 export const escapeHTML = (value: unknown) =>
   String(value ?? '')
@@ -252,6 +254,9 @@ export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
         ${officeAddress ? buildDetailRow('Адрес на офис', escapeHTML(officeAddress)) : ''}
         ${args.shippingFee ? buildDetailRow('Цена на доставка', escapeHTML(formatMoney(args.shippingFee, args.currency))) : ''}
       </table>
+      <p style="margin: 0 0 20px; color: #475467; font-size: 14px; line-height: 1.7;">
+        ${escapeHTML(deliveryPricingNote)}
+      </p>
 
       <h2 style="margin: 26px 0 12px; color: ${brandBlue}; font-size: 20px; line-height: 1.3; font-weight: 500;">Артикули</h2>
       ${buildOrderItemsTableHTML(args.items, args.currency)}
@@ -296,6 +301,9 @@ export const buildAdminOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
         ${officeAddress ? buildDetailRow('Адрес на офис', escapeHTML(officeAddress)) : ''}
         ${args.shippingFee ? buildDetailRow('Цена на доставка', escapeHTML(formatMoney(args.shippingFee, args.currency))) : ''}
       </table>
+      <p style="margin: 0 0 20px; color: #475467; font-size: 14px; line-height: 1.7;">
+        ${escapeHTML(deliveryPricingNote)}
+      </p>
 
       ${shippingAddressHTML ? `<h2 style="margin: 26px 0 8px; color: ${brandBlue}; font-size: 20px; line-height: 1.3; font-weight: 500;">Адрес</h2><p style="margin: 0 0 18px; color: #475467; font-size: 15px; line-height: 1.7;">${shippingAddressHTML}</p>` : ''}
       ${notes ? `<h2 style="margin: 26px 0 8px; color: ${brandBlue}; font-size: 20px; line-height: 1.3; font-weight: 500;">Бележки</h2><p style="margin: 0 0 18px; color: #475467; font-size: 15px; line-height: 1.7; white-space: pre-line;">${escapeHTML(notes)}</p>` : ''}

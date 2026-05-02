@@ -8,7 +8,7 @@ import { HeaderThemeProvider } from './HeaderTheme'
 import { ThemeProvider } from './Theme'
 import { SonnerProvider } from '@/providers/Sonner'
 import { manualAdapterClient } from '@/ecommerce/manualAdapter'
-import { revolutAdapterClient } from '@/ecommerce/revolutAdapter'
+import { revolutAdapterClient } from '@/ecommerce/revolutAdapterClient'
 
 const ecommerceCurrenciesConfig = {
   defaultCurrency: 'EUR',

@@ -278,6 +278,7 @@ const appendTransactionCheckoutSnapshotFields = (fields: any[]): any[] => [
     type: 'number',
     label: 'Цена на доставка',
     admin: {
+      hidden: true,
       position: 'sidebar',
       readOnly: true,
     },
@@ -571,6 +572,7 @@ export const plugins: Plugin[] = [
             name: 'shippingFee',
             type: 'number',
             admin: {
+              hidden: true,
               position: 'sidebar',
               readOnly: true,
             },

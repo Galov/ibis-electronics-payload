@@ -16,6 +16,8 @@ import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
 
 export const dynamic = 'force-dynamic'
+const deliveryPricingNote =
+  'Цената не включва доставката. Тя се определя по тарифата на избраната куриерска компания и се заплаща при получаване на пратката.'
 
 type OrderPaymentMethod = 'manual' | 'revolut' | null | undefined
 
@@ -181,7 +183,7 @@ export default async function Order({ params, searchParams }: PageProps) {
             {order.amount && <Price className="text-lg text-primary/80" amount={order.amount} currencyCode="EUR" />}
           </div>
 
-          {typeof order.shippingFee === 'number' ? (
+          {typeof order.shippingFee === 'number' && order.shippingFee > 0 ? (
             <div>
               <p className="type-eyebrow mb-1 text-primary/45">Доставка</p>
               <Price className="text-lg text-primary/80" amount={order.shippingFee} currencyCode="EUR" />
@@ -202,6 +204,10 @@ export default async function Order({ params, searchParams }: PageProps) {
             </div>
           )}
         </div>
+
+        <p className="rounded-[10px] border border-black/6 bg-white px-5 py-4 text-sm leading-6 text-primary/60">
+          {deliveryPricingNote}
+        </p>
 
         {order.items && (
           <div>

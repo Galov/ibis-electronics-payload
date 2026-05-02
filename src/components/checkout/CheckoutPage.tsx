@@ -20,7 +20,7 @@ import { getProductPrimaryImage } from '@/utilities/product'
 import { useAddresses, useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import type { Address } from '@/payload-types'
 
@@ -28,12 +28,11 @@ export const CheckoutPage: React.FC<{
   freeShippingThreshold?: number
   revolutPayEnabled?: boolean
 }> = ({
-  freeShippingThreshold,
+  freeShippingThreshold: _freeShippingThreshold,
   revolutPayEnabled = false,
 }) => {
-  const ADDRESS_SHIPPING_FEE = 6
-  const ECONT_OFFICE_SHIPPING_FEE = 5
-  const SPEEDY_OFFICE_SHIPPING_FEE = 5
+  const deliveryPricingNote =
+    'Цената не включва доставката. Тя се определя по тарифата на избраната куриерска компания и се заплаща при получаване на пратката.'
   const { user } = useAuth()
   const { cart } = useCart()
   const { addresses } = useAddresses()
@@ -44,22 +43,7 @@ export const CheckoutPage: React.FC<{
   const [customerNotes, setCustomerNotes] = useState('')
   const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
   const [deliveryMethod, setDeliveryMethod] = useState<'address' | 'speedy-office' | 'econt-office'>('address')
-  const qualifiesForFreeShipping = useMemo(
-    () =>
-      typeof freeShippingThreshold === 'number' &&
-      Number.isFinite(freeShippingThreshold) &&
-      freeShippingThreshold >= 0 &&
-      (cart?.subtotal || 0) >= freeShippingThreshold,
-    [cart?.subtotal, freeShippingThreshold],
-  )
-  const activeShippingFee = qualifiesForFreeShipping
-    ? 0
-    : deliveryMethod === 'speedy-office'
-      ? SPEEDY_OFFICE_SHIPPING_FEE
-      : deliveryMethod === 'econt-office'
-        ? ECONT_OFFICE_SHIPPING_FEE
-        : ADDRESS_SHIPPING_FEE
-  const orderTotal = (cart?.subtotal || 0) + activeShippingFee
+  const orderTotal = cart?.subtotal || 0
   const [speedyOffice, setSpeedyOffice] = useState<{
     address: string
     id: string
@@ -326,9 +310,7 @@ export const CheckoutPage: React.FC<{
                 type="button"
               >
                 <p className="type-subsection-title text-primary/85">Адрес</p>
-                <p className="mt-1 text-sm text-primary/60">
-                  Използвай въведения адрес за доставка. {qualifiesForFreeShipping ? 'Безплатно' : '+6 EUR'}
-                </p>
+                <p className="mt-1 text-sm text-primary/60">Използвай въведения адрес за доставка.</p>
               </button>
 
               <button
@@ -344,9 +326,7 @@ export const CheckoutPage: React.FC<{
                 type="button"
               >
                 <p className="type-subsection-title text-primary/85">Офис на Econt</p>
-                <p className="mt-1 text-sm text-primary/60">
-                  Избери удобен офис. {qualifiesForFreeShipping ? 'Безплатно' : '+5 EUR'}
-                </p>
+                <p className="mt-1 text-sm text-primary/60">Избери удобен офис.</p>
               </button>
 
               <button
@@ -362,16 +342,10 @@ export const CheckoutPage: React.FC<{
                 type="button"
               >
                 <p className="type-subsection-title text-primary/85">Офис на Speedy</p>
-                <p className="mt-1 text-sm text-primary/60">
-                  Избери удобен офис. {qualifiesForFreeShipping ? 'Безплатно' : '+5 EUR'}
-                </p>
+                <p className="mt-1 text-sm text-primary/60">Избери удобен офис.</p>
               </button>
             </div>
-            {qualifiesForFreeShipping ? (
-              <p className="mt-4 text-sm text-primary/60">
-                Поръчката покрива прага за безплатна доставка.
-              </p>
-            ) : null}
+            <p className="mt-4 text-sm text-primary/60">{deliveryPricingNote}</p>
           </div>
         </div>
 
@@ -562,7 +536,7 @@ export const CheckoutPage: React.FC<{
           econtOffice={econtOffice}
           revolutPayEnabled={revolutPayEnabled}
           setProcessingPayment={setProcessingPayment}
-          shippingFee={activeShippingFee}
+          shippingFee={0}
           shippingAddress={resolvedShippingAddress}
           speedyOffice={speedyOffice}
           totalAmount={orderTotal}
@@ -613,9 +587,9 @@ export const CheckoutPage: React.FC<{
         })}
 
         <div className="border-t border-black/5 pt-6">
-          <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="mb-3 flex items-start justify-between gap-4">
             <span className="type-eyebrow text-primary/45">Доставка</span>
-            <Price amount={activeShippingFee} className="text-base font-medium text-primary/70" currencyCode="EUR" />
+            <p className="max-w-[16rem] text-right text-sm leading-6 text-primary/60">{deliveryPricingNote}</p>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="type-eyebrow text-primary/45">Общо</span>

@@ -104,7 +104,7 @@ export const RevolutConfirmOrder: React.FC = () => {
     const finishRevolutOrder = async () => {
       try {
         const storedCheckoutData = storedCheckoutDataRaw ? JSON.parse(storedCheckoutDataRaw) : {}
-        const response = await fetch('/api/payments/revolut/confirm-order', {
+        const response = await fetch('/api/payments/revolut/confirm-return', {
           body: JSON.stringify({
             ...(cartID ? { cartID } : {}),
             ...(cartSecret ? { secret: cartSecret } : {}),

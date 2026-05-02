@@ -1,5 +1,6 @@
 import type { PaymentAdapter, PaymentAdapterClient } from '@payloadcms/plugin-ecommerce/types'
-import type { Field } from 'payload'
+import { addDataAndFileToRequest } from 'payload'
+import type { Field, PayloadRequest } from 'payload'
 import type { Cart } from '@/payload-types'
 
 import { finalizeCheckoutTransaction, createCheckoutTransactionData, type CheckoutPaymentData } from './orderLifecycle'
@@ -85,6 +86,300 @@ const wait = async (ms: number) =>
   new Promise<void>((resolve) => {
     setTimeout(resolve, ms)
   })
+
+const findRevolutTransaction = async ({
+  adapterData,
+  req,
+}: {
+  adapterData?: RevolutAdapterData
+  req: PayloadRequest
+}) => {
+  const payload = req.payload
+  const transactionID = adapterData?.transactionID
+  const revolutOrderID = adapterData?.revolutOrderID
+  const revolutPublicID = adapterData?.revolutPublicID
+
+  if (transactionID) {
+    return (await payload.findByID({
+      collection: transactionsSlug,
+      depth: 1,
+      id: transactionID,
+      overrideAccess: true,
+      req,
+    })) as (RevolutTransaction & { order?: unknown }) | null
+  }
+
+  if (revolutOrderID) {
+    const transactionsResult = await payload.find({
+      collection: transactionsSlug,
+      depth: 1,
+      limit: 1,
+      overrideAccess: true,
+      req,
+      where: {
+        'revolut.orderId': {
+          equals: revolutOrderID,
+        },
+      },
+    })
+
+    return transactionsResult.docs[0] as (RevolutTransaction & { order?: unknown }) | undefined
+  }
+
+  if (revolutPublicID) {
+    const transactionsResult = await payload.find({
+      collection: transactionsSlug,
+      depth: 1,
+      limit: 1,
+      overrideAccess: true,
+      req,
+      where: {
+        'revolut.token': {
+          equals: revolutPublicID,
+        },
+      },
+    })
+
+    return transactionsResult.docs[0] as (RevolutTransaction & { order?: unknown }) | undefined
+  }
+
+  return null
+}
+
+const resolveRevolutTransaction = async ({
+  adapterData,
+  req,
+}: {
+  adapterData?: RevolutAdapterData
+  req: PayloadRequest
+}) => {
+  const payload = req.payload
+  const checkoutData = (adapterData || {}) as CheckoutPaymentData
+  const cartSecret = typeof adapterData?.secret === 'string' ? adapterData.secret : undefined
+  const revolutOrderID = adapterData?.revolutOrderID
+  const revolutPublicID = adapterData?.revolutPublicID
+  const transactionID = adapterData?.transactionID
+
+  const transaction = await findRevolutTransaction({ adapterData, req })
+
+  if (!transaction) {
+    payload.logger.warn({
+      msg: 'Revolut confirm could not find transaction',
+      revolutOrderID,
+      revolutPublicID,
+      transactionID,
+    })
+    throw new Error('Revolut транзакцията не беше намерена.')
+  }
+
+  let resolvedTransaction = transaction
+
+  if (resolvedTransaction.order) {
+    return finalizeCheckoutTransaction({
+      req,
+      transactionID: resolvedTransaction.id,
+    })
+  }
+
+  const orderID = resolvedTransaction.revolut?.orderId
+
+  if (!orderID) {
+    payload.logger.warn({
+      msg: 'Revolut confirm found transaction without order ID',
+      revolutOrderID,
+      revolutPublicID,
+      transactionID: resolvedTransaction.id,
+    })
+    throw new Error('Липсва Revolut order ID за тази транзакция.')
+  }
+
+  if (
+    checkoutData.deliveryMethod ||
+    typeof checkoutData.shippingFee === 'number' ||
+    checkoutData.econtOffice ||
+    checkoutData.speedyOffice ||
+    checkoutData.shippingAddress
+  ) {
+    let cartSnapshot: CartSnapshot | null | string | undefined = resolvedTransaction.cart
+
+    if (!cartSnapshot || typeof cartSnapshot !== 'object') {
+      const cartID =
+        typeof adapterData?.cartID === 'string'
+          ? adapterData.cartID
+          : typeof resolvedTransaction.cart === 'string'
+            ? resolvedTransaction.cart
+            : typeof resolvedTransaction.cart === 'object' && resolvedTransaction.cart?.id
+              ? String(resolvedTransaction.cart.id)
+              : undefined
+
+      if (cartID) {
+        if (cartSecret) {
+          req.query = req.query || {}
+          req.query.secret = cartSecret
+        }
+
+        cartSnapshot = (await payload.findByID({
+          id: cartID,
+          collection: cartsSlug,
+          depth: 2,
+          overrideAccess: false,
+          req,
+          select: {
+            currency: true,
+            customer: true,
+            items: true,
+            subtotal: true,
+          },
+        })) as CartSnapshot
+      }
+    }
+
+    if (cartSnapshot && typeof cartSnapshot === 'object' && Array.isArray(cartSnapshot.items)) {
+      const refreshedSnapshot = createCheckoutTransactionData({
+        cart: cartSnapshot,
+        checkoutData,
+        paymentMethod: 'revolut',
+        user: req.user ? { email: req.user.email, id: req.user.id } : undefined,
+      })
+
+      await payload.update({
+        collection: transactionsSlug,
+        id: resolvedTransaction.id,
+        data: {
+          amount: refreshedSnapshot.amount,
+          billingAddress: refreshedSnapshot.billingAddress,
+          ...(refreshedSnapshot.customerEmail ? { customerEmail: refreshedSnapshot.customerEmail } : {}),
+          customerNotes: refreshedSnapshot.customerNotes,
+          deliveryMethod: refreshedSnapshot.deliveryMethod,
+          econtOfficeAddress: refreshedSnapshot.econtOfficeAddress,
+          econtOfficeCode: refreshedSnapshot.econtOfficeCode,
+          econtOfficeId: refreshedSnapshot.econtOfficeId,
+          econtOfficeName: refreshedSnapshot.econtOfficeName,
+          shippingAddress: refreshedSnapshot.shippingAddress,
+          shippingFee: refreshedSnapshot.shippingFee,
+          speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress,
+          speedyOfficeId: refreshedSnapshot.speedyOfficeId,
+          speedyOfficeName: refreshedSnapshot.speedyOfficeName,
+        },
+        overrideAccess: true,
+        req,
+      })
+
+        resolvedTransaction = {
+          ...resolvedTransaction,
+          ...refreshedSnapshot,
+        }
+
+        payload.logger.info({
+          msg: 'Revolut confirm refreshed checkout snapshot',
+          transactionID: resolvedTransaction.id,
+          customerEmail: refreshedSnapshot.customerEmail || null,
+        deliveryMethod: refreshedSnapshot.deliveryMethod || null,
+        shippingFee: refreshedSnapshot.shippingFee ?? null,
+        speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress || null,
+        speedyOfficeName: refreshedSnapshot.speedyOfficeName || null,
+        econtOfficeAddress: refreshedSnapshot.econtOfficeAddress || null,
+        econtOfficeName: refreshedSnapshot.econtOfficeName || null,
+      })
+    }
+  }
+
+  let revolutOrder = await retrieveRevolutOrder(orderID)
+  payload.logger.info({
+    msg: 'Revolut confirm initial state',
+    revolutOrderID: orderID,
+    state: revolutOrder.state || 'pending',
+    transactionID: resolvedTransaction.id,
+  })
+
+  for (
+    let attempt = 1;
+    !isRevolutSuccessState(revolutOrder.state) && attempt < REVOLUT_CONFIRM_MAX_ATTEMPTS;
+    attempt += 1
+  ) {
+    const currentTransactionID = resolvedTransaction.id
+
+    await wait(REVOLUT_CONFIRM_RETRY_DELAY_MS)
+    revolutOrder = await retrieveRevolutOrder(orderID)
+    payload.logger.info({
+      attempt,
+      msg: 'Revolut confirm polled state',
+      revolutOrderID: orderID,
+      state: revolutOrder.state || 'pending',
+      transactionID: currentTransactionID,
+    })
+
+    const refreshedTransaction = await findRevolutTransaction({
+      adapterData: {
+        transactionID: currentTransactionID,
+      },
+      req,
+    })
+
+    if (refreshedTransaction) {
+      resolvedTransaction = refreshedTransaction
+    }
+
+    if (resolvedTransaction.order) {
+      return finalizeCheckoutTransaction({
+        req,
+        transactionID: resolvedTransaction.id,
+      })
+    }
+  }
+
+  const latestTransaction =
+    (await findRevolutTransaction({
+      adapterData: {
+        transactionID: resolvedTransaction.id,
+      },
+      req,
+    })) || resolvedTransaction
+
+  resolvedTransaction = latestTransaction
+
+  if (resolvedTransaction.order) {
+    return finalizeCheckoutTransaction({
+      req,
+      transactionID: resolvedTransaction.id,
+    })
+  }
+
+  await payload.update({
+    collection: transactionsSlug,
+    id: resolvedTransaction.id,
+    data: {
+      revolut: {
+        ...resolvedTransaction.revolut,
+        state: revolutOrder.state || resolvedTransaction.revolut?.state || 'pending',
+      },
+    },
+    overrideAccess: true,
+    req,
+  })
+
+  if (!isRevolutSuccessState(revolutOrder.state)) {
+    payload.logger.warn({
+      msg: 'Revolut order is still not confirmed after polling window',
+      revolutOrderID: orderID,
+      state: revolutOrder.state || 'pending',
+      transactionID: resolvedTransaction.id,
+    })
+    throw new Error('Плащането с Revolut все още не е потвърдено.')
+  }
+
+  payload.logger.info({
+    msg: 'Revolut confirm accepted successful state',
+    revolutOrderID: orderID,
+    state: revolutOrder.state,
+    transactionID: resolvedTransaction.id,
+  })
+
+  return finalizeCheckoutTransaction({
+    req,
+    transactionID: resolvedTransaction.id,
+  })
+}
 
 export const revolutAdapter = (): PaymentAdapter => ({
   name: 'revolut',
@@ -228,229 +523,39 @@ export const revolutAdapter = (): PaymentAdapter => ({
     }
   },
   confirmOrder: async ({ data, req }) => {
-    const payload = req.payload
-    const adapterData = data as RevolutAdapterData | undefined
-    const checkoutData = (data || {}) as CheckoutPaymentData
-    const cartSecret = typeof adapterData?.secret === 'string' ? adapterData.secret : undefined
-    const transactionID = adapterData?.transactionID
-    const revolutOrderID = adapterData?.revolutOrderID
-    const revolutPublicID = adapterData?.revolutPublicID
-
-    let transaction: (RevolutTransaction & { order?: unknown }) | null = null
-
-    if (transactionID) {
-      transaction = await payload.findByID({
-        collection: transactionsSlug,
-        depth: 1,
-        id: transactionID,
-        overrideAccess: true,
-        req,
-      })
-    } else if (revolutOrderID) {
-      const transactionsResult = await payload.find({
-        collection: transactionsSlug,
-        depth: 1,
-        limit: 1,
-        overrideAccess: true,
-        req,
-        where: {
-          'revolut.orderId': {
-            equals: revolutOrderID,
-          },
-        },
-      })
-
-      transaction = transactionsResult.docs[0]
-    } else if (revolutPublicID) {
-      const transactionsResult = await payload.find({
-        collection: transactionsSlug,
-        depth: 1,
-        limit: 1,
-        overrideAccess: true,
-        req,
-        where: {
-          'revolut.token': {
-            equals: revolutPublicID,
-          },
-        },
-      })
-
-      transaction = transactionsResult.docs[0]
-    }
-
-    if (!transaction) {
-      payload.logger.warn({
-        msg: 'Revolut confirm could not find transaction',
-        revolutOrderID,
-        revolutPublicID,
-        transactionID,
-      })
-      throw new Error('Revolut транзакцията не беше намерена.')
-    }
-
-    const orderID = transaction.revolut?.orderId
-
-    if (!orderID) {
-      payload.logger.warn({
-        msg: 'Revolut confirm found transaction without order ID',
-        revolutOrderID,
-        revolutPublicID,
-        transactionID: transaction.id,
-      })
-      throw new Error('Липсва Revolut order ID за тази транзакция.')
-    }
-
-    if (
-      checkoutData.deliveryMethod ||
-      typeof checkoutData.shippingFee === 'number' ||
-      checkoutData.econtOffice ||
-      checkoutData.speedyOffice ||
-      checkoutData.shippingAddress
-    ) {
-      let cartSnapshot: CartSnapshot | null | string | undefined = transaction.cart
-
-      if (!cartSnapshot || typeof cartSnapshot !== 'object') {
-        const cartID =
-          typeof adapterData?.cartID === 'string'
-            ? adapterData.cartID
-            : typeof transaction.cart === 'string'
-              ? transaction.cart
-              : typeof transaction.cart === 'object' && transaction.cart?.id
-                ? String(transaction.cart.id)
-                : undefined
-
-        if (cartID) {
-          if (cartSecret) {
-            req.query = req.query || {}
-            req.query.secret = cartSecret
-          }
-
-          cartSnapshot = (await payload.findByID({
-            id: cartID,
-            collection: cartsSlug,
-            depth: 2,
-            overrideAccess: false,
-            req,
-            select: {
-              currency: true,
-              customer: true,
-              items: true,
-              subtotal: true,
-            },
-          })) as CartSnapshot
-        }
-      }
-
-      if (cartSnapshot && typeof cartSnapshot === 'object' && Array.isArray(cartSnapshot.items)) {
-        const refreshedSnapshot = createCheckoutTransactionData({
-          cart: cartSnapshot,
-          checkoutData,
-          paymentMethod: 'revolut',
-          user: req.user ? { email: req.user.email, id: req.user.id } : undefined,
-        })
-
-        await payload.update({
-          collection: transactionsSlug,
-          id: transaction.id,
-          data: {
-            amount: refreshedSnapshot.amount,
-            billingAddress: refreshedSnapshot.billingAddress,
-            ...(refreshedSnapshot.customerEmail ? { customerEmail: refreshedSnapshot.customerEmail } : {}),
-            customerNotes: refreshedSnapshot.customerNotes,
-            deliveryMethod: refreshedSnapshot.deliveryMethod,
-            econtOfficeAddress: refreshedSnapshot.econtOfficeAddress,
-            econtOfficeCode: refreshedSnapshot.econtOfficeCode,
-            econtOfficeId: refreshedSnapshot.econtOfficeId,
-            econtOfficeName: refreshedSnapshot.econtOfficeName,
-            shippingAddress: refreshedSnapshot.shippingAddress,
-            shippingFee: refreshedSnapshot.shippingFee,
-            speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress,
-            speedyOfficeId: refreshedSnapshot.speedyOfficeId,
-            speedyOfficeName: refreshedSnapshot.speedyOfficeName,
-          },
-          overrideAccess: true,
-          req,
-        })
-
-        transaction = {
-          ...transaction,
-          ...refreshedSnapshot,
-        }
-
-        payload.logger.info({
-          msg: 'Revolut confirm refreshed checkout snapshot',
-          transactionID: transaction.id,
-          customerEmail: refreshedSnapshot.customerEmail || null,
-          deliveryMethod: refreshedSnapshot.deliveryMethod || null,
-          shippingFee: refreshedSnapshot.shippingFee ?? null,
-          speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress || null,
-          speedyOfficeName: refreshedSnapshot.speedyOfficeName || null,
-          econtOfficeAddress: refreshedSnapshot.econtOfficeAddress || null,
-          econtOfficeName: refreshedSnapshot.econtOfficeName || null,
-        })
-      }
-    }
-
-    let revolutOrder = await retrieveRevolutOrder(orderID)
-    payload.logger.info({
-      msg: 'Revolut confirm initial state',
-      revolutOrderID: orderID,
-      state: revolutOrder.state || 'pending',
-      transactionID: transaction.id,
-    })
-
-    for (
-      let attempt = 1;
-      !isRevolutSuccessState(revolutOrder.state) && attempt < REVOLUT_CONFIRM_MAX_ATTEMPTS;
-      attempt += 1
-    ) {
-      await wait(REVOLUT_CONFIRM_RETRY_DELAY_MS)
-      revolutOrder = await retrieveRevolutOrder(orderID)
-      payload.logger.info({
-        attempt,
-        msg: 'Revolut confirm polled state',
-        revolutOrderID: orderID,
-        state: revolutOrder.state || 'pending',
-        transactionID: transaction.id,
-      })
-    }
-
-    await payload.update({
-      collection: transactionsSlug,
-      id: transaction.id,
-      data: {
-        revolut: {
-          ...transaction.revolut,
-          state: revolutOrder.state || transaction.revolut?.state || 'pending',
-        },
-      },
-      overrideAccess: true,
+    return resolveRevolutTransaction({
+      adapterData: data as RevolutAdapterData | undefined,
       req,
-    })
-
-    if (!isRevolutSuccessState(revolutOrder.state)) {
-      payload.logger.warn({
-        msg: 'Revolut order is still not confirmed after polling window',
-        revolutOrderID: orderID,
-        state: revolutOrder.state || 'pending',
-        transactionID: transaction.id,
-      })
-      throw new Error('Плащането с Revolut все още не е потвърдено.')
-    }
-
-    payload.logger.info({
-      msg: 'Revolut confirm accepted successful state',
-      revolutOrderID: orderID,
-      state: revolutOrder.state,
-      transactionID: transaction.id,
-    })
-
-    return finalizeCheckoutTransaction({
-      req,
-      transactionID: transaction.id,
     })
   },
   endpoints: [
+    {
+      path: '/confirm-return',
+      method: 'post',
+      handler: async (req) => {
+        await addDataAndFileToRequest(req)
+
+        try {
+          const paymentResponse = await resolveRevolutTransaction({
+            adapterData: req.data as RevolutAdapterData | undefined,
+            req,
+          })
+
+          return Response.json(paymentResponse)
+        } catch (error) {
+          req.payload.logger.error(error, 'Error confirming Revolut return.')
+
+          return Response.json(
+            {
+              message: error instanceof Error ? error.message : 'Error confirming Revolut return.',
+            },
+            {
+              status: 500,
+            },
+          )
+        }
+      },
+    },
     {
       path: '/webhooks',
       method: 'post',

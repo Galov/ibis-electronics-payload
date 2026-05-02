@@ -231,13 +231,9 @@ export const createCheckoutTransactionData = ({
   user,
 }: CreateCheckoutTransactionArgs) => {
   const resolvedEmail = trimToUndefined(user?.email) || trimToUndefined(checkoutData.customerEmail)
-  const normalizedShippingFee =
-    typeof checkoutData.shippingFee === 'number' && Number.isFinite(checkoutData.shippingFee)
-      ? checkoutData.shippingFee
-      : 0
 
   return {
-    amount: (cart.subtotal || 0) + normalizedShippingFee,
+    amount: cart.subtotal || 0,
     billingAddress: checkoutData.billingAddress,
     cart: cart.id,
     currency: cart.currency,
@@ -252,7 +248,7 @@ export const createCheckoutTransactionData = ({
     items: normalizeCartItems(cart.items),
     paymentMethod,
     shippingAddress: checkoutData.shippingAddress,
-    shippingFee: normalizedShippingFee,
+    shippingFee: 0,
     speedyOfficeAddress: formatSpeedyOfficeAddress(checkoutData.speedyOffice),
     speedyOfficeId: trimToUndefined(checkoutData.speedyOffice?.id),
     speedyOfficeName: trimToUndefined(checkoutData.speedyOffice?.name),
