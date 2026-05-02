@@ -224,7 +224,7 @@ export const CheckoutForm: React.FC<Props> = ({
               }}
               type="button"
             >
-              <p className="type-subsection-title text-primary/85">Заявка за поръчка</p>
+              <p className="type-subsection-title text-primary/85">Наложен платеж</p>
               <p className="mt-1 text-sm text-primary/60">Поръчката се изпраща за ръчна обработка.</p>
             </button>
 

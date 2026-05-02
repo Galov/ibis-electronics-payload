@@ -23,6 +23,7 @@ const REVOLUT_CONFIRM_RETRY_DELAY_MS = 1500
 const cartsSlug = 'carts'
 
 type RevolutAdapterData = CheckoutPaymentData & {
+  additionalData?: CheckoutPaymentData
   cartID?: string
   cart?: Pick<Cart, 'currency' | 'id' | 'items' | 'subtotal'>
   currency?: string
@@ -46,6 +47,14 @@ type RevolutTransaction = {
 }
 
 const transactionsSlug = 'transactions'
+
+const extractCheckoutData = (data?: RevolutAdapterData): CheckoutPaymentData => {
+  if (data?.additionalData && typeof data.additionalData === 'object') {
+    return data.additionalData
+  }
+
+  return (data || {}) as CheckoutPaymentData
+}
 
 const revolutGroupFields: Field[] = [
   {
@@ -154,7 +163,7 @@ const resolveRevolutTransaction = async ({
   req: PayloadRequest
 }) => {
   const payload = req.payload
-  const checkoutData = (adapterData || {}) as CheckoutPaymentData
+  const checkoutData = extractCheckoutData(adapterData)
   const cartSecret = typeof adapterData?.secret === 'string' ? adapterData.secret : undefined
   const revolutOrderID = adapterData?.revolutOrderID
   const revolutPublicID = adapterData?.revolutPublicID
@@ -396,7 +405,7 @@ export const revolutAdapter = (): PaymentAdapter => ({
     const payload = req.payload
     const user = req.user
     const adapterData = data as RevolutAdapterData | undefined
-    const checkoutData = (data || {}) as CheckoutPaymentData
+    const checkoutData = extractCheckoutData(adapterData)
     const cart = adapterData?.cart
 
     payload.logger.info({

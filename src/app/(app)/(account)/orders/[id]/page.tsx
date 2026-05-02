@@ -26,7 +26,7 @@ const getPaymentMethodLabel = (paymentMethod?: OrderPaymentMethod) => {
     case 'revolut':
       return 'Плащане онлайн'
     case 'manual':
-      return 'Заявка за поръчка'
+      return 'Наложен платеж'
     default:
       return null
   }
