@@ -18,6 +18,7 @@ export type OrderEmailAddress = {
 }
 
 export type OrderEmailDeliveryMethod = 'address' | 'speedy-office' | 'econt-office'
+export type OrderEmailPaymentMethod = 'manual' | 'revolut'
 
 type OrderEmailTemplateArgs = {
   amount: number
@@ -31,6 +32,7 @@ type OrderEmailTemplateArgs = {
   orderAdminURL: string
   orderID: string
   orderURL: string
+  paymentMethod?: OrderEmailPaymentMethod
   shippingAddress?: OrderEmailAddress
   shippingFee: number
   speedyOfficeAddress?: string
@@ -92,6 +94,15 @@ export const getDeliveryLabel = (deliveryMethod?: OrderEmailDeliveryMethod) => {
       return 'Офис на Speedy'
     default:
       return 'До адрес'
+  }
+}
+
+export const getPaymentMethodLabel = (paymentMethod?: OrderEmailPaymentMethod) => {
+  switch (paymentMethod) {
+    case 'revolut':
+      return 'Плащане онлайн'
+    default:
+      return 'При доставка'
   }
 }
 
@@ -211,6 +222,7 @@ const buildLayout = ({
 
 export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
   const deliveryLabel = getDeliveryLabel(args.deliveryMethod)
+  const paymentMethodLabel = getPaymentMethodLabel(args.paymentMethod)
   const officeName =
     args.deliveryMethod === 'econt-office'
       ? args.econtOfficeName
@@ -234,6 +246,7 @@ export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
 
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 24px;">
         ${buildDetailRow('Сума', escapeHTML(formatMoney(args.amount, args.currency)))}
+        ${buildDetailRow('Начин на плащане', escapeHTML(paymentMethodLabel))}
         ${buildDetailRow('Доставка', escapeHTML(deliveryLabel))}
         ${officeName ? buildDetailRow('Офис', escapeHTML(officeName)) : ''}
         ${officeAddress ? buildDetailRow('Адрес на офис', escapeHTML(officeAddress)) : ''}
@@ -254,6 +267,7 @@ export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
 
 export const buildAdminOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
   const deliveryLabel = getDeliveryLabel(args.deliveryMethod)
+  const paymentMethodLabel = getPaymentMethodLabel(args.paymentMethod)
   const officeName =
     args.deliveryMethod === 'econt-office'
       ? args.econtOfficeName
@@ -276,6 +290,7 @@ export const buildAdminOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 24px;">
         ${buildDetailRow('Клиентски имейл', escapeHTML(args.customerEmail || '-'))}
         ${buildDetailRow('Сума', escapeHTML(formatMoney(args.amount, args.currency)))}
+        ${buildDetailRow('Начин на плащане', escapeHTML(paymentMethodLabel))}
         ${buildDetailRow('Доставка', escapeHTML(deliveryLabel))}
         ${officeName ? buildDetailRow('Офис', escapeHTML(officeName)) : ''}
         ${officeAddress ? buildDetailRow('Адрес на офис', escapeHTML(officeAddress)) : ''}

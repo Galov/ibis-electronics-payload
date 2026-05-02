@@ -9,6 +9,7 @@ import {
   type OrderEmailAddress,
   type OrderEmailDeliveryMethod,
   type OrderEmailItem,
+  type OrderEmailPaymentMethod,
 } from './orderEmailTemplates'
 
 export type DeliveryMethod = 'address' | 'econt-office' | 'speedy-office'
@@ -118,6 +119,7 @@ const sendOrderEmails = async ({
   orderAdminURL,
   orderID,
   orderURL,
+  paymentMethod,
   payload,
   shippingAddress,
   shippingFee,
@@ -136,6 +138,7 @@ const sendOrderEmails = async ({
   orderAdminURL: string
   orderID: string
   orderURL: string
+  paymentMethod?: OrderEmailPaymentMethod
   payload: Payload
   shippingAddress?: OrderEmailAddress
   shippingFee: number
@@ -154,6 +157,7 @@ const sendOrderEmails = async ({
     orderAdminURL,
     orderID,
     orderURL,
+    paymentMethod,
     shippingAddress,
     shippingFee,
     speedyOfficeAddress,
@@ -394,6 +398,7 @@ export const finalizeCheckoutTransaction = async ({
     orderAdminURL,
     orderID: order.id,
     orderURL,
+    paymentMethod: transaction.paymentMethod === 'revolut' ? 'revolut' : 'manual',
     payload,
     shippingAddress: transaction.shippingAddress as OrderEmailAddress | undefined,
     shippingFee: typeof transaction.shippingFee === 'number' ? transaction.shippingFee : 0,
