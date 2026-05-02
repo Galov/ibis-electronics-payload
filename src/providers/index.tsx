@@ -8,6 +8,7 @@ import { HeaderThemeProvider } from './HeaderTheme'
 import { ThemeProvider } from './Theme'
 import { SonnerProvider } from '@/providers/Sonner'
 import { manualAdapterClient } from '@/ecommerce/manualAdapter'
+import { revolutAdapterClient } from '@/ecommerce/revolutAdapter'
 
 const ecommerceCurrenciesConfig = {
   defaultCurrency: 'EUR',
@@ -43,7 +44,7 @@ const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }
           },
         },
       }}
-      paymentMethods={[manualAdapterClient()]}
+      paymentMethods={[manualAdapterClient(), revolutAdapterClient()]}
       syncLocalStorage={{
         key: 'cart-eur',
       }}

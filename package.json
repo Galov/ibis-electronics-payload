@@ -48,6 +48,7 @@
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-select": "^2.1.6",
     "@radix-ui/react-slot": "^1.1.2",
+    "@revolut/checkout": "^1.1.25",
     "@stripe/react-stripe-js": "^3",
     "@stripe/stripe-js": "^4.0.0",
     "class-variance-authority": "^0.7.0",

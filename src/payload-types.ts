@@ -438,12 +438,20 @@ export interface Transaction {
   items?:
     | {
         product?: (string | null) | Product;
+        productSKU?: string | null;
+        productUnitPrice?: number | null;
         quantity: number;
         id?: string | null;
       }[]
     | null;
-  paymentMethod?: 'manual' | null;
+  paymentMethod?: ('manual' | 'revolut') | null;
   manual?: {};
+  revolut?: {
+    orderId?: string | null;
+    token?: string | null;
+    state?: string | null;
+    lastEvent?: string | null;
+  };
   billingAddress?: {
     title?: string | null;
     firstName?: string | null;
@@ -464,6 +472,29 @@ export interface Transaction {
   cart?: (string | null) | Cart;
   amount?: number | null;
   currency?: 'EUR' | null;
+  customerNotes?: string | null;
+  deliveryMethod?: ('address' | 'econt-office' | 'speedy-office') | null;
+  shippingFee?: number | null;
+  shippingAddress?: {
+    title?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    company?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+    phone?: string | null;
+  };
+  econtOfficeId?: string | null;
+  econtOfficeCode?: string | null;
+  econtOfficeName?: string | null;
+  econtOfficeAddress?: string | null;
+  speedyOfficeId?: string | null;
+  speedyOfficeName?: string | null;
+  speedyOfficeAddress?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1534,11 +1565,21 @@ export interface TransactionsSelect<T extends boolean = true> {
     | T
     | {
         product?: T;
+        productSKU?: T;
+        productUnitPrice?: T;
         quantity?: T;
         id?: T;
       };
   paymentMethod?: T;
   manual?: T | {};
+  revolut?:
+    | T
+    | {
+        orderId?: T;
+        token?: T;
+        state?: T;
+        lastEvent?: T;
+      };
   billingAddress?:
     | T
     | {
@@ -1561,6 +1602,31 @@ export interface TransactionsSelect<T extends boolean = true> {
   cart?: T;
   amount?: T;
   currency?: T;
+  customerNotes?: T;
+  deliveryMethod?: T;
+  shippingFee?: T;
+  shippingAddress?:
+    | T
+    | {
+        title?: T;
+        firstName?: T;
+        lastName?: T;
+        company?: T;
+        addressLine1?: T;
+        addressLine2?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+        country?: T;
+        phone?: T;
+      };
+  econtOfficeId?: T;
+  econtOfficeCode?: T;
+  econtOfficeName?: T;
+  econtOfficeAddress?: T;
+  speedyOfficeId?: T;
+  speedyOfficeName?: T;
+  speedyOfficeAddress?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1812,6 +1878,14 @@ export interface PricingSetting {
 export interface OrderSetting {
   id: string;
   /**
+   * Ако сумата на продуктите в количката достигне или надвиши тази стойност в евро, доставката става безплатна.
+   */
+  freeShippingThreshold?: number | null;
+  /**
+   * Когато е включено, клиентите ще виждат онлайн плащане чрез защитения checkout на Revolut.
+   */
+  revolutPayEnabled?: boolean | null;
+  /**
    * На тези имейл адреси ще се изпраща известие при успешно направена поръчка.
    */
   notificationRecipients?:
@@ -1969,6 +2043,8 @@ export interface PricingSettingsSelect<T extends boolean = true> {
  * via the `definition` "order-settings_select".
  */
 export interface OrderSettingsSelect<T extends boolean = true> {
+  freeShippingThreshold?: T;
+  revolutPayEnabled?: T;
   notificationRecipients?:
     | T
     | {

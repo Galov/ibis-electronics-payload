@@ -11,6 +11,7 @@ import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
 import { ProductsCollection } from '@/collections/Products'
 import { manualAdapter } from '@/ecommerce/manualAdapter'
+import { revolutAdapter } from '@/ecommerce/revolutAdapter'
 
 const hasR2Config = Boolean(
   process.env.R2_BUCKET &&
@@ -49,18 +50,18 @@ const normalizeMoneyAdminFields = (fields: any[]): any[] => {
   })
 }
 
-const addOrderItemSKUField = (fields: any[]): any[] => {
+const addLineItemSnapshotFields = (fields: any[]): any[] => {
   return fields.map((field) => {
     const nextField = { ...field }
 
     if (Array.isArray(nextField.fields)) {
-      nextField.fields = addOrderItemSKUField(nextField.fields)
+      nextField.fields = addLineItemSnapshotFields(nextField.fields)
     }
 
     if (Array.isArray(nextField.tabs)) {
       nextField.tabs = nextField.tabs.map((tab: any) => ({
         ...tab,
-        fields: Array.isArray(tab.fields) ? addOrderItemSKUField(tab.fields) : tab.fields,
+        fields: Array.isArray(tab.fields) ? addLineItemSnapshotFields(tab.fields) : tab.fields,
       }))
     }
 
@@ -147,6 +148,151 @@ const applyReadOnlyOrderItemsField = (fields: any[]): any[] => {
     return nextField
   })
 }
+
+const transactionShippingAddressFields = [
+  {
+    name: 'title',
+    type: 'text',
+    label: 'Заглавие',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'firstName',
+    type: 'text',
+    label: 'Име',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'lastName',
+    type: 'text',
+    label: 'Фамилия',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'company',
+    type: 'text',
+    label: 'Компания',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'addressLine1',
+    type: 'text',
+    label: 'Адрес 1',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'addressLine2',
+    type: 'text',
+    label: 'Адрес 2',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'city',
+    type: 'text',
+    label: 'Град',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'state',
+    type: 'text',
+    label: 'Област',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'postalCode',
+    type: 'text',
+    label: 'Пощенски код',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'country',
+    type: 'text',
+    label: 'Държава',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'phone',
+    type: 'text',
+    label: 'Телефон',
+    admin: {
+      readOnly: true,
+    },
+  },
+]
+
+const appendTransactionCheckoutSnapshotFields = (fields: any[]): any[] => [
+  ...fields,
+  {
+    name: 'customerNotes',
+    type: 'textarea',
+    label: 'Бележки към поръчката',
+    admin: {
+      readOnly: true,
+    },
+  },
+  {
+    name: 'deliveryMethod',
+    type: 'select',
+    label: 'Начин на доставка',
+    options: [
+      {
+        label: 'Адрес',
+        value: 'address',
+      },
+      {
+        label: 'Офис на Econt',
+        value: 'econt-office',
+      },
+      {
+        label: 'Офис на Speedy',
+        value: 'speedy-office',
+      },
+    ],
+    admin: {
+      position: 'sidebar',
+      readOnly: true,
+    },
+  },
+  {
+    name: 'shippingFee',
+    type: 'number',
+    label: 'Цена на доставка',
+    admin: {
+      position: 'sidebar',
+      readOnly: true,
+    },
+  },
+  {
+    name: 'shippingAddress',
+    type: 'group',
+    label: 'Адрес за доставка',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'address',
+    },
+    fields: transactionShippingAddressFields,
+  },
+  ...deliveryDetailFields,
+]
 
 const clarifyOrderCustomerField = (fields: any[]): any[] => {
   return fields.map((field) => {
@@ -362,7 +508,7 @@ export const plugins: Plugin[] = [
       supportedCurrencies: [EUR],
     },
     payments: {
-      paymentMethods: [manualAdapter()],
+      paymentMethods: [manualAdapter(), revolutAdapter()],
     },
     products: {
       productsCollectionOverride: ProductsCollection,
@@ -392,7 +538,7 @@ export const plugins: Plugin[] = [
         fields: [
           ...arrangeOrderAdminTabs(
             applyReadOnlyOrderItemsField(
-              addOrderItemSKUField(
+              addLineItemSnapshotFields(
                 clarifyOrderCustomerField(normalizeMoneyAdminFields(defaultCollection.fields)),
               ),
             ),
@@ -467,7 +613,9 @@ export const plugins: Plugin[] = [
           ...defaultCollection.admin,
           group: 'Търговия',
         },
-        fields: normalizeMoneyAdminFields(defaultCollection.fields),
+        fields: appendTransactionCheckoutSnapshotFields(
+          addLineItemSnapshotFields(normalizeMoneyAdminFields(defaultCollection.fields)),
+        ),
         labels: {
           plural: 'Транзакции',
           singular: 'Транзакция',

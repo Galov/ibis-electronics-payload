@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 
 import { getNoIndexMetadata } from '@/utilities/getNoIndexMetadata'
-import { redirect } from 'next/navigation'
+import { RevolutConfirmOrder } from '@/components/checkout/RevolutConfirmOrder'
 
 export default function ConfirmOrderPage() {
-  redirect('/checkout')
+  return <RevolutConfirmOrder />
 }
 
 export const metadata: Promise<Metadata> = getNoIndexMetadata({

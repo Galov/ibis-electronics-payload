@@ -17,9 +17,26 @@ import { AddressItem } from '@/components/addresses/AddressItem'
 
 export const dynamic = 'force-dynamic'
 
+type OrderPaymentMethod = 'manual' | 'revolut' | null | undefined
+
+const getPaymentMethodLabel = (paymentMethod?: OrderPaymentMethod) => {
+  switch (paymentMethod) {
+    case 'revolut':
+      return 'Плащане онлайн'
+    case 'manual':
+      return 'Заявка за поръчка'
+    default:
+      return null
+  }
+}
+
 type PageProps = {
   params: Promise<{ id: string }>
   searchParams: Promise<{ email?: string; accessToken?: string }>
+}
+
+type OrderWithPaymentMethod = Order & {
+  paymentMethod?: OrderPaymentMethod
 }
 
 export default async function Order({ params, searchParams }: PageProps) {
@@ -84,6 +101,7 @@ export default async function Order({ params, searchParams }: PageProps) {
         customerEmail: true,
         customer: true,
         deliveryMethod: true,
+        paymentMethod: true,
         shippingFee: true,
         speedyOfficeAddress: true,
         speedyOfficeId: true,
@@ -119,6 +137,8 @@ export default async function Order({ params, searchParams }: PageProps) {
   if (!order) {
     notFound()
   }
+
+  const paymentMethodLabel = getPaymentMethodLabel((order as OrderWithPaymentMethod).paymentMethod)
 
   return (
     <div>
@@ -165,6 +185,13 @@ export default async function Order({ params, searchParams }: PageProps) {
             <div>
               <p className="type-eyebrow mb-1 text-primary/45">Доставка</p>
               <Price className="text-lg text-primary/80" amount={order.shippingFee} currencyCode="EUR" />
+            </div>
+          ) : null}
+
+          {paymentMethodLabel ? (
+            <div>
+              <p className="type-eyebrow mb-1 text-primary/45">Плащане</p>
+              <p className="text-lg text-primary/80">{paymentMethodLabel}</p>
             </div>
           ) : null}
 

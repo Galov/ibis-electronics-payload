@@ -4,7 +4,7 @@ import { adminOnly } from '@/access/adminOnly'
 
 export const OrderSettings: GlobalConfig = {
   slug: 'order-settings',
-  label: 'Известия за поръчки',
+  label: 'Настройки на поръчките',
   access: {
     read: adminOnly,
     update: adminOnly,
@@ -13,6 +13,26 @@ export const OrderSettings: GlobalConfig = {
     group: 'Сайт',
   },
   fields: [
+    {
+      name: 'freeShippingThreshold',
+      label: 'Безплатна доставка над сума',
+      type: 'number',
+      min: 0,
+      admin: {
+        description:
+          'Ако сумата на продуктите в количката достигне или надвиши тази стойност в евро, доставката става безплатна.',
+      },
+    },
+    {
+      name: 'revolutPayEnabled',
+      label: 'Покажи онлайн плащане в checkout',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description:
+          'Когато е включено, клиентите ще виждат онлайн плащане чрез защитения checkout на Revolut.',
+      },
+    },
     {
       name: 'notificationRecipients',
       label: 'Получатели на имейл при нова поръчка',

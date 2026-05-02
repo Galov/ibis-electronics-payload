@@ -71,6 +71,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.1.2
         version: 1.2.4(@types/react@19.2.9)(react@19.2.1)
+      '@revolut/checkout':
+        specifier: ^1.1.25
+        version: 1.1.25
       '@stripe/react-stripe-js':
         specifier: ^3
         version: 3.10.0(@stripe/stripe-js@4.10.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -1831,6 +1834,9 @@ packages:
 
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
+
+  '@revolut/checkout@1.1.25':
+    resolution: {integrity: sha512-SInbH+dzLqOdsooBVfvKhRfJs4EPTIlzVYcPq17Plrh8htSKHV74k5wIth80Pa0C2nIDqBGSRsTh4pIUoGBTBw==}
 
   '@rolldown/pluginutils@1.0.0-beta.11':
     resolution: {integrity: sha512-L/gAA/hyCSuzTF1ftlzUSI/IKr2POHsv1Dd78GfqkR83KMNuswWD61JxGV2L7nRwBBBSDr6R1gCkdTmoN7W4ag==}
@@ -7382,6 +7388,8 @@ snapshots:
       '@types/react-dom': 19.2.3(@types/react@19.2.9)
 
   '@radix-ui/rect@1.1.1': {}
+
+  '@revolut/checkout@1.1.25': {}
 
   '@rolldown/pluginutils@1.0.0-beta.11': {}
 

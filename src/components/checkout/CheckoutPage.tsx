@@ -20,11 +20,17 @@ import { getProductPrimaryImage } from '@/utilities/product'
 import { useAddresses, useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import type { Address } from '@/payload-types'
 
-export const CheckoutPage: React.FC = () => {
+export const CheckoutPage: React.FC<{
+  freeShippingThreshold?: number
+  revolutPayEnabled?: boolean
+}> = ({
+  freeShippingThreshold,
+  revolutPayEnabled = false,
+}) => {
   const ADDRESS_SHIPPING_FEE = 6
   const ECONT_OFFICE_SHIPPING_FEE = 5
   const SPEEDY_OFFICE_SHIPPING_FEE = 5
@@ -38,8 +44,17 @@ export const CheckoutPage: React.FC = () => {
   const [customerNotes, setCustomerNotes] = useState('')
   const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
   const [deliveryMethod, setDeliveryMethod] = useState<'address' | 'speedy-office' | 'econt-office'>('address')
-  const activeShippingFee =
-    deliveryMethod === 'speedy-office'
+  const qualifiesForFreeShipping = useMemo(
+    () =>
+      typeof freeShippingThreshold === 'number' &&
+      Number.isFinite(freeShippingThreshold) &&
+      freeShippingThreshold >= 0 &&
+      (cart?.subtotal || 0) >= freeShippingThreshold,
+    [cart?.subtotal, freeShippingThreshold],
+  )
+  const activeShippingFee = qualifiesForFreeShipping
+    ? 0
+    : deliveryMethod === 'speedy-office'
       ? SPEEDY_OFFICE_SHIPPING_FEE
       : deliveryMethod === 'econt-office'
         ? ECONT_OFFICE_SHIPPING_FEE
@@ -312,7 +327,7 @@ export const CheckoutPage: React.FC = () => {
               >
                 <p className="type-subsection-title text-primary/85">Адрес</p>
                 <p className="mt-1 text-sm text-primary/60">
-                  Използвай въведения адрес за доставка. +6 EUR
+                  Използвай въведения адрес за доставка. {qualifiesForFreeShipping ? 'Безплатно' : '+6 EUR'}
                 </p>
               </button>
 
@@ -329,7 +344,9 @@ export const CheckoutPage: React.FC = () => {
                 type="button"
               >
                 <p className="type-subsection-title text-primary/85">Офис на Econt</p>
-                <p className="mt-1 text-sm text-primary/60">Избери удобен офис. +5 EUR</p>
+                <p className="mt-1 text-sm text-primary/60">
+                  Избери удобен офис. {qualifiesForFreeShipping ? 'Безплатно' : '+5 EUR'}
+                </p>
               </button>
 
               <button
@@ -345,9 +362,16 @@ export const CheckoutPage: React.FC = () => {
                 type="button"
               >
                 <p className="type-subsection-title text-primary/85">Офис на Speedy</p>
-                <p className="mt-1 text-sm text-primary/60">Избери удобен офис. +5 EUR</p>
+                <p className="mt-1 text-sm text-primary/60">
+                  Избери удобен офис. {qualifiesForFreeShipping ? 'Безплатно' : '+5 EUR'}
+                </p>
               </button>
             </div>
+            {qualifiesForFreeShipping ? (
+              <p className="mt-4 text-sm text-primary/60">
+                Поръчката покрива прага за безплатна доставка.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -524,8 +548,9 @@ export const CheckoutPage: React.FC = () => {
         </div>
 
         <div className="bg-muted/20 px-5 py-4 text-sm text-primary/60">
-          Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за
-          ръчна обработка.
+          {revolutPayEnabled
+            ? 'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн през Revolut Pay.'
+            : 'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.'}
         </div>
 
         <CheckoutForm
@@ -535,10 +560,12 @@ export const CheckoutPage: React.FC = () => {
           deliveryMethod={deliveryMethod}
           disabled={!canSubmitOrder}
           econtOffice={econtOffice}
+          revolutPayEnabled={revolutPayEnabled}
           setProcessingPayment={setProcessingPayment}
           shippingFee={activeShippingFee}
           shippingAddress={resolvedShippingAddress}
           speedyOffice={speedyOffice}
+          totalAmount={orderTotal}
         />
       </div>
 
