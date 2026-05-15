@@ -126,6 +126,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     ...defaultCollection.admin,
     defaultColumns: ['title', 'sku', 'brand', 'price', 'stockQty', 'published'],
     group: 'Каталог',
+    listSearchableFields: ['sku'],
     useAsTitle: 'title',
   },
   labels: {
