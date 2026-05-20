@@ -18,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const payload = await getPayload({ config: configPromise })
   const baseURL = getBaseURL()
 
-  const [products, categories] = await Promise.all([
+  const [products, categories, posts] = await Promise.all([
     payload.find({
       collection: 'products',
       depth: 0,
@@ -48,12 +48,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         updatedAt: true,
       },
     }),
+    payload.find({
+      collection: 'posts',
+      depth: 0,
+      draft: false,
+      limit: 1000,
+      overrideAccess: false,
+      pagination: false,
+      select: {
+        slug: true,
+        updatedAt: true,
+      },
+      where: {
+        _status: {
+          equals: 'published',
+        },
+      },
+    }),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
     '',
     '/shop',
     '/partners',
+    '/blog',
     '/contact',
     '/terms',
     '/privacy',
@@ -82,5 +100,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseURL}${buildCategoryPath(category)}`,
     }))
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes]
+  const postRoutes: MetadataRoute.Sitemap = posts.docs
+    .filter((post) => Boolean(post.slug))
+    .map((post) => ({
+      changeFrequency: 'weekly' as const,
+      lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(),
+      priority: 0.72,
+      url: `${baseURL}/blog/${post.slug}`,
+    }))
+
+  return [...staticRoutes, ...categoryRoutes, ...productRoutes, ...postRoutes]
 }

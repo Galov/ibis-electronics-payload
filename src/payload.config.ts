@@ -12,6 +12,8 @@ import { Categories } from '@/collections/Categories'
 import { ContactInquiries } from '@/collections/ContactInquiries'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
+import { PostCategories } from '@/collections/PostCategories'
+import { Posts } from '@/collections/Posts'
 import { Partners } from '@/collections/Partners'
 import { Users } from '@/collections/Users'
 import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
@@ -52,7 +54,7 @@ export default buildConfig({
     dateFormat: 'dd.MM.yyyy, HH:mm',
     user: Users.slug,
   },
-  collections: [Users, Brands, Categories, Pages, Partners, ContactInquiries, Media],
+  collections: [Users, Brands, Categories, Pages, PostCategories, Posts, Partners, ContactInquiries, Media],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),

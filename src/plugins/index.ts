@@ -676,7 +676,7 @@ export const plugins: Plugin[] = [
     },
   }),
   seoPlugin({
-    collections: ['categories', 'pages', 'partners', 'products'],
+    collections: ['categories', 'pages', 'partners', 'posts', 'products'],
     globals: ['contact-page', 'privacy-page', 'terms-page'],
     tabbedUI: true,
     uploadsCollection: 'media',
