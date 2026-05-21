@@ -69,16 +69,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     '',
-    '/shop',
+    '/magazin',
     '/partners',
     '/blog',
-    '/contact',
+    '/kontakti',
     '/terms',
     '/privacy',
   ].map((path) => ({
     changeFrequency: path === '' ? 'daily' : 'weekly',
     lastModified: new Date(),
-    priority: path === '' ? 1 : path === '/shop' ? 0.95 : 0.7,
+    priority: path === '' ? 1 : path === '/magazin' ? 0.95 : 0.7,
     url: `${baseURL}${path || '/'}`,
   }))
 

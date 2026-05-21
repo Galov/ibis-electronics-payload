@@ -11,6 +11,7 @@ import { PostArchive } from '@/components/blog/PostArchive'
 import { RichText } from '@/components/RichText'
 import { generateMeta } from '@/utilities/generateMeta'
 import { queryPostBySlug } from '@/utilities/posts'
+import { buildBlogPostingSchema } from '@/utilities/schema'
 
 export const dynamic = 'force-dynamic'
 
@@ -83,9 +84,24 @@ export default async function BlogPostPage({ params }: Args) {
   const publishedAt = formatDate(post.publishedAt)
   const featuredImage =
     post.featuredImage && typeof post.featuredImage === 'object' ? post.featuredImage : null
+  const blogPostingJsonLd = buildBlogPostingSchema({
+    categories,
+    description: post.excerpt,
+    image: featuredImage?.url,
+    publishedAt: post.publishedAt,
+    slug: post.slug || slug,
+    title: post.title,
+    updatedAt: post.updatedAt,
+  })
 
   return (
     <div className="container py-10 md:py-14">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogPostingJsonLd),
+        }}
+        type="application/ld+json"
+      />
       <div className="mx-auto max-w-4xl">
         <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-primary/55">
           <Link className="transition hover:text-primary/80" href="/blog">

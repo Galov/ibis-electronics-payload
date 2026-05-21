@@ -21,6 +21,10 @@ type ContactPageLike = {
   store?: ContactLocation
 }
 
+type PostCategoryLike = {
+  title?: null | string
+}
+
 const baseURL = getBaseURL()
 
 const toAbsoluteUrl = (path: string) => `${baseURL}${path.startsWith('/') ? path : `/${path}`}`
@@ -84,7 +88,7 @@ export const buildLocalBusinessSchemas = (contactPage?: ContactPageLike | null) 
     name: location.label,
     openingHours: location.workingHours,
     telephone: normalizePhone(location.phone),
-    url: toAbsoluteUrl('/contact'),
+    url: toAbsoluteUrl('/kontakti'),
   })]
 }
 
@@ -179,6 +183,46 @@ export const buildProductSchema = (args: {
   }
 }
 
+export const buildBlogPostingSchema = (args: {
+  categories?: null | PostCategoryLike[]
+  description?: null | string
+  image?: null | string
+  publishedAt?: null | string
+  slug: string
+  title: string
+  updatedAt?: null | string
+}) => {
+  const { categories, description, image, publishedAt, slug, title, updatedAt } = args
+  const articleSection = categories
+    ?.map((category) => category?.title?.trim())
+    .filter((category): category is string => Boolean(category))
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    ...(articleSection?.length ? { articleSection } : {}),
+    ...(description ? { description } : {}),
+    ...(image ? { image: [image] } : {}),
+    ...(publishedAt ? { datePublished: publishedAt } : {}),
+    ...(updatedAt ? { dateModified: updatedAt } : {}),
+    author: {
+      '@type': 'Organization',
+      name: 'Ibis Electronics',
+    },
+    headline: title,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': toAbsoluteUrl(`/blog/${slug}`),
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Ibis Electronics',
+      url: baseURL,
+    },
+    url: toAbsoluteUrl(`/blog/${slug}`),
+  }
+}
+
 export const buildProductBreadcrumbItems = (args: {
   category?: null | CategoryLike
   productName: string
@@ -186,7 +230,7 @@ export const buildProductBreadcrumbItems = (args: {
 }) => {
   const items: BreadcrumbItem[] = [
     { name: 'Начало', path: '/' },
-    { name: 'Каталог', path: '/shop' },
+    { name: 'Каталог', path: '/magazin' },
   ]
 
   const categoryChain: CategoryLike[] = []
@@ -216,7 +260,7 @@ export const buildProductBreadcrumbItems = (args: {
 export const buildCategoryBreadcrumbItems = (args: { category: CategoryLike & { title: string } }) => {
   const items: BreadcrumbItem[] = [
     { name: 'Начало', path: '/' },
-    { name: 'Каталог', path: '/shop' },
+    { name: 'Каталог', path: '/magazin' },
   ]
 
   const categoryChain: CategoryLike[] = []
