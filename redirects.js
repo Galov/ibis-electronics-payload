@@ -18,7 +18,13 @@ const redirects = async () => {
     source: '/produkt/:slug',
   }
 
-  const redirects = [legacyProductRedirect, internetExplorerRedirect]
+  const legacyProductTagRedirect = {
+    destination: '/magazin?q=:slug',
+    permanent: true,
+    source: '/produkt-etiket/:slug',
+  }
+
+  const redirects = [legacyProductRedirect, legacyProductTagRedirect, internetExplorerRedirect]
 
   return redirects
 }
