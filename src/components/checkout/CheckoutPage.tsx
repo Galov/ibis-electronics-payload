@@ -1,5 +1,6 @@
 'use client'
 
+import { BoxNowOfficeSelector } from '@/components/checkout/BoxNowOfficeSelector'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Price } from '@/components/Price'
 import { EditItemQuantityButton } from '@/components/Cart/EditItemQuantityButton'
@@ -23,6 +24,7 @@ import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 
 import type { Address } from '@/payload-types'
+import { getDeliveryPricingNote } from '@/utilities/delivery'
 
 export const CheckoutPage: React.FC<{
   freeShippingThreshold?: number
@@ -31,8 +33,6 @@ export const CheckoutPage: React.FC<{
   freeShippingThreshold: _freeShippingThreshold,
   revolutPayEnabled = false,
 }) => {
-  const deliveryPricingNote =
-    'Цената не включва доставката. Тя се определя по тарифата на избраната куриерска компания и се заплаща при получаване на пратката.'
   const { user } = useAuth()
   const { cart } = useCart()
   const { addresses } = useAddresses()
@@ -42,8 +42,18 @@ export const CheckoutPage: React.FC<{
   const [phone, setPhone] = useState('')
   const [customerNotes, setCustomerNotes] = useState('')
   const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
-  const [deliveryMethod, setDeliveryMethod] = useState<'address' | 'speedy-office' | 'econt-office'>('address')
+  const [deliveryMethod, setDeliveryMethod] = useState<'address' | 'boxnow' | 'speedy-office' | 'econt-office'>(
+    'boxnow',
+  )
   const orderTotal = cart?.subtotal || 0
+  const [boxNowLocker, setBoxNowLocker] = useState<{
+    address: string
+    id: string
+    latitude: string
+    longitude: string
+    name: string
+    postalCode: string
+  } | null>(null)
   const [speedyOffice, setSpeedyOffice] = useState<{
     address: string
     id: string
@@ -115,7 +125,8 @@ export const CheckoutPage: React.FC<{
   useEffect(() => {
     return () => {
       setShippingAddress(undefined)
-      setDeliveryMethod('address')
+      setDeliveryMethod('boxnow')
+      setBoxNowLocker(null)
       setSpeedyOffice(null)
       setSpeedySite(null)
       setSpeedyState(null)
@@ -162,10 +173,13 @@ export const CheckoutPage: React.FC<{
       ((deliveryMethod !== 'address') ||
         billingAddressSameAsShipping ||
         hasCompleteAddress(shippingAddress)) &&
-      (deliveryMethod === 'address' ||
+      ((deliveryMethod === 'boxnow' && boxNowLocker) ||
+        deliveryMethod === 'address' ||
         (deliveryMethod === 'speedy-office' && speedyOffice) ||
         (deliveryMethod === 'econt-office' && econtOffice)),
   )
+
+  const deliveryPricingNote = getDeliveryPricingNote(deliveryMethod)
 
   const customerContactAddress: Partial<Address> = {
     country: 'BG',
@@ -296,7 +310,23 @@ export const CheckoutPage: React.FC<{
           <div className="w-full rounded-[10px] bg-muted/20 px-5 py-5">
             <p className="mb-4 text-sm text-primary/65">Избери начин на доставка.</p>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-4">
+              <button
+                className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                  deliveryMethod === 'boxnow'
+                    ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                    : 'border-black/8 bg-white hover:border-black/15'
+                }`}
+                onClick={(event) => {
+                  event.preventDefault()
+                  setDeliveryMethod('boxnow')
+                }}
+                type="button"
+              >
+                <p className="type-subsection-title text-primary/85">Автомат на BoxNow</p>
+                <p className="mt-1 text-sm text-primary/60">Безплатно до 31 юли 2026 г.</p>
+              </button>
+
               <button
                 className={`rounded-[10px] border px-4 py-3 text-left transition ${
                   deliveryMethod === 'address'
@@ -482,6 +512,10 @@ export const CheckoutPage: React.FC<{
           />
         ) : null}
 
+        {deliveryMethod === 'boxnow' ? (
+          <BoxNowOfficeSelector onSelect={setBoxNowLocker} selectedLocker={boxNowLocker} />
+        ) : null}
+
         {deliveryMethod === 'econt-office' ? (
           <EcontOfficeSelector
             onSelect={({ city, office, region }) => {
@@ -529,6 +563,7 @@ export const CheckoutPage: React.FC<{
 
         <CheckoutForm
           billingAddress={resolvedBillingAddress}
+          boxNowLocker={boxNowLocker}
           customerEmail={email}
           customerNotes={customerNotes}
           deliveryMethod={deliveryMethod}

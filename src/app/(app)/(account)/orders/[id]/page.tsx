@@ -14,11 +14,9 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
+import { getDeliveryPricingNote } from '@/utilities/delivery'
 
 export const dynamic = 'force-dynamic'
-const deliveryPricingNote =
-  'Цената не включва доставката. Тя се определя по тарифата на избраната куриерска компания и се заплаща при получаване на пратката.'
-
 type OrderPaymentMethod = 'manual' | 'revolut' | null | undefined
 
 const getPaymentMethodLabel = (paymentMethod?: OrderPaymentMethod) => {
@@ -94,6 +92,10 @@ export default async function Order({ params, searchParams }: PageProps) {
       },
       select: {
         amount: true,
+        boxNowLockerAddress: true,
+        boxNowLockerId: true,
+        boxNowLockerName: true,
+        boxNowLockerPostalCode: true,
         currency: true,
         econtOfficeAddress: true,
         econtOfficeCode: true,
@@ -141,6 +143,7 @@ export default async function Order({ params, searchParams }: PageProps) {
   }
 
   const paymentMethodLabel = getPaymentMethodLabel((order as OrderWithPaymentMethod).paymentMethod)
+  const deliveryPricingNote = getDeliveryPricingNote(order.deliveryMethod)
 
   return (
     <div>
@@ -231,6 +234,27 @@ export default async function Order({ params, searchParams }: PageProps) {
             </ul>
           </div>
         )}
+
+        {order.deliveryMethod === 'boxnow' && (order.boxNowLockerName || order.boxNowLockerAddress) ? (
+          <div>
+            <h2 className="type-eyebrow mb-4 text-primary/45">Автомат на BoxNow</h2>
+
+            <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
+              {order.boxNowLockerName ? (
+                <p className="type-subsection-title text-primary/85">{order.boxNowLockerName}</p>
+              ) : null}
+              {order.boxNowLockerAddress ? (
+                <p className="type-body-small mt-2 text-primary/60">{order.boxNowLockerAddress}</p>
+              ) : null}
+              {order.boxNowLockerPostalCode ? (
+                <p className="type-eyebrow mt-2 text-primary/45">ПК: {order.boxNowLockerPostalCode}</p>
+              ) : null}
+              {order.boxNowLockerId ? (
+                <p className="type-eyebrow mt-2 text-primary/45">Locker ID: {order.boxNowLockerId}</p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {order.deliveryMethod === 'econt-office' && (order.econtOfficeName || order.econtOfficeAddress) ? (
           <div>

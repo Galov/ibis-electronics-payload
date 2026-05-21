@@ -254,6 +254,26 @@ export interface Order {
     country?: string | null;
     phone?: string | null;
   };
+  boxNowLockerId?: string | null;
+  boxNowLockerName?: string | null;
+  boxNowLockerPostalCode?: string | null;
+  boxNowLockerAddress?: string | null;
+  boxNowShipmentStatus?: ('pending' | 'created' | 'error') | null;
+  boxNowDeliveryRequestId?: string | null;
+  boxNowShipmentCreatedAt?: string | null;
+  boxNowShipmentError?: string | null;
+  /**
+   * Колетите, които реално ще изпратите към BoxNow за тази поръчка.
+   */
+  boxNowParcels?:
+    | {
+        description?: string | null;
+        weight: number;
+        compartmentSize: 1 | 2 | 3;
+        boxNowParcelId?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   econtOfficeId?: string | null;
   econtOfficeCode?: string | null;
   econtOfficeName?: string | null;
@@ -267,7 +287,7 @@ export interface Order {
   status?: OrderStatus;
   amount?: number | null;
   currency?: 'EUR' | null;
-  deliveryMethod?: ('address' | 'econt-office' | 'speedy-office') | null;
+  deliveryMethod?: ('boxnow' | 'address' | 'econt-office' | 'speedy-office') | null;
   shippingFee?: number | null;
   /**
    * Клиентът може да види поръчката чрез линка, който получава по имейл: https://ibis-electronics.com/orders/{ID}?email={EMAIL}&accessToken={ACCESS_TOKEN}
@@ -477,7 +497,7 @@ export interface Transaction {
   amount?: number | null;
   currency?: 'EUR' | null;
   customerNotes?: string | null;
-  deliveryMethod?: ('address' | 'econt-office' | 'speedy-office') | null;
+  deliveryMethod?: ('boxnow' | 'address' | 'econt-office' | 'speedy-office') | null;
   shippingFee?: number | null;
   shippingAddress?: {
     title?: string | null;
@@ -492,6 +512,26 @@ export interface Transaction {
     country?: string | null;
     phone?: string | null;
   };
+  boxNowLockerId?: string | null;
+  boxNowLockerName?: string | null;
+  boxNowLockerPostalCode?: string | null;
+  boxNowLockerAddress?: string | null;
+  boxNowShipmentStatus?: ('pending' | 'created' | 'error') | null;
+  boxNowDeliveryRequestId?: string | null;
+  boxNowShipmentCreatedAt?: string | null;
+  boxNowShipmentError?: string | null;
+  /**
+   * Колетите, които реално ще изпратите към BoxNow за тази поръчка.
+   */
+  boxNowParcels?:
+    | {
+        description?: string | null;
+        weight: number;
+        compartmentSize: 1 | 2 | 3;
+        boxNowParcelId?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   econtOfficeId?: string | null;
   econtOfficeCode?: string | null;
   econtOfficeName?: string | null;
@@ -1639,6 +1679,23 @@ export interface OrdersSelect<T extends boolean = true> {
         country?: T;
         phone?: T;
       };
+  boxNowLockerId?: T;
+  boxNowLockerName?: T;
+  boxNowLockerPostalCode?: T;
+  boxNowLockerAddress?: T;
+  boxNowShipmentStatus?: T;
+  boxNowDeliveryRequestId?: T;
+  boxNowShipmentCreatedAt?: T;
+  boxNowShipmentError?: T;
+  boxNowParcels?:
+    | T
+    | {
+        description?: T;
+        weight?: T;
+        compartmentSize?: T;
+        boxNowParcelId?: T;
+        id?: T;
+      };
   econtOfficeId?: T;
   econtOfficeCode?: T;
   econtOfficeName?: T;
@@ -1721,6 +1778,23 @@ export interface TransactionsSelect<T extends boolean = true> {
         postalCode?: T;
         country?: T;
         phone?: T;
+      };
+  boxNowLockerId?: T;
+  boxNowLockerName?: T;
+  boxNowLockerPostalCode?: T;
+  boxNowLockerAddress?: T;
+  boxNowShipmentStatus?: T;
+  boxNowDeliveryRequestId?: T;
+  boxNowShipmentCreatedAt?: T;
+  boxNowShipmentError?: T;
+  boxNowParcels?:
+    | T
+    | {
+        description?: T;
+        weight?: T;
+        compartmentSize?: T;
+        boxNowParcelId?: T;
+        id?: T;
       };
   econtOfficeId?: T;
   econtOfficeCode?: T;

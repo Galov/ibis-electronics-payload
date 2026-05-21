@@ -15,6 +15,8 @@ import { Pages } from '@/collections/Pages'
 import { PostCategories } from '@/collections/PostCategories'
 import { Posts } from '@/collections/Posts'
 import { Partners } from '@/collections/Partners'
+import { boxNowLockersHandler } from '@/endpoints/boxnow-lockers'
+import { boxNowCreateShipmentHandler, boxNowParcelLabelHandler } from '@/endpoints/boxnow-order-shipment'
 import { Users } from '@/collections/Users'
 import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
@@ -89,6 +91,21 @@ export default buildConfig({
       handler: recalculateRetailPricesHandler,
       method: 'post',
       path: '/pricing/recalculate',
+    },
+    {
+      handler: boxNowLockersHandler,
+      method: 'get',
+      path: '/integrations/boxnow/lockers',
+    },
+    {
+      handler: boxNowCreateShipmentHandler,
+      method: 'post',
+      path: '/integrations/boxnow/orders/:id/shipment',
+    },
+    {
+      handler: boxNowParcelLabelHandler,
+      method: 'get',
+      path: '/integrations/boxnow/orders/:id/parcels/:parcelId/label.pdf',
     },
     {
       handler: econtOfficesHandler,

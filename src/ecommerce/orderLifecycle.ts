@@ -1,6 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload'
 
 import type { Address, Cart, Product, Transaction, User } from '@/payload-types'
+import type { DeliveryMethod } from '@/utilities/delivery'
 import { getServerSideURL } from '@/utilities/getURL'
 
 import {
@@ -11,8 +12,6 @@ import {
   type OrderEmailItem,
   type OrderEmailPaymentMethod,
 } from './orderEmailTemplates'
-
-export type DeliveryMethod = 'address' | 'econt-office' | 'speedy-office'
 
 export type CheckoutEcontOffice = {
   address?: string
@@ -35,8 +34,18 @@ export type CheckoutSpeedyOffice = {
   stateName?: string
 }
 
+export type CheckoutBoxNowLocker = {
+  address?: string
+  id?: string
+  latitude?: string
+  longitude?: string
+  name?: string
+  postalCode?: string
+}
+
 export type CheckoutPaymentData = {
   billingAddress?: Partial<Address> | Record<string, unknown>
+  boxNowLocker?: CheckoutBoxNowLocker
   customerEmail?: string
   customerNotes?: string
   deliveryMethod?: OrderEmailDeliveryMethod
@@ -68,6 +77,10 @@ type OrderResult = {
 }
 
 type CheckoutTransaction = Transaction & {
+  boxNowLockerAddress?: string | null
+  boxNowLockerId?: string | null
+  boxNowLockerName?: string | null
+  boxNowLockerPostalCode?: string | null
   customerNotes?: string | null
   deliveryMethod?: DeliveryMethod | null
   econtOfficeAddress?: string | null
@@ -106,9 +119,19 @@ export const formatSpeedyOfficeAddress = (office?: CheckoutSpeedyOffice) => {
   return [office.stateName, office.siteName, office.address].filter(Boolean).join(', ')
 }
 
+export const formatBoxNowLockerAddress = (locker?: CheckoutBoxNowLocker) => {
+  if (!locker || (!locker.name && !locker.address && !locker.postalCode)) {
+    return undefined
+  }
+
+  return [locker.postalCode, locker.address].filter(Boolean).join(', ')
+}
+
 const sendOrderEmails = async ({
   adminEmails,
   amount,
+  boxNowLockerAddress,
+  boxNowLockerName,
   currency,
   customerEmail,
   customerNotes,
@@ -128,6 +151,8 @@ const sendOrderEmails = async ({
 }: {
   adminEmails: string[]
   amount: number
+  boxNowLockerAddress?: string
+  boxNowLockerName?: string
   currency: string
   customerEmail?: string
   customerNotes?: string
@@ -147,6 +172,8 @@ const sendOrderEmails = async ({
 }) => {
   const templateArgs = {
     amount,
+    boxNowLockerAddress,
+    boxNowLockerName,
     currency,
     customerEmail,
     customerNotes,
@@ -239,6 +266,10 @@ export const createCheckoutTransactionData = ({
     currency: cart.currency,
     customer: user?.id || undefined,
     ...(resolvedEmail ? { customerEmail: resolvedEmail } : {}),
+    boxNowLockerAddress: formatBoxNowLockerAddress(checkoutData.boxNowLocker),
+    boxNowLockerId: trimToUndefined(checkoutData.boxNowLocker?.id),
+    boxNowLockerName: trimToUndefined(checkoutData.boxNowLocker?.name),
+    boxNowLockerPostalCode: trimToUndefined(checkoutData.boxNowLocker?.postalCode),
     customerNotes: trimToUndefined(checkoutData.customerNotes),
     deliveryMethod: checkoutData.deliveryMethod || 'address',
     econtOfficeAddress: formatEcontOfficeAddress(checkoutData.econtOffice),
@@ -303,6 +334,8 @@ export const finalizeCheckoutTransaction = async ({
     transactionID: transaction.id,
     customerEmail: transaction.customerEmail || null,
     deliveryMethod: transaction.deliveryMethod || null,
+    boxNowLockerAddress: transaction.boxNowLockerAddress || null,
+    boxNowLockerName: transaction.boxNowLockerName || null,
     shippingFee: transaction.shippingFee ?? null,
     speedyOfficeAddress: transaction.speedyOfficeAddress || null,
     speedyOfficeName: transaction.speedyOfficeName || null,
@@ -320,6 +353,10 @@ export const finalizeCheckoutTransaction = async ({
           ? transaction.customer.id
           : transaction.customer || undefined,
       ...(transaction.customerEmail ? { customerEmail: transaction.customerEmail } : {}),
+      boxNowLockerAddress: transaction.boxNowLockerAddress || undefined,
+      boxNowLockerId: transaction.boxNowLockerId || undefined,
+      boxNowLockerName: transaction.boxNowLockerName || undefined,
+      boxNowLockerPostalCode: transaction.boxNowLockerPostalCode || undefined,
       customerNotes: transaction.customerNotes || undefined,
       deliveryMethod: transaction.deliveryMethod || 'address',
       econtOfficeAddress: transaction.econtOfficeAddress || undefined,
@@ -388,6 +425,8 @@ export const finalizeCheckoutTransaction = async ({
     customerEmail: transaction.customerEmail || undefined,
     customerNotes: transaction.customerNotes || undefined,
     deliveryMethod: transaction.deliveryMethod || 'address',
+    boxNowLockerAddress: transaction.boxNowLockerAddress || undefined,
+    boxNowLockerName: transaction.boxNowLockerName || undefined,
     econtOfficeAddress: transaction.econtOfficeAddress || undefined,
     econtOfficeName: transaction.econtOfficeName || undefined,
     items: transaction.items as OrderEmailItem[] | undefined,

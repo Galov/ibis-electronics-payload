@@ -7,6 +7,7 @@ import { StockIndicator } from '@/components/product/StockIndicator'
 import { buildCategoryPath } from '@/utilities/category'
 import { formatLegacyProductDescription } from '@/utilities/formatLegacyProductDescription'
 import Link from 'next/link'
+import Image from 'next/image'
 import React, { Suspense } from 'react'
 
 type ProductCategoryLink = {
@@ -14,6 +15,19 @@ type ProductCategoryLink = {
   slug?: null | string
   title: string
 }
+
+const BoxNowPromoBanner = ({ className = '' }: { className?: string }) => (
+  <div className={className}>
+    <Image
+      alt="Безплатна доставка до BoxNow автомат до края на юли"
+      className="h-auto w-full rounded-[10px]"
+      height={300}
+      priority={false}
+      src="/Free-Delivery-Boxnow.webp"
+      width={1200}
+    />
+  </div>
+)
 
 export function ProductDescription({ product }: { product: Product }) {
   const description = formatLegacyProductDescription(
@@ -36,6 +50,7 @@ export function ProductDescription({ product }: { product: Product }) {
           <Price amount={product.price} />
         </div>
       </div>
+      <BoxNowPromoBanner className="lg:hidden" />
       <div className="grid gap-1.5 text-sm leading-6">
         {brand ? (
           <p>
@@ -91,6 +106,8 @@ export function ProductDescription({ product }: { product: Product }) {
         <Suspense fallback={null}>
           <StockIndicator product={product} />
         </Suspense>
+
+        <BoxNowPromoBanner className="hidden lg:block" />
 
         <div className="flex items-center justify-between">
           <Suspense fallback={null}>

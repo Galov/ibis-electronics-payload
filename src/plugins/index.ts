@@ -256,6 +256,10 @@ const appendTransactionCheckoutSnapshotFields = (fields: any[]): any[] => [
     label: 'Начин на доставка',
     options: [
       {
+        label: 'Автомат на BoxNow',
+        value: 'boxnow',
+      },
+      {
         label: 'Адрес',
         value: 'address',
       },
@@ -432,6 +436,162 @@ const customerNotesField = {
 
 const deliveryDetailFields = [
   {
+    name: 'boxNowLockerId',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      readOnly: true,
+    },
+    label: 'BoxNow locker ID',
+  },
+  {
+    name: 'boxNowLockerName',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      readOnly: true,
+    },
+    label: 'Име на автомат',
+  },
+  {
+    name: 'boxNowLockerPostalCode',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      readOnly: true,
+    },
+    label: 'Пощенски код',
+  },
+  {
+    name: 'boxNowLockerAddress',
+    type: 'textarea',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      readOnly: true,
+    },
+    label: 'Адрес на автомат',
+  },
+  {
+    name: 'boxNowShipmentStatus',
+    type: 'select',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      readOnly: true,
+    },
+    label: 'BoxNow shipment статус',
+    options: [
+      {
+        label: 'Не е създаден',
+        value: 'pending',
+      },
+      {
+        label: 'Създаден',
+        value: 'created',
+      },
+      {
+        label: 'Грешка',
+        value: 'error',
+      },
+    ],
+  },
+  {
+    name: 'boxNowDeliveryRequestId',
+    type: 'text',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      readOnly: true,
+    },
+    label: 'BoxNow delivery request ID',
+  },
+  {
+    name: 'boxNowShipmentCreatedAt',
+    type: 'date',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      date: {
+        pickerAppearance: 'dayAndTime',
+      },
+      readOnly: true,
+    },
+    label: 'BoxNow shipment създаден на',
+  },
+  {
+    name: 'boxNowShipmentError',
+    type: 'textarea',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      readOnly: true,
+    },
+    label: 'Последна BoxNow грешка',
+  },
+  {
+    name: 'boxNowParcels',
+    type: 'array',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      description: 'Колетите, които реално ще изпратите към BoxNow за тази поръчка.',
+    },
+    label: 'BoxNow колети',
+    labels: {
+      plural: 'BoxNow колети',
+      singular: 'BoxNow колет',
+    },
+    fields: [
+      {
+        name: 'description',
+        type: 'text',
+        label: 'Описание',
+      },
+      {
+        name: 'weight',
+        type: 'number',
+        label: 'Тегло (кг)',
+        required: true,
+      },
+      {
+        name: 'compartmentSize',
+        type: 'select',
+        label: 'Размер на клетка',
+        options: [
+          {
+            label: '1',
+            value: 1,
+          },
+          {
+            label: '2',
+            value: 2,
+          },
+          {
+            label: '3',
+            value: 3,
+          },
+        ],
+        required: true,
+      },
+      {
+        name: 'boxNowParcelId',
+        type: 'text',
+        admin: {
+          readOnly: true,
+        },
+        label: 'BoxNow parcel ID',
+      },
+    ],
+  },
+  {
+    name: 'boxNowShipmentActions',
+    type: 'ui',
+    admin: {
+      condition: (_: unknown, siblingData: any) => siblingData?.deliveryMethod === 'boxnow',
+      components: {
+        Field: {
+          path: '@/components/admin/BoxNowShipmentField',
+          exportName: 'BoxNowShipmentField',
+        },
+      },
+    },
+  },
+  {
     name: 'econtOfficeId',
     type: 'text',
     admin: {
@@ -604,6 +764,10 @@ export const plugins: Plugin[] = [
             defaultValue: 'address',
             label: 'Начин на доставка',
             options: [
+              {
+                label: 'Автомат на BoxNow',
+                value: 'boxnow',
+              },
               {
                 label: 'Адрес',
                 value: 'address',

@@ -1,3 +1,5 @@
+import { getDeliveryMethodLabel, getDeliveryPricingNote, type DeliveryMethod } from '@/utilities/delivery'
+
 export type OrderEmailItem = {
   product?: unknown
   productSKU?: string | null
@@ -17,11 +19,13 @@ export type OrderEmailAddress = {
   state?: string | null
 }
 
-export type OrderEmailDeliveryMethod = 'address' | 'speedy-office' | 'econt-office'
+export type OrderEmailDeliveryMethod = DeliveryMethod
 export type OrderEmailPaymentMethod = 'manual' | 'revolut'
 
 type OrderEmailTemplateArgs = {
   amount: number
+  boxNowLockerAddress?: string
+  boxNowLockerName?: string
   currency: string
   customerEmail?: string
   customerNotes?: string
@@ -41,8 +45,6 @@ type OrderEmailTemplateArgs = {
 
 const brandBlue = 'rgb(1,55,186)'
 const logoURL = 'https://ibis-electronics.com/ibis_blue_logo.png'
-const deliveryPricingNote =
-  'Цената не включва доставката. Тя се определя по тарифата на избраната куриерска компания и се заплаща при получаване на пратката.'
 
 export const escapeHTML = (value: unknown) =>
   String(value ?? '')
@@ -86,17 +88,6 @@ export const formatAddressHTML = (address?: OrderEmailAddress | null) => {
     .filter(Boolean)
     .map(escapeHTML)
     .join('<br />')
-}
-
-export const getDeliveryLabel = (deliveryMethod?: OrderEmailDeliveryMethod) => {
-  switch (deliveryMethod) {
-    case 'econt-office':
-      return 'Офис на Econt'
-    case 'speedy-office':
-      return 'Офис на Speedy'
-    default:
-      return 'До адрес'
-  }
 }
 
 export const getPaymentMethodLabel = (paymentMethod?: OrderEmailPaymentMethod) => {
@@ -223,20 +214,25 @@ const buildLayout = ({
 `
 
 export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
-  const deliveryLabel = getDeliveryLabel(args.deliveryMethod)
+  const deliveryLabel = getDeliveryMethodLabel(args.deliveryMethod)
   const paymentMethodLabel = getPaymentMethodLabel(args.paymentMethod)
   const officeName =
-    args.deliveryMethod === 'econt-office'
-      ? args.econtOfficeName
-      : args.deliveryMethod === 'speedy-office'
-        ? args.speedyOfficeName
-        : undefined
+    args.deliveryMethod === 'boxnow'
+      ? args.boxNowLockerName
+      : args.deliveryMethod === 'econt-office'
+        ? args.econtOfficeName
+        : args.deliveryMethod === 'speedy-office'
+          ? args.speedyOfficeName
+          : undefined
   const officeAddress =
-    args.deliveryMethod === 'econt-office'
-      ? args.econtOfficeAddress
-      : args.deliveryMethod === 'speedy-office'
-        ? args.speedyOfficeAddress
-        : undefined
+    args.deliveryMethod === 'boxnow'
+      ? args.boxNowLockerAddress
+      : args.deliveryMethod === 'econt-office'
+        ? args.econtOfficeAddress
+        : args.deliveryMethod === 'speedy-office'
+          ? args.speedyOfficeAddress
+          : undefined
+  const deliveryPricingNote = getDeliveryPricingNote(args.deliveryMethod)
 
   return buildLayout({
     heading: 'Поръчката е приета',
@@ -271,22 +267,27 @@ export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
 }
 
 export const buildAdminOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
-  const deliveryLabel = getDeliveryLabel(args.deliveryMethod)
+  const deliveryLabel = getDeliveryMethodLabel(args.deliveryMethod)
   const paymentMethodLabel = getPaymentMethodLabel(args.paymentMethod)
   const officeName =
-    args.deliveryMethod === 'econt-office'
-      ? args.econtOfficeName
-      : args.deliveryMethod === 'speedy-office'
-        ? args.speedyOfficeName
-        : undefined
+    args.deliveryMethod === 'boxnow'
+      ? args.boxNowLockerName
+      : args.deliveryMethod === 'econt-office'
+        ? args.econtOfficeName
+        : args.deliveryMethod === 'speedy-office'
+          ? args.speedyOfficeName
+          : undefined
   const officeAddress =
-    args.deliveryMethod === 'econt-office'
-      ? args.econtOfficeAddress
-      : args.deliveryMethod === 'speedy-office'
-        ? args.speedyOfficeAddress
-        : undefined
+    args.deliveryMethod === 'boxnow'
+      ? args.boxNowLockerAddress
+      : args.deliveryMethod === 'econt-office'
+        ? args.econtOfficeAddress
+        : args.deliveryMethod === 'speedy-office'
+          ? args.speedyOfficeAddress
+          : undefined
   const shippingAddressHTML = formatAddressHTML(args.shippingAddress)
   const notes = args.customerNotes?.trim()
+  const deliveryPricingNote = getDeliveryPricingNote(args.deliveryMethod)
 
   return buildLayout({
     heading: `Нова поръчка #${args.orderID}`,

@@ -60,6 +60,7 @@ const extractCheckoutData = (...candidates: Array<RevolutAdapterData | undefined
 
     if (
       candidate.deliveryMethod ||
+      candidate.boxNowLocker ||
       candidate.econtOffice ||
       candidate.speedyOffice ||
       candidate.customerNotes ||
@@ -221,6 +222,7 @@ const resolveRevolutTransaction = async ({
   if (
     checkoutData.deliveryMethod ||
     typeof checkoutData.shippingFee === 'number' ||
+    checkoutData.boxNowLocker ||
     checkoutData.econtOffice ||
     checkoutData.speedyOffice ||
     checkoutData.shippingAddress
@@ -274,6 +276,10 @@ const resolveRevolutTransaction = async ({
           amount: refreshedSnapshot.amount,
           billingAddress: refreshedSnapshot.billingAddress,
           ...(refreshedSnapshot.customerEmail ? { customerEmail: refreshedSnapshot.customerEmail } : {}),
+          boxNowLockerAddress: refreshedSnapshot.boxNowLockerAddress,
+          boxNowLockerId: refreshedSnapshot.boxNowLockerId,
+          boxNowLockerName: refreshedSnapshot.boxNowLockerName,
+          boxNowLockerPostalCode: refreshedSnapshot.boxNowLockerPostalCode,
           customerNotes: refreshedSnapshot.customerNotes,
           deliveryMethod: refreshedSnapshot.deliveryMethod,
           econtOfficeAddress: refreshedSnapshot.econtOfficeAddress,
@@ -299,13 +305,15 @@ const resolveRevolutTransaction = async ({
           msg: 'Revolut confirm refreshed checkout snapshot',
           transactionID: resolvedTransaction.id,
           customerEmail: refreshedSnapshot.customerEmail || null,
-        deliveryMethod: refreshedSnapshot.deliveryMethod || null,
-        shippingFee: refreshedSnapshot.shippingFee ?? null,
-        speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress || null,
-        speedyOfficeName: refreshedSnapshot.speedyOfficeName || null,
-        econtOfficeAddress: refreshedSnapshot.econtOfficeAddress || null,
-        econtOfficeName: refreshedSnapshot.econtOfficeName || null,
-      })
+          deliveryMethod: refreshedSnapshot.deliveryMethod || null,
+          boxNowLockerAddress: refreshedSnapshot.boxNowLockerAddress || null,
+          boxNowLockerName: refreshedSnapshot.boxNowLockerName || null,
+          shippingFee: refreshedSnapshot.shippingFee ?? null,
+          speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress || null,
+          speedyOfficeName: refreshedSnapshot.speedyOfficeName || null,
+          econtOfficeAddress: refreshedSnapshot.econtOfficeAddress || null,
+          econtOfficeName: refreshedSnapshot.econtOfficeName || null,
+        })
     }
   }
 
@@ -429,6 +437,14 @@ export const revolutAdapter = (): PaymentAdapter => ({
       msg: 'Revolut initiate received checkout data',
       customerEmail: checkoutData.customerEmail || null,
       deliveryMethod: checkoutData.deliveryMethod || null,
+      boxNowLockerAddress:
+        checkoutData.boxNowLocker && typeof checkoutData.boxNowLocker.address === 'string'
+          ? checkoutData.boxNowLocker.address
+          : null,
+      boxNowLockerName:
+        checkoutData.boxNowLocker && typeof checkoutData.boxNowLocker.name === 'string'
+          ? checkoutData.boxNowLocker.name
+          : null,
       shippingFee:
         typeof checkoutData.shippingFee === 'number' && Number.isFinite(checkoutData.shippingFee)
           ? checkoutData.shippingFee
@@ -472,6 +488,8 @@ export const revolutAdapter = (): PaymentAdapter => ({
       transactionID: transaction.id,
       customerEmail: transaction.customerEmail || null,
       deliveryMethod: transaction.deliveryMethod || null,
+      boxNowLockerAddress: transaction.boxNowLockerAddress || null,
+      boxNowLockerName: transaction.boxNowLockerName || null,
       shippingFee: transaction.shippingFee ?? null,
       speedyOfficeAddress: transaction.speedyOfficeAddress || null,
       speedyOfficeName: transaction.speedyOfficeName || null,

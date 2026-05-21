@@ -12,7 +12,15 @@ type Props = {
   customerNotes?: string
   billingAddress?: Partial<Address>
   disabled?: boolean
-  deliveryMethod: 'address' | 'speedy-office' | 'econt-office'
+  deliveryMethod: 'address' | 'boxnow' | 'speedy-office' | 'econt-office'
+  boxNowLocker?: {
+    address: string
+    id: string
+    latitude: string
+    longitude: string
+    name: string
+    postalCode: string
+  } | null
   econtOffice?: {
     address: string
     cityId: string
@@ -49,6 +57,7 @@ export const CheckoutForm: React.FC<Props> = ({
   customerEmail,
   customerNotes,
   billingAddress,
+  boxNowLocker,
   disabled = false,
   deliveryMethod,
   econtOffice,
@@ -77,6 +86,7 @@ export const CheckoutForm: React.FC<Props> = ({
       customerEmail: effectiveCustomerEmail,
       customerNotes: customerNotes?.trim() || undefined,
       deliveryMethod,
+      ...(deliveryMethod === 'boxnow' && boxNowLocker ? { boxNowLocker } : {}),
       ...(deliveryMethod === 'econt-office' && econtOffice ? { econtOffice } : {}),
       shippingFee,
       ...(deliveryMethod === 'speedy-office' && speedyOffice ? { speedyOffice } : {}),
@@ -84,6 +94,7 @@ export const CheckoutForm: React.FC<Props> = ({
     }),
     [
       billingAddress,
+      boxNowLocker,
       customerNotes,
       deliveryMethod,
       econtOffice,
