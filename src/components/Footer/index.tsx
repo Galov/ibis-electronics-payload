@@ -1,4 +1,5 @@
 import { CMSLink } from '@/components/Link'
+import { OpenCookiePreferencesButton } from '@/components/CookieConsent/OpenPreferencesButton'
 import { SiteLogo } from '@/components/Logo/SiteLogo'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import type { ContactPage, Footer as FooterGlobal } from '@/payload-types'
@@ -93,8 +94,10 @@ export async function Footer() {
       </div>
 
       <div className="border-t border-white/15 bg-[rgb(1,55,186)] py-6 text-sm">
-        <div className="container mx-auto flex w-full flex-col items-center gap-1 md:flex-row md:gap-0">
+        <div className="container mx-auto flex w-full flex-col items-center gap-2 md:flex-row md:flex-wrap md:gap-y-2">
           <p>&copy; 2026 Ibis Electronics. Всички права запазени.</p>
+          <hr className="mx-4 hidden h-4 w-px border-l border-white/30 md:inline-block" />
+          <OpenCookiePreferencesButton className="text-white/82 transition hover:text-white" />
           <hr className="mx-4 hidden h-4 w-px border-l border-white/30 md:inline-block" />
           <p className="md:ml-auto">
             Създаден от{' '}

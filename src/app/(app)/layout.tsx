@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
 
 import { AdminBar } from '@/components/AdminBar'
+import { CookieConsentBanner } from '@/components/CookieConsent/Banner'
+import { COOKIE_CONSENT_STORAGE_KEY } from '@/components/CookieConsent/shared'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
@@ -58,6 +60,33 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <link href="/logo-sign.png" rel="icon" sizes="32x32" type="image/png" />
         <link href="/logo-sign.png" rel="apple-touch-icon" />
         {gtmID ? (
+          <Script id="google-consent-mode" strategy="beforeInteractive">{`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            window.gtag = window.gtag || gtag;
+
+            (function () {
+              var storedChoice = null;
+
+              try {
+                storedChoice = window.localStorage.getItem('${COOKIE_CONSENT_STORAGE_KEY}');
+              } catch (error) {
+                storedChoice = null;
+              }
+
+              var analyticsState = storedChoice === 'accepted' ? 'granted' : 'denied';
+
+              gtag('consent', 'default', {
+                ad_personalization: 'denied',
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                analytics_storage: analyticsState,
+                wait_for_update: 500
+              });
+            })();
+          `}</Script>
+        ) : null}
+        {gtmID ? (
           <Script
             id="google-tag-manager"
             strategy="afterInteractive"
@@ -95,6 +124,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            <CookieConsentBanner analyticsEnabled={Boolean(gtmID)} />
           </div>
         </Providers>
       </body>
