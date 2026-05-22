@@ -97,8 +97,8 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-black/10 bg-white/96 shadow-[0_-12px_32px_rgba(15,23,42,0.12)] backdrop-blur">
       <div className="container py-4 md:py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
+          <div className="flex max-w-3xl flex-col justify-center">
             <p className="type-subsection-title text-primary/90">Настройки за бисквитките</p>
             <p className="mt-2 text-sm leading-6 text-primary/68">
               Използваме необходими бисквитки за работата на сайта и по избор аналитични
@@ -110,7 +110,7 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
             </p>
           </div>
 
-          <div className="w-full max-w-xl rounded-[10px] border border-black/8 bg-white p-4">
+          <div className="flex w-full max-w-xl flex-col justify-center rounded-[10px] border border-black/8 bg-white p-4">
             <label className="flex items-start gap-3">
               <input
                 checked={analyticsSelected}
