@@ -14,9 +14,12 @@ import React from 'react'
 import { getBaseURL } from '@/utilities/getBaseURL'
 import { getSocialImageURL } from '@/utilities/getSocialImageURL'
 import { buildOrganizationSchema } from '@/utilities/schema'
+import Script from 'next/script'
 import './globals.css'
 
 export const dynamic = 'force-dynamic'
+
+const gtmID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || ''
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -54,6 +57,18 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <InitTheme />
         <link href="/logo-sign.png" rel="icon" sizes="32x32" type="image/png" />
         <link href="/logo-sign.png" rel="apple-touch-icon" />
+        {gtmID ? (
+          <Script
+            id="google-tag-manager"
+            strategy="afterInteractive"
+          >{`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','${gtmID}');
+          `}</Script>
+        ) : null}
         <script
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(organizationJsonLd),
@@ -62,6 +77,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         />
       </head>
       <body className="min-h-screen">
+        {gtmID ? (
+          <noscript>
+            <iframe
+              height="0"
+              src={`https://www.googletagmanager.com/ns.html?id=${gtmID}`}
+              style={{ display: 'none', visibility: 'hidden' }}
+              width="0"
+            />
+          </noscript>
+        ) : null}
         <Providers>
           <div className="flex min-h-screen flex-col">
             <AdminBar />

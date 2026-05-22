@@ -57,6 +57,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_SERVER_URL=${{ vars.NEXT_PUBLIC_SERVER_URL }}
             PAYLOAD_PUBLIC_SERVER_URL=${{ vars.PAYLOAD_PUBLIC_SERVER_URL }}
+            NEXT_PUBLIC_GTM_ID=${{ vars.NEXT_PUBLIC_GTM_ID }}
             NEXT_PUBLIC_R2_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_R2_PUBLIC_BASE_URL }}
 
   deploy:
