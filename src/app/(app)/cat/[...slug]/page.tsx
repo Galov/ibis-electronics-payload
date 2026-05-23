@@ -133,7 +133,7 @@ const queryCategoryBySegments = async ({ segments }: { segments: string[] }) => 
   const result = await payload.find({
     collection: 'categories',
     depth: 10,
-    limit: 100,
+    limit: 1000,
     pagination: false,
     where: {
       slug: {

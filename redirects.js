@@ -1,3 +1,5 @@
+import categoryRedirects from './categoryRedirects.generated.js'
+
 const redirects = async () => {
   const internetExplorerRedirect = {
     destination: '/ie-incompatible.html',
@@ -18,7 +20,7 @@ const redirects = async () => {
     source: '/produkt/:slug',
   }
 
-  const redirects = [legacyProductRedirect, internetExplorerRedirect]
+  const redirects = [...categoryRedirects, legacyProductRedirect, internetExplorerRedirect]
 
   return redirects
 }
