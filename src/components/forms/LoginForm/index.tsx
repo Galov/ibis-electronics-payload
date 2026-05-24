@@ -48,7 +48,7 @@ export const LoginForm: React.FC = () => {
           )
         }
         if (redirect?.current) router.push(redirect.current)
-        else router.push('/shop')
+        else router.push('/magazin')
       } catch (_) {
         setError('Въведените данни за вход са невалидни. Опитайте отново.')
       }

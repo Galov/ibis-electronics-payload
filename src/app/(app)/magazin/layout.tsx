@@ -1,5 +1,6 @@
 import { Categories } from '@/components/layout/search/Categories'
 import { ShopBanner } from '@/components/shop/ShopBanner'
+import { ShopLayoutSkeleton } from '@/components/shop/ShopLayoutSkeleton'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React, { Suspense } from 'react'
@@ -12,7 +13,7 @@ export default async function MagazinLayout({ children }: { children: React.Reac
   })
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ShopLayoutSkeleton />}>
       <div className="container my-16 flex flex-col gap-8 pb-4">
         <ShopBanner banner={shopPage?.topBanner} priority />
 

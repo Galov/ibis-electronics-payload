@@ -46,7 +46,7 @@ export const buildCategoryPublicSegments = (category?: (CategoryLike | null) | n
 export const buildCategoryPath = (category?: (CategoryLike | null) | null) => {
   const segments = buildCategoryPublicSegments(category)
 
-  if (segments.length === 0) return '/shop'
+  if (segments.length === 0) return '/magazin'
 
   return `/cat/${segments.map(encodeURIComponent).join('/')}`
 }

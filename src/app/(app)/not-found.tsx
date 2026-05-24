@@ -29,7 +29,7 @@ export default function NotFound() {
                 asChild
                 className="h-12 rounded-md border-[rgb(1,55,186)] bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)] hover:text-white"
               >
-                <Link href="/shop">Към каталога</Link>
+                <Link href="/magazin">Към каталога</Link>
               </Button>
 
               <Button asChild className="h-12 rounded-md px-7 text-sm font-normal" variant="outline">
@@ -44,7 +44,7 @@ export default function NotFound() {
             <div className="mt-6 space-y-5">
               <Link
                 className="group block border-b border-black/6 pb-5 last:border-b-0 last:pb-0"
-                href="/shop"
+                href="/magazin"
               >
                 <p className="type-subsection-title text-primary transition group-hover:text-[rgb(1,55,186)]">
                   Каталог

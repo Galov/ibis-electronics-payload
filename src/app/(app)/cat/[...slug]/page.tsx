@@ -68,7 +68,7 @@ export default async function CategoryPage({ params }: Args) {
       />
       <div className="mb-5">
         <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-primary/55">
-          <Link className="transition hover:text-primary/80" href="/shop">
+          <Link className="transition hover:text-primary/80" href="/magazin">
             Каталог
           </Link>
           {categoryTrail.map((item) => (

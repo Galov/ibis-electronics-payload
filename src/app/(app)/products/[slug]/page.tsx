@@ -132,7 +132,7 @@ export default async function ProductPage({ params }: Args) {
       <div className="container pt-8 pb-8">
         <div className="mb-3">
           <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-primary/55">
-            <Link className="transition hover:text-primary/80" href="/shop">
+            <Link className="transition hover:text-primary/80" href="/magazin">
               Каталог
             </Link>
             {parentCategory?.slug && parentCategory?.title ? (

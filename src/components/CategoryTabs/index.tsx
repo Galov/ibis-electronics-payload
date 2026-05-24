@@ -11,6 +11,7 @@ async function List() {
     collection: 'categories',
     sort: 'title',
     select: {
+      id: true,
       title: true,
       slug: true,
     },
@@ -18,7 +19,7 @@ async function List() {
 
   const categories = categoriesData.docs?.map((category) => {
     return {
-      href: `/shop/${category.slug}`,
+      href: `/magazin?category=${category.id}`,
       title: category.title,
     }
   })
@@ -27,7 +28,7 @@ async function List() {
     <React.Fragment>
       <nav>
         <ul className="flex gap-3">
-          <Item title="All" href="/shop" />
+          <Item title="All" href="/magazin" />
           <Suspense fallback={null}>
             {categories.map((category) => {
               return <Item {...category} key={category.href} />

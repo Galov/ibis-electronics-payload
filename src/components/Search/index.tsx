@@ -273,11 +273,11 @@ export const Search: React.FC<Props> = ({
 
     newParams.delete('page')
 
-    router.push(createUrl('/shop', newParams))
+    router.push(createUrl('/magazin', newParams))
   }
 
   function onResetFilters() {
-    router.push('/shop')
+    router.push('/magazin')
   }
 
   function onRemoveFilter(filterKey: ActiveFilter['key']) {
@@ -306,7 +306,7 @@ export const Search: React.FC<Props> = ({
 
     nextParams.delete('page')
 
-    router.push(createUrl('/shop', nextParams))
+    router.push(createUrl('/magazin', nextParams))
   }
 
   function onBrandFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -318,7 +318,7 @@ export const Search: React.FC<Props> = ({
       const nextParams = new URLSearchParams(searchParams.toString())
       nextParams.delete('brand')
       nextParams.delete('page')
-      router.push(createUrl('/shop', nextParams))
+      router.push(createUrl('/magazin', nextParams))
     }
   }
 
@@ -330,7 +330,7 @@ export const Search: React.FC<Props> = ({
     nextParams.set('brand', brand.slug)
     nextParams.delete('page')
 
-    router.push(createUrl('/shop', nextParams))
+    router.push(createUrl('/magazin', nextParams))
   }
 
   function onClearBrandFilter() {
@@ -341,7 +341,7 @@ export const Search: React.FC<Props> = ({
     nextParams.delete('brand')
     nextParams.delete('page')
 
-    router.push(createUrl('/shop', nextParams))
+    router.push(createUrl('/magazin', nextParams))
   }
 
   return (

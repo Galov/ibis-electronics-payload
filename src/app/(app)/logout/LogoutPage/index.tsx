@@ -31,7 +31,7 @@ export const LogoutPage: React.FC = () => {
             Какво искате да направите сега?
             <Fragment>
               {' '}
-              <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/shop">
+              <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/magazin">
                 Натиснете тук
               </Link>
               {` за да разгледате каталога.`}

@@ -158,7 +158,7 @@ export const CheckoutPage: React.FC<{
     return (
       <div className="w-full py-12 text-primary/70">
         <p className="mb-3 text-lg">Количката е празна.</p>
-        <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/shop">
+        <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/magazin">
           Продължи с пазаруването
         </Link>
       </div>

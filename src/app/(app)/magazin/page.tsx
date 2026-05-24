@@ -200,7 +200,7 @@ export default async function MagazinPage({ searchParams }: Props) {
           </Grid>
           <CatalogPagination
             currentPage={currentPage}
-            pathname="/shop"
+            pathname="/magazin"
             searchParams={resolvedSearchParams}
             totalPages={pageSize === 'all' ? 1 : products.totalPages}
           />

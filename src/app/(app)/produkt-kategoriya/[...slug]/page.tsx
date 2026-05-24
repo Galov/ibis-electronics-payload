@@ -62,7 +62,7 @@ export default async function LegacyCategoryPage({ params }: Props) {
   const { slug } = await params
 
   if (!slug?.length) {
-    redirect('/shop')
+    redirect('/magazin')
   }
 
   const category = await queryCategoryBySegments({ segments: slug })
@@ -77,7 +77,7 @@ export default async function LegacyCategoryPage({ params }: Props) {
     .trim()
 
   if (!normalizedSearchTerm) {
-    redirect('/shop')
+    redirect('/magazin')
   }
 
   const qs = new URLSearchParams({
