@@ -10,6 +10,7 @@ import { generateMeta } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
 import type { Metadata } from 'next'
 import { getPayload, type Where } from 'payload'
+import { Suspense } from 'react'
 
 type SearchParams = { [key: string]: string | string[] | undefined }
 
@@ -41,6 +42,14 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function MagazinPage({ searchParams }: Props) {
+  return (
+    <Suspense fallback={<MagazinPageSkeleton />}>
+      <MagazinPageContent searchParams={searchParams} />
+    </Suspense>
+  )
+}
+
+async function MagazinPageContent({ searchParams }: Props) {
   const resolvedSearchParams = await searchParams
   const {
     brand,
@@ -207,6 +216,49 @@ export default async function MagazinPage({ searchParams }: Props) {
           <ShopBanner banner={shopPage?.bottomBanner} className="mt-8" />
         </>
       ) : null}
+    </div>
+  )
+}
+
+function MagazinPageSkeleton() {
+  return (
+    <div aria-hidden="true">
+      <section className="mb-6 rounded-[6px] bg-[rgb(250,251,253)] px-4 py-5 md:px-5 md:py-6">
+        <div className="hidden md:block">
+          <div className="shop-skeleton h-14 w-full rounded-[12px] bg-[rgb(237,242,250)]" />
+        </div>
+
+        <div className="mt-5 flex items-center justify-between gap-4">
+          <div className="space-y-3">
+            <div className="shop-skeleton h-4 w-40 rounded-[8px] bg-[rgb(237,242,250)]" />
+            <div className="shop-skeleton h-4 w-56 rounded-[8px] bg-[rgb(237,242,250)]" />
+          </div>
+
+          <div className="hidden gap-3 md:flex">
+            <div className="shop-skeleton h-10 w-36 rounded-[8px] bg-[rgb(237,242,250)]" />
+            <div className="shop-skeleton h-10 w-28 rounded-[8px] bg-[rgb(237,242,250)]" />
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="rounded-[12px] border border-[rgb(1,55,186)]/8 bg-white p-4 shadow-[0_12px_26px_rgba(15,23,42,0.04)]"
+          >
+            <div className="shop-skeleton mb-4 aspect-square w-full rounded-[10px] bg-[rgb(237,242,250)]" />
+            <div className="shop-skeleton mb-3 h-4 w-5/6 rounded-[8px] bg-[rgb(237,242,250)]" />
+            <div className="shop-skeleton mb-3 h-4 w-2/3 rounded-[8px] bg-[rgb(237,242,250)]" />
+            <div className="shop-skeleton mb-5 h-4 w-1/2 rounded-[8px] bg-[rgb(237,242,250)]" />
+
+            <div className="flex items-center justify-between gap-3">
+              <div className="shop-skeleton h-6 w-20 rounded-[8px] bg-[rgb(237,242,250)]" />
+              <div className="shop-skeleton h-10 w-12 rounded-full bg-[rgb(237,242,250)]" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
