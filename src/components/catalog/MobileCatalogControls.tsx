@@ -9,16 +9,35 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { SlidersHorizontal } from 'lucide-react'
-import React from 'react'
+import React, { createContext, useContext, useMemo, useState } from 'react'
 
 type Props = {
   children: React.ReactNode
 }
 
+type MobileCatalogControlsContextValue = {
+  closeSheet: () => void
+}
+
+const MobileCatalogControlsContext = createContext<MobileCatalogControlsContextValue | null>(null)
+
+export function useMobileCatalogControls() {
+  return useContext(MobileCatalogControlsContext)
+}
+
 export function MobileCatalogControls({ children }: Props) {
+  const [isOpen, setIsOpen] = useState(false)
+  const contextValue = useMemo<MobileCatalogControlsContextValue>(
+    () => ({
+      closeSheet: () => setIsOpen(false),
+    }),
+    [],
+  )
+
   return (
     <div className="md:hidden">
-      <Sheet>
+      <MobileCatalogControlsContext.Provider value={contextValue}>
+        <Sheet onOpenChange={setIsOpen} open={isOpen}>
         <SheetTrigger asChild>
           <button
             type="button"
@@ -45,7 +64,8 @@ export function MobileCatalogControls({ children }: Props) {
 
           <div className="flex flex-col gap-2">{children}</div>
         </SheetContent>
-      </Sheet>
+        </Sheet>
+      </MobileCatalogControlsContext.Provider>
     </div>
   )
 }

@@ -1,9 +1,10 @@
 'use client'
 
+import { useMobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utilities/cn'
 import { createUrl } from '@/utilities/createUrl'
-import { SearchIcon, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
@@ -35,6 +36,7 @@ export const Search: React.FC<Props> = ({
   className,
   showBrandFilter = false,
 }) => {
+  const mobileCatalogControls = useMobileCatalogControls()
   const router = useRouter()
   const searchParams = useSearchParams()
   const searchQuery = searchParams?.get('q') || ''
@@ -111,7 +113,7 @@ export const Search: React.FC<Props> = ({
 
   const placeholder = useMemo(() => {
     if (selectedCategoryTitle) {
-      return `Търси по име, марка, категория, производител, номер в ${selectedCategoryTitle}`
+      return `Търси в ${selectedCategoryTitle}`
     }
 
     return 'Търси по име, марка, категория, производител, номер във всички продукти'
@@ -189,6 +191,7 @@ export const Search: React.FC<Props> = ({
     return availableBrands.filter((brand) => brand.title.toLowerCase().includes(query))
   }, [availableBrands, selectedBrandTitle])
 
+  const isInsideMobileCatalogSheet = Boolean(mobileCatalogControls)
   const showRefinementSection = showBrandFilter || activeFilters.length > 0
 
   useEffect(() => {
@@ -274,6 +277,7 @@ export const Search: React.FC<Props> = ({
     newParams.delete('page')
 
     router.push(createUrl('/magazin', newParams))
+    mobileCatalogControls?.closeSheet()
   }
 
   function onResetFilters() {
@@ -351,6 +355,23 @@ export const Search: React.FC<Props> = ({
         className,
       )}
     >
+      {isInsideMobileCatalogSheet && selectedCategoryTitle ? (
+        <div className="mb-4 rounded-md bg-[rgb(250,251,253)] px-4 py-3">
+          <p className="text-sm leading-6 text-primary/78">
+            Търси в <span className="font-medium text-primary">{selectedCategoryTitle}</span> или
+            разгледай всички продукти в тази категория.
+          </p>
+          <Button
+            className="mt-3 h-11 w-full rounded-md px-4 text-sm font-normal text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]"
+            onClick={() => mobileCatalogControls?.closeSheet()}
+            type="button"
+            variant="outline"
+          >
+            Покажи всички продукти в {selectedCategoryTitle}
+          </Button>
+        </div>
+      ) : null}
+
       <form
         className={cn(
           'grid w-full items-stretch gap-3 transition-[grid-template-columns] ease-in-out md:[grid-template-columns:minmax(0,1fr)_10.5rem_var(--reset-width)]',
@@ -366,7 +387,7 @@ export const Search: React.FC<Props> = ({
         <div className="relative">
           <input
             autoComplete="off"
-            className="h-12 w-full rounded-md border bg-white px-5 pr-12 text-[16px] text-black placeholder:text-neutral-500 md:text-sm dark:border-neutral-800 dark:bg-black dark:text-white dark:placeholder:text-neutral-400"
+            className="h-12 w-full rounded-md border bg-white px-5 text-[16px] text-black placeholder:text-neutral-500 md:text-sm dark:border-neutral-800 dark:bg-black dark:text-white dark:placeholder:text-neutral-400"
             defaultValue={searchQuery}
             key={searchQuery}
             name="searchQuery"
@@ -376,14 +397,11 @@ export const Search: React.FC<Props> = ({
           />
           <div
             className={cn(
-              'pointer-events-none absolute inset-y-0 left-5 right-12 flex items-center text-[16px] text-neutral-500 transition-opacity duration-1000 ease-in-out md:text-sm dark:text-neutral-400',
+              'pointer-events-none absolute inset-y-0 left-5 right-5 flex items-center text-[16px] text-neutral-500 transition-opacity duration-1000 ease-in-out md:text-sm dark:text-neutral-400',
               isPlaceholderVisible && !searchInputValue.trim() ? 'opacity-100' : 'opacity-0',
             )}
           >
             <span className="truncate">{animatedPlaceholder}</span>
-          </div>
-          <div className="absolute right-0 top-0 mr-3 flex h-full items-center">
-            <SearchIcon className="h-4" />
           </div>
         </div>
         <Button

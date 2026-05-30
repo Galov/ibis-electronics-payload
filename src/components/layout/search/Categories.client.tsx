@@ -102,23 +102,25 @@ export const CategoryItem: React.FC<ItemProps> = ({
   return (
     <li>
       <div
-        className="flex items-start gap-2 py-1"
+        className="flex items-center gap-2 py-1.5"
         style={{ paddingLeft: `${level * 14}px` }}
       >
         {category.children.length > 0 ? (
-          <button
-            type="button"
-            aria-label={isExpanded ? 'Свий категорията' : 'Разгърни категорията'}
-            className="flex h-6 w-6 shrink-0 items-center justify-center text-[rgb(1,55,186)]/88 transition hover:text-[rgb(1,55,186)]"
-            onClick={() => onToggleCategory(category.id)}
-          >
-            <ChevronRight
-              className={clsx('h-4 w-4 transition-transform duration-300', {
-                'rotate-90': isExpanded,
-              })}
-              strokeWidth={2.8}
-            />
-          </button>
+          <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
+            <button
+              type="button"
+              aria-label={isExpanded ? 'Свий категорията' : 'Разгърни категорията'}
+              className="absolute -inset-1 flex items-center justify-center text-[rgb(1,55,186)] transition hover:text-[rgb(0,46,158)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(1,55,186)]/25 focus-visible:ring-offset-2"
+              onClick={() => onToggleCategory(category.id)}
+            >
+              <ChevronRight
+                className={clsx('h-4 w-4 transition-transform duration-300', {
+                  'rotate-90': isExpanded,
+                })}
+                strokeWidth={2.8}
+              />
+            </button>
+          </span>
         ) : (
           <span className="w-6 shrink-0" />
         )}
