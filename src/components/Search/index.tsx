@@ -55,6 +55,7 @@ export const Search: React.FC<Props> = ({
   const selectedBrandSlug = searchParams?.get('brand')
   const brandFilterRef = useRef<HTMLDivElement | null>(null)
   const refinementRef = useRef<HTMLDivElement | null>(null)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -191,8 +192,23 @@ export const Search: React.FC<Props> = ({
     return availableBrands.filter((brand) => brand.title.toLowerCase().includes(query))
   }, [availableBrands, selectedBrandTitle])
 
-  const isInsideMobileCatalogSheet = Boolean(mobileCatalogControls)
   const showRefinementSection = showBrandFilter || activeFilters.length > 0
+
+  useEffect(() => {
+    if (!mobileCatalogControls) return
+
+    mobileCatalogControls.registerSearchFocusHandler(() => {
+      searchInputRef.current?.focus()
+      searchInputRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    })
+
+    return () => {
+      mobileCatalogControls.registerSearchFocusHandler(null)
+    }
+  }, [mobileCatalogControls])
 
   useEffect(() => {
     if (showRefinementSection) {
@@ -281,6 +297,11 @@ export const Search: React.FC<Props> = ({
   }
 
   function onResetFilters() {
+    setSelectedBrandTitle('')
+    setSelectedCategoryTitle(null)
+    setIsBrandDropdownOpen(false)
+    setSearchInputValue('')
+    mobileCatalogControls?.resetControls()
     router.push('/magazin')
   }
 
@@ -355,23 +376,6 @@ export const Search: React.FC<Props> = ({
         className,
       )}
     >
-      {isInsideMobileCatalogSheet && selectedCategoryTitle ? (
-        <div className="mb-4 rounded-md bg-[rgb(250,251,253)] px-4 py-3">
-          <p className="text-sm leading-6 text-primary/78">
-            Търси в <span className="font-medium text-primary">{selectedCategoryTitle}</span> или
-            разгледай всички продукти в тази категория.
-          </p>
-          <Button
-            className="mt-3 h-11 w-full rounded-md px-4 text-sm font-normal text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]"
-            onClick={() => mobileCatalogControls?.closeSheet()}
-            type="button"
-            variant="outline"
-          >
-            Покажи всички продукти в {selectedCategoryTitle}
-          </Button>
-        </div>
-      ) : null}
-
       <form
         className={cn(
           'grid w-full items-stretch gap-3 transition-[grid-template-columns] ease-in-out md:[grid-template-columns:minmax(0,1fr)_10.5rem_var(--reset-width)]',
@@ -393,6 +397,7 @@ export const Search: React.FC<Props> = ({
             name="searchQuery"
             onChange={(event) => setSearchInputValue(event.target.value)}
             placeholder=""
+            ref={searchInputRef}
             type="text"
           />
           <div

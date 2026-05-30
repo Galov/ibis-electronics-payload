@@ -1,5 +1,5 @@
 import { CatalogPagination } from '@/components/catalog/CatalogPagination'
-import { MobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
+import { MobileCatalogControls, MobileCatalogStickyFooter } from '@/components/catalog/MobileCatalogControls'
 import { Grid } from '@/components/Grid'
 import { Categories } from '@/components/layout/search/Categories'
 import { SortToolbar } from '@/components/layout/search/SortToolbar'
@@ -186,12 +186,12 @@ async function MagazinPageContent({ searchParams }: Props) {
         <div className="max-h-[55dvh] overflow-y-auto pr-1">
           <Categories />
         </div>
-        <div className="sticky bottom-0 z-10 bg-white pt-2">
+        <MobileCatalogStickyFooter>
           <Search
             availableBrands={availableBrands}
             showBrandFilter={Boolean(searchValue) && products.docs.length > 0}
           />
-        </div>
+        </MobileCatalogStickyFooter>
         {products?.docs.length > 0 ? <SortToolbar pageSize={pageSize} /> : null}
       </MobileCatalogControls>
 

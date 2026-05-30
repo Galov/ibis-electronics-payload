@@ -1,4 +1,5 @@
 'use client'
+import { useMobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
@@ -74,6 +75,7 @@ export const CategoryItem: React.FC<ItemProps> = ({
   level = 0,
   onToggleCategory,
 }) => {
+  const mobileCatalogControls = useMobileCatalogControls()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -85,11 +87,17 @@ export const CategoryItem: React.FC<ItemProps> = ({
 
   const setQuery = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
+    const nextIsActive = !isActive
 
-    if (isActive) {
+    if (!nextIsActive) {
       params.delete('category')
+      mobileCatalogControls?.closeCategoryStep()
     } else {
       params.set('category', String(category.id))
+      mobileCatalogControls?.openCategoryStep({
+        id: category.id,
+        title: category.title,
+      })
     }
 
     params.delete('page')
@@ -97,7 +105,7 @@ export const CategoryItem: React.FC<ItemProps> = ({
     const newParams = params.toString()
 
     router.push(pathname + '?' + newParams)
-  }, [category.id, isActive, pathname, router, searchParams])
+  }, [category.id, category.title, isActive, mobileCatalogControls, pathname, router, searchParams])
 
   return (
     <li>
@@ -186,6 +194,7 @@ export const CategoryTree: React.FC<TreeProps> = ({ categories }) => {
 }
 
 export const CategoriesPanel: React.FC<PanelProps> = ({ categories }) => {
+  const mobileCatalogControls = useMobileCatalogControls()
   const contentRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(true)
   const [maxHeight, setMaxHeight] = useState('none')
@@ -222,6 +231,14 @@ export const CategoriesPanel: React.FC<PanelProps> = ({ categories }) => {
       observer.disconnect()
     }
   }, [categories, isOpen])
+
+  useEffect(() => {
+    mobileCatalogControls?.setCategoryListExpanded(isOpen)
+
+    return () => {
+      mobileCatalogControls?.setCategoryListExpanded(false)
+    }
+  }, [isOpen, mobileCatalogControls])
 
   return (
     <section className="rounded-[6px] border border-[rgb(1,55,186)]/10 bg-[rgb(250,251,253)] px-5 py-5 md:border-transparent md:px-6">
