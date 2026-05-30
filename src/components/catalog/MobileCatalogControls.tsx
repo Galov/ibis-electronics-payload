@@ -58,23 +58,21 @@ export function MobileCatalogControls({ children }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [categoryStep, setCategoryStep] = useState<CategoryStep | null>(null)
   const [isCategoryStepOpen, setIsCategoryStepOpen] = useState(false)
+  const [shouldRenderCategoryStep, setShouldRenderCategoryStep] = useState(false)
   const [isCategoryListExpanded, setCategoryListExpanded] = useState(false)
   const searchFocusHandlerRef = useRef<(() => void) | null>(null)
 
   const closeSheet = useCallback(() => {
     setIsOpen(false)
     setIsCategoryStepOpen(false)
-    setCategoryStep(null)
   }, [])
 
   const closeCategoryStep = useCallback(() => {
     setIsCategoryStepOpen(false)
-    setCategoryStep(null)
   }, [])
 
   const focusSearchInput = useCallback(() => {
     setIsCategoryStepOpen(false)
-    setCategoryStep(null)
 
     window.setTimeout(() => {
       searchFocusHandlerRef.current?.()
@@ -92,7 +90,6 @@ export function MobileCatalogControls({ children }: Props) {
 
   const resetControls = useCallback(() => {
     setIsCategoryStepOpen(false)
-    setCategoryStep(null)
   }, [])
 
   const handleSheetOpenChange = useCallback((nextOpen: boolean) => {
@@ -100,9 +97,24 @@ export function MobileCatalogControls({ children }: Props) {
 
     if (!nextOpen) {
       setIsCategoryStepOpen(false)
-      setCategoryStep(null)
     }
   }, [])
+
+  React.useEffect(() => {
+    if (isCategoryStepOpen && categoryStep) {
+      setShouldRenderCategoryStep(true)
+      return
+    }
+
+    const timeout = window.setTimeout(() => {
+      setShouldRenderCategoryStep(false)
+      setCategoryStep(null)
+    }, 460)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [categoryStep, isCategoryStepOpen])
 
   const contextValue = useMemo<MobileCatalogControlsContextValue>(
     () => ({
@@ -157,9 +169,21 @@ export function MobileCatalogControls({ children }: Props) {
 
             <div className="flex flex-col gap-2">{children}</div>
 
-            {isCategoryStepOpen && categoryStep ? (
-              <div className="absolute inset-0 z-20 flex items-end">
-                <div className="relative z-10 w-full rounded-t-3xl border-t border-[rgb(1,55,186)]/12 bg-white px-4 pb-6 pt-4 shadow-[0_-18px_40px_rgba(15,23,42,0.12)]">
+            {shouldRenderCategoryStep && categoryStep ? (
+              <div
+                className={[
+                  'absolute inset-0 z-20 flex items-end transition-opacity ease-out',
+                  isCategoryStepOpen ? 'opacity-100' : 'opacity-0',
+                ].join(' ')}
+                style={{ transitionDuration: '420ms' }}
+              >
+                <div
+                  className={[
+                    'relative z-10 w-full rounded-t-3xl border-t border-[rgb(1,55,186)]/12 bg-white px-4 pb-6 pt-4 shadow-[0_-18px_40px_rgba(15,23,42,0.12)] transition-transform ease-[cubic-bezier(0.16,1,0.3,1)]',
+                    isCategoryStepOpen ? 'translate-y-0' : 'translate-y-8',
+                  ].join(' ')}
+                  style={{ transitionDuration: '520ms' }}
+                >
                   <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[rgb(1,55,186)]/14" />
                   <div className="space-y-3">
                     <Button
