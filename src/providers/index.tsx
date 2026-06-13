@@ -5,7 +5,6 @@ import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
 import React from 'react'
 
 import { HeaderThemeProvider } from './HeaderTheme'
-import { ThemeProvider } from './Theme'
 import { SonnerProvider } from '@/providers/Sonner'
 import { manualAdapterClient } from '@/ecommerce/manualAdapter'
 import { revolutAdapterClient } from '@/ecommerce/revolutAdapterClient'
@@ -58,13 +57,11 @@ export const Providers: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <HeaderThemeProvider>
-          <SonnerProvider />
-          <CommerceProviders>{children}</CommerceProviders>
-        </HeaderThemeProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <HeaderThemeProvider>
+        <SonnerProvider />
+        <CommerceProviders>{children}</CommerceProviders>
+      </HeaderThemeProvider>
+    </AuthProvider>
   )
 }

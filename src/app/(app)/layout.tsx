@@ -8,7 +8,6 @@ import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { Providers } from '@/providers'
-import { InitTheme } from '@/providers/Theme/InitTheme'
 import configPromise from '@payload-config'
 import { GeistSans } from 'geist/font/sans'
 import { getPayload } from 'payload'
@@ -57,7 +56,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html className={[GeistSans.variable].filter(Boolean).join(' ')} lang="bg" suppressHydrationWarning>
       <head>
-        <InitTheme />
         <link href="/logo-sign.png" rel="icon" sizes="32x32" type="image/png" />
         <link href="/logo-sign.png" rel="apple-touch-icon" />
         {googleSiteVerification ? (
