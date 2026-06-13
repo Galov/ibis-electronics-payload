@@ -54,7 +54,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const organizationJsonLd = buildOrganizationSchema(contactPage as never)
 
   return (
-    <html className={[GeistSans.variable].filter(Boolean).join(' ')} lang="bg" suppressHydrationWarning>
+    <html
+      className={[GeistSans.variable].filter(Boolean).join(' ')}
+      data-theme="light"
+      lang="bg"
+      suppressHydrationWarning
+    >
       <head>
         <link href="/logo-sign.png" rel="icon" sizes="32x32" type="image/png" />
         <link href="/logo-sign.png" rel="apple-touch-icon" />
