@@ -53,5 +53,18 @@ export const OrderSettings: GlobalConfig = {
         singular: 'Получател',
       },
     },
+    {
+      name: 'ordersReport',
+      label: 'Справка и експорт',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: {
+            path: '@/components/admin/OrdersReportField',
+            exportName: 'OrdersReportField',
+          },
+        },
+      },
+    },
   ],
 }

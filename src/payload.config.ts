@@ -19,6 +19,7 @@ import { boxNowLockersHandler } from '@/endpoints/boxnow-lockers'
 import { boxNowCreateShipmentHandler, boxNowParcelLabelHandler } from '@/endpoints/boxnow-order-shipment'
 import { Users } from '@/collections/Users'
 import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
+import { ordersReportHandler } from '@/endpoints/orders-report'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
 import { econtOfficesHandler } from '@/endpoints/econt-offices'
 import { speedyOfficesHandler } from '@/endpoints/speedy-offices'
@@ -91,6 +92,11 @@ export default buildConfig({
       handler: recalculateRetailPricesHandler,
       method: 'post',
       path: '/pricing/recalculate',
+    },
+    {
+      handler: ordersReportHandler,
+      method: 'get',
+      path: '/reports/orders',
     },
     {
       handler: boxNowLockersHandler,
