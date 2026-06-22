@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 
 import {
-  SITEMAP_REVALIDATE_SECONDS,
   buildSitemapXml,
   getProductSitemapEntries,
   getProductSitemapPageCount,
 } from '@/utilities/sitemap'
 
-export const revalidate = SITEMAP_REVALIDATE_SECONDS
+export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 export async function GET(
   _: Request,

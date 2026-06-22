@@ -5,8 +5,6 @@ import { buildCategoryPath } from '@/utilities/category'
 import { getBaseURL } from '@/utilities/getBaseURL'
 
 export const SITEMAP_PRODUCT_CHUNK_SIZE = 5000
-export const SITEMAP_REVALIDATE_SECONDS = 3600
-
 const RESERVED_PAGE_SLUGS = new Set([
   'account',
   'blog',
