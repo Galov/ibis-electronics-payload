@@ -21,7 +21,6 @@ import './globals.css'
 export const dynamic = 'force-dynamic'
 
 const gtmID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || ''
-const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || ''
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -63,9 +62,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <head>
         <link href="/logo-sign.png" rel="icon" sizes="32x32" type="image/png" />
         <link href="/logo-sign.png" rel="apple-touch-icon" />
-        {googleSiteVerification ? (
-          <meta content={googleSiteVerification} name="google-site-verification" />
-        ) : null}
         {gtmID ? (
           <Script id="google-consent-mode" strategy="beforeInteractive">{`
             window.dataLayer = window.dataLayer || [];
