@@ -250,6 +250,7 @@ export const getPageSitemapEntries = async (): Promise<SitemapEntry[]> => {
   const staticEntries: SitemapEntry[] = [
     '/',
     '/magazin',
+    '/kategorii',
     '/partners',
     '/blog',
     '/kontakti',
