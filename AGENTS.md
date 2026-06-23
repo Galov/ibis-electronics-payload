@@ -73,6 +73,10 @@ For deeper repo-local context, consult the files in `.cursor/rules/`:
 - `components.md`
 - `security-critical.mdc`
 
+For project planning and ongoing SEO work, also consult:
+
+- `docs/seo-roadmap.md`
+
 ## Intent
 
 - Prefer keeping shared Payload knowledge in the global skill, not duplicated here.

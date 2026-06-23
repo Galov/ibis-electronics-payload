@@ -1,7 +1,0 @@
-import { redirect } from 'next/navigation'
-
-export default function HomePage() {
-  redirect('/magazin')
-}
-
-export const dynamic = 'force-dynamic'

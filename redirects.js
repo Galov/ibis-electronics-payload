@@ -18,7 +18,31 @@ const redirects = async () => {
     source: '/produkt/:slug',
   }
 
-  const redirects = [legacyProductRedirect, internetExplorerRedirect]
+  const homeRedirect = {
+    destination: '/magazin',
+    permanent: true,
+    source: '/',
+  }
+
+  const shopRedirect = {
+    destination: '/magazin',
+    permanent: true,
+    source: '/shop',
+  }
+
+  const contactRedirect = {
+    destination: '/kontakti',
+    permanent: true,
+    source: '/contact',
+  }
+
+  const redirects = [
+    legacyProductRedirect,
+    homeRedirect,
+    shopRedirect,
+    contactRedirect,
+    internetExplorerRedirect,
+  ]
 
   return redirects
 }
