@@ -1994,6 +1994,15 @@ export interface ContactPage {
      */
     mapQuery?: string | null;
   };
+  /**
+   * На тези имейл адреси ще се изпраща известие, когато някой изпрати запитване през контактната форма.
+   */
+  notificationRecipients?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -2168,6 +2177,12 @@ export interface ContactPageSelect<T extends boolean = true> {
         phone?: T;
         workingHours?: T;
         mapQuery?: T;
+      };
+  notificationRecipients?:
+    | T
+    | {
+        email?: T;
+        id?: T;
       };
   meta?:
     | T

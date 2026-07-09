@@ -60,5 +60,26 @@ export const ContactPage: GlobalConfig = {
       required: true,
     },
     locationFields(),
+    {
+      name: 'notificationRecipients',
+      label: 'Получатели на контактни запитвания',
+      type: 'array',
+      admin: {
+        description:
+          'На тези имейл адреси ще се изпраща известие, когато някой изпрати запитване през контактната форма.',
+      },
+      fields: [
+        {
+          name: 'email',
+          label: 'Имейл адрес',
+          type: 'email',
+          required: true,
+        },
+      ],
+      labels: {
+        plural: 'Получатели',
+        singular: 'Получател',
+      },
+    },
   ],
 }
