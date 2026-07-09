@@ -13,10 +13,12 @@ import { submitContactInquiry } from './submitContactInquiry'
 
 type FormData = {
   email: string
+  website: string
   message: string
   name: string
   phone: string
   privacyAccepted: boolean
+  submittedAt: number
 }
 
 export const ContactForm: React.FC = () => {
@@ -31,10 +33,12 @@ export const ContactForm: React.FC = () => {
   } = useForm<FormData>({
     defaultValues: {
       email: '',
+      website: '',
       message: '',
       name: '',
       phone: '',
       privacyAccepted: false,
+      submittedAt: Date.now(),
     },
   })
 
@@ -44,7 +48,15 @@ export const ContactForm: React.FC = () => {
     if (result.success) {
       setError('')
       setSuccess('Запитването е изпратено успешно. Ще се свържем с вас възможно най-скоро.')
-      reset()
+      reset({
+        email: '',
+        website: '',
+        message: '',
+        name: '',
+        phone: '',
+        privacyAccepted: false,
+        submittedAt: Date.now(),
+      })
       return
     }
 
@@ -83,6 +95,15 @@ export const ContactForm: React.FC = () => {
       </div>
 
       <div className="mb-6 grid gap-6">
+        <input
+          autoComplete="off"
+          className="pointer-events-none absolute left-[-9999px] top-auto h-px w-px overflow-hidden opacity-0"
+          tabIndex={-1}
+          type="text"
+          {...register('website')}
+        />
+        <input type="hidden" {...register('submittedAt', { valueAsNumber: true })} />
+
         <FormItem>
           <Label htmlFor="phone" className="mb-2">
             Телефон

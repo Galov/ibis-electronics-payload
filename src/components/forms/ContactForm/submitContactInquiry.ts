@@ -10,6 +10,8 @@ type SubmitContactInquiryArgs = {
   name: string
   phone?: string
   privacyAccepted: boolean
+  submittedAt: number
+  website?: string
 }
 
 type SubmitContactInquiryResult = {
@@ -40,14 +42,103 @@ const formatValue = (value?: string) => {
   return trimmed ? escapeHTML(trimmed) : '-'
 }
 
+const MIN_SUBMIT_DELAY_MS = 2500
+const MAX_MESSAGE_LENGTH = 4000
+const MAX_NAME_LENGTH = 120
+const MAX_PHONE_LENGTH = 40
+const MAX_LINK_COUNT = 2
+
+const countLinks = (value: string) => {
+  const matches = value.match(/https?:\/\//gi)
+  return matches ? matches.length : 0
+}
+
+const hasSuspiciousContent = ({
+  email,
+  message,
+  name,
+  phone,
+}: {
+  email: string
+  message: string
+  name: string
+  phone?: string
+}) => {
+  const normalizedMessage = message.trim().toLowerCase()
+  const normalizedName = name.trim().toLowerCase()
+  const normalizedEmail = email.trim().toLowerCase()
+  const normalizedPhone = phone?.trim() || ''
+  const suspiciousPatterns = [
+    'viagra',
+    'casino',
+    'crypto',
+    'forex',
+    'seo service',
+    'backlinks',
+    'telegram',
+    'whatsapp',
+  ]
+
+  if (
+    !normalizedName ||
+    !normalizedMessage ||
+    !normalizedEmail ||
+    name.length > MAX_NAME_LENGTH ||
+    normalizedMessage.length > MAX_MESSAGE_LENGTH ||
+    normalizedPhone.length > MAX_PHONE_LENGTH
+  ) {
+    return true
+  }
+
+  if (countLinks(normalizedMessage) > MAX_LINK_COUNT) {
+    return true
+  }
+
+  if (suspiciousPatterns.some((pattern) => normalizedMessage.includes(pattern))) {
+    return true
+  }
+
+  if (normalizedName.includes('http') || normalizedEmail.includes('http') || normalizedPhone.includes('http')) {
+    return true
+  }
+
+  return false
+}
+
 export async function submitContactInquiry({
   email,
   message,
   name,
   phone,
   privacyAccepted,
+  submittedAt,
+  website,
 }: SubmitContactInquiryArgs): Promise<SubmitContactInquiryResult> {
   const payload = await getPayload({ config: configPromise })
+  const normalizedWebsite = website?.trim() || ''
+  const now = Date.now()
+  const submitDelay = Number.isFinite(submittedAt) ? now - submittedAt : 0
+
+  if (normalizedWebsite) {
+    payload.logger.warn('Contact inquiry blocked by honeypot field.')
+    return { success: true }
+  }
+
+  if (submitDelay < MIN_SUBMIT_DELAY_MS) {
+    payload.logger.warn({ msg: 'Contact inquiry blocked because it was submitted too quickly.', submitDelay })
+    return {
+      success: false,
+      error: 'Формата беше изпратена твърде бързо. Моля, изчакайте малко и опитайте отново.',
+    }
+  }
+
+  if (hasSuspiciousContent({ email, message, name, phone })) {
+    payload.logger.warn({ msg: 'Contact inquiry blocked by anti-spam content validation.', email, name })
+    return {
+      success: false,
+      error: 'Запитването изглежда невалидно. Моля, прегледайте въведените данни и опитайте отново.',
+    }
+  }
 
   try {
     const inquiry = (await payload.create({
