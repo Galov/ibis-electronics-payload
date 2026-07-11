@@ -1,5 +1,6 @@
 'use server'
 
+import { headers as getHeaders } from 'next/headers'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -41,6 +42,61 @@ const formatValue = (value?: string) => {
   const trimmed = value?.trim()
   return trimmed ? escapeHTML(trimmed) : '-'
 }
+
+const maskEmail = (value?: string) => {
+  const trimmed = value?.trim().toLowerCase()
+
+  if (!trimmed || !trimmed.includes('@')) {
+    return 'unknown'
+  }
+
+  const [localPart, domain] = trimmed.split('@')
+  const visibleLocalPart = localPart.slice(0, 2)
+  const maskedLocalPart = `${visibleLocalPart}${'*'.repeat(Math.max(localPart.length - visibleLocalPart.length, 1))}`
+
+  return `${maskedLocalPart}@${domain}`
+}
+
+const getClientIP = (headers: Headers) => {
+  const forwardedFor = headers.get('x-forwarded-for')
+  const realIP = headers.get('x-real-ip')
+  const cloudflareIP = headers.get('cf-connecting-ip')
+
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0]?.trim() || 'unknown'
+  }
+
+  return cloudflareIP || realIP || 'unknown'
+}
+
+const buildBlockedAttemptLog = ({
+  email,
+  headers,
+  message,
+  name,
+  phone,
+  reason,
+  submitDelay,
+}: {
+  email: string
+  headers: Headers
+  message: string
+  name: string
+  phone?: string
+  reason: 'honeypot' | 'suspicious_content' | 'too_fast'
+  submitDelay?: number
+}) => ({
+  msg: 'Contact inquiry blocked by anti-spam protection.',
+  reason,
+  emailMasked: maskEmail(email),
+  ip: getClientIP(headers),
+  messageLength: message.trim().length,
+  messagePreview: message.trim().slice(0, 80),
+  name: name.trim().slice(0, 80),
+  phoneProvided: Boolean(phone?.trim()),
+  submitDelay,
+  userAgent: headers.get('user-agent') || 'unknown',
+})
 
 const MIN_SUBMIT_DELAY_MS = 2500
 const MAX_MESSAGE_LENGTH = 4000
@@ -114,18 +170,39 @@ export async function submitContactInquiry({
   submittedAt,
   website,
 }: SubmitContactInquiryArgs): Promise<SubmitContactInquiryResult> {
+  const headers = await getHeaders()
   const payload = await getPayload({ config: configPromise })
   const normalizedWebsite = website?.trim() || ''
   const now = Date.now()
   const submitDelay = Number.isFinite(submittedAt) ? now - submittedAt : 0
 
   if (normalizedWebsite) {
-    payload.logger.warn('Contact inquiry blocked by honeypot field.')
+    payload.logger.warn(
+      buildBlockedAttemptLog({
+        email,
+        headers,
+        message,
+        name,
+        phone,
+        reason: 'honeypot',
+        submitDelay,
+      }),
+    )
     return { success: true }
   }
 
   if (submitDelay < MIN_SUBMIT_DELAY_MS) {
-    payload.logger.warn({ msg: 'Contact inquiry blocked because it was submitted too quickly.', submitDelay })
+    payload.logger.warn(
+      buildBlockedAttemptLog({
+        email,
+        headers,
+        message,
+        name,
+        phone,
+        reason: 'too_fast',
+        submitDelay,
+      }),
+    )
     return {
       success: false,
       error: 'Формата беше изпратена твърде бързо. Моля, изчакайте малко и опитайте отново.',
@@ -133,7 +210,17 @@ export async function submitContactInquiry({
   }
 
   if (hasSuspiciousContent({ email, message, name, phone })) {
-    payload.logger.warn({ msg: 'Contact inquiry blocked by anti-spam content validation.', email, name })
+    payload.logger.warn(
+      buildBlockedAttemptLog({
+        email,
+        headers,
+        message,
+        name,
+        phone,
+        reason: 'suspicious_content',
+        submitDelay,
+      }),
+    )
     return {
       success: false,
       error: 'Запитването изглежда невалидно. Моля, прегледайте въведените данни и опитайте отново.',
