@@ -104,6 +104,10 @@ export const buildProductSchema = (args: {
   slug: string
 }) => {
   const { brand, category, description, image, inStock, name, price, sku, slug } = args
+  const normalizedDescription = description?.trim()
+  const fallbackDescription = [name.trim(), sku?.trim() ? `Код ${sku.trim()}` : null]
+    .filter(Boolean)
+    .join(' · ')
   const shippingDestination = {
     '@type': 'DefinedRegion',
     addressCountry: 'BG',
@@ -140,7 +144,7 @@ export const buildProductSchema = (args: {
           category: category.title,
         }
       : {}),
-    ...(description ? { description } : {}),
+    description: normalizedDescription || `${fallbackDescription} в каталога на Ibis Electronics.`,
     ...(image ? { image: [image] } : {}),
     ...(sku ? { sku } : {}),
     name,

@@ -20,6 +20,7 @@ import { boxNowCreateShipmentHandler, boxNowParcelLabelHandler } from '@/endpoin
 import { Users } from '@/collections/Users'
 import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
 import { ordersReportHandler } from '@/endpoints/orders-report'
+import { productVersionsAuditHandler, productVersionsRepairHandler } from '@/endpoints/productVersionsAudit'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
 import { econtOfficesHandler } from '@/endpoints/econt-offices'
 import { speedyOfficesHandler } from '@/endpoints/speedy-offices'
@@ -97,6 +98,21 @@ export default buildConfig({
       handler: ordersReportHandler,
       method: 'get',
       path: '/reports/orders',
+    },
+    {
+      handler: productVersionsAuditHandler,
+      method: 'get',
+      path: '/maintenance/products/version-audit',
+    },
+    {
+      handler: productVersionsRepairHandler,
+      method: 'get',
+      path: '/maintenance/products/version-repair',
+    },
+    {
+      handler: productVersionsRepairHandler,
+      method: 'post',
+      path: '/maintenance/products/version-repair',
     },
     {
       handler: boxNowLockersHandler,
