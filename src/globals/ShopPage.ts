@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
+import { revalidateGlobal } from '@/hooks/revalidateGlobal'
 
 const bannerFields = (label: string) => ({
   name:
@@ -44,6 +45,9 @@ export const ShopPage: GlobalConfig = {
   },
   admin: {
     group: 'Сайт',
+  },
+  hooks: {
+    afterChange: [revalidateGlobal],
   },
   fields: [
     bannerFields('Горен банер'),
