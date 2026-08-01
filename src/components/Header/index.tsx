@@ -1,4 +1,4 @@
-import type { Category, Header as HeaderGlobal, Page, Product } from '@/payload-types'
+import type { Category, Header as HeaderGlobal, Page, Post, Product } from '@/payload-types'
 
 import { buildCategoryPath } from '@/utilities/category'
 import { getCachedGlobal } from '@/utilities/getGlobals'
@@ -22,11 +22,14 @@ const resolveReferenceHref = (reference: HeaderLink['reference']) => {
     return buildCategoryPath(reference.value as Category)
   }
 
-  const value = reference.value as Page | Product | { slug?: string | null }
+  const value = reference.value as Page | Post | Product | { slug?: string | null }
 
   if (!value.slug) return null
 
-  return reference.relationTo === 'pages' ? `/${value.slug}` : `/${reference.relationTo}/${value.slug}`
+  if (reference.relationTo === 'pages') return `/${value.slug}`
+  if (reference.relationTo === 'posts') return `/blog/${value.slug}`
+
+  return `/${reference.relationTo}/${value.slug}`
 }
 
 const normalizeNavItems = (navItems: HeaderGlobal['navItems']): HeaderNavItem[] => {
@@ -37,6 +40,8 @@ const normalizeNavItems = (navItems: HeaderGlobal['navItems']): HeaderNavItem[] 
       const href =
         item.link.type === 'reference'
           ? resolveReferenceHref(item.link.reference)
+          : item.link.type === 'internal'
+            ? item.link.internalPath || null
           : item.link.url || null
 
       if (!href || !item.link.label) return null

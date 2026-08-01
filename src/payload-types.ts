@@ -2062,6 +2062,14 @@ export interface ShopPage {
     url?: string | null;
     openInNewTab?: boolean | null;
   };
+  productBanner?: {
+    image?: (string | null) | Media;
+    /**
+     * Незадължително. Ако е попълнен, банерът ще води към този адрес.
+     */
+    url?: string | null;
+    openInNewTab?: boolean | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2236,6 +2244,13 @@ export interface ShopPageSelect<T extends boolean = true> {
         openInNewTab?: T;
       };
   bottomBanner?:
+    | T
+    | {
+        image?: T;
+        url?: T;
+        openInNewTab?: T;
+      };
+  productBanner?:
     | T
     | {
         image?: T;

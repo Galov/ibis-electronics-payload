@@ -1,13 +1,13 @@
 'use client'
-import type { Product } from '@/payload-types'
+import type { Product, ShopPage } from '@/payload-types'
 
 import { AddToCart } from '@/components/Cart/AddToCart'
 import { Price } from '@/components/Price'
 import { StockIndicator } from '@/components/product/StockIndicator'
+import { ShopBanner } from '@/components/shop/ShopBanner'
 import { buildCategoryPath } from '@/utilities/category'
 import { formatLegacyProductDescription } from '@/utilities/formatLegacyProductDescription'
 import Link from 'next/link'
-import Image from 'next/image'
 import React, { Suspense } from 'react'
 
 type ProductCategoryLink = {
@@ -16,20 +16,15 @@ type ProductCategoryLink = {
   title: string
 }
 
-const BoxNowPromoBanner = ({ className = '' }: { className?: string }) => (
-  <div className={className}>
-    <Image
-      alt="Безплатна доставка до BoxNow автомат до края на юли"
-      className="h-auto w-full rounded-[10px]"
-      height={300}
-      priority={false}
-      src="/Free-Delivery-Boxnow.webp"
-      width={1200}
-    />
-  </div>
-)
+type ProductBanner = ShopPage['productBanner']
 
-export function ProductDescription({ product }: { product: Product }) {
+export function ProductDescription({
+  product,
+  productBanner,
+}: {
+  product: Product
+  productBanner?: ProductBanner | null
+}) {
   const description = formatLegacyProductDescription(
     product.description || product.shortDescription,
   )
@@ -50,7 +45,7 @@ export function ProductDescription({ product }: { product: Product }) {
           <Price amount={product.price} />
         </div>
       </div>
-      <BoxNowPromoBanner className="lg:hidden" />
+      <ShopBanner banner={productBanner} className="lg:hidden" />
       <div className="grid gap-1.5 text-sm leading-6">
         {brand ? (
           <p>
@@ -107,7 +102,7 @@ export function ProductDescription({ product }: { product: Product }) {
           <StockIndicator product={product} />
         </Suspense>
 
-        <BoxNowPromoBanner className="hidden lg:block" />
+        <ShopBanner banner={productBanner} className="hidden lg:block" />
 
         <div className="flex items-center justify-between">
           <Suspense fallback={null}>

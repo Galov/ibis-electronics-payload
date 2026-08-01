@@ -324,7 +324,7 @@ export const CheckoutPage: React.FC<{
                 type="button"
               >
                 <p className="type-subsection-title text-primary/85">Автомат на BoxNow</p>
-                <p className="mt-1 text-sm text-primary/60">Безплатно до 31 юли 2026 г.</p>
+                <p className="mt-1 text-sm text-primary/60">Избери удобен автомат</p>
               </button>
 
               <button

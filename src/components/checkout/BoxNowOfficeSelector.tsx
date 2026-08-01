@@ -133,7 +133,9 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
     }
     script.onerror = () => {
       if (!cancelled) {
-        setError('BoxNow картата не можа да се зареди. Опитай да презаредиш страницата.')
+        setError(
+          'BoxNow картата не можа да се зареди. Опитай да презаредиш страницата. Ако използваш Safari в private режим, отвори страницата в нормален прозорец или използвай друг браузър.',
+        )
       }
     }
 
@@ -147,9 +149,7 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
   return (
     <div className="rounded-[10px] bg-muted/20 px-5 py-5">
       <div className="mb-4">
-        <p className="text-sm text-primary/65">
-          Избери удобен автомат на BoxNow от карта. Доставката е безплатна до 31 юли 2026 г.
-        </p>
+        <p className="text-sm text-primary/65">Избери удобен автомат на BoxNow от карта.</p>
         <p className="mt-2 text-sm text-primary/65">
           Ако поръчката не е платена онлайн, при получаване плащането е възможно само с карта.
         </p>

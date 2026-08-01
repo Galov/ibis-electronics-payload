@@ -3,7 +3,12 @@ import type { GlobalConfig } from 'payload'
 import { adminOnly } from '@/access/adminOnly'
 
 const bannerFields = (label: string) => ({
-  name: label === 'Горен банер' ? 'topBanner' : 'bottomBanner',
+  name:
+    label === 'Горен банер'
+      ? 'topBanner'
+      : label === 'Долен банер'
+        ? 'bottomBanner'
+        : 'productBanner',
   label,
   type: 'group' as const,
   fields: [
@@ -40,5 +45,9 @@ export const ShopPage: GlobalConfig = {
   admin: {
     group: 'Сайт',
   },
-  fields: [bannerFields('Горен банер'), bannerFields('Долен банер')],
+  fields: [
+    bannerFields('Горен банер'),
+    bannerFields('Долен банер'),
+    bannerFields('Банер в продуктова страница'),
+  ],
 }

@@ -10,6 +10,7 @@ import React, { Suspense } from 'react'
 import { Metadata } from 'next'
 import { getProductPrimaryImage, getProductSEODescription } from '@/utilities/product'
 import { generateMeta } from '@/utilities/generateMeta'
+import { getCachedGlobal } from '@/utilities/getGlobals'
 import { buildCategoryPath } from '@/utilities/category'
 import { buildBreadcrumbSchema, buildProductBreadcrumbItems, buildProductSchema } from '@/utilities/schema'
 import { decodeMangledLegacySlug } from '@/utilities/legacySlugs'
@@ -93,6 +94,7 @@ export default async function ProductPage({ params }: Args) {
         .filter(Boolean) || [],
     productID: product.id,
   })
+  const shopPage = await getCachedGlobal('shopPage', 1)()
 
   const productJsonLd = {
     ...buildProductSchema({
@@ -175,7 +177,7 @@ export default async function ProductPage({ params }: Args) {
           </div>
 
           <div className="basis-full lg:basis-1/2">
-            <ProductDescription product={product} />
+            <ProductDescription product={product} productBanner={shopPage?.productBanner} />
           </div>
         </div>
 
