@@ -42,8 +42,12 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
             defaultValue: 'reference',
             options: [
               {
-                label: 'Вътрешна връзка',
+                label: 'Документ',
                 value: 'reference',
+              },
+              {
+                label: 'Системна страница',
+                value: 'internal',
               },
               {
                 label: 'Ръчен URL',
@@ -76,7 +80,22 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
       },
       label: 'Документ',
       maxDepth: 1,
-      relationTo: ['pages', 'products', 'categories'],
+      relationTo: ['pages', 'products', 'categories', 'posts'],
+      required: true,
+    },
+    {
+      name: 'internalPath',
+      type: 'select',
+      admin: {
+        condition: (_, siblingData) => siblingData?.type === 'internal',
+      },
+      label: 'Системна страница',
+      options: [
+        {
+          label: 'Блог',
+          value: '/blog',
+        },
+      ],
       required: true,
     },
     {

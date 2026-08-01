@@ -654,7 +654,7 @@ export interface Page {
     links?:
       | {
           link: {
-            type?: ('reference' | 'custom') | null;
+            type?: ('reference' | 'internal' | 'custom') | null;
             newTab?: boolean | null;
             reference?:
               | ({
@@ -668,7 +668,12 @@ export interface Page {
               | ({
                   relationTo: 'categories';
                   value: string | Category;
+                } | null)
+              | ({
+                  relationTo: 'posts';
+                  value: string | Post;
                 } | null);
+            internalPath?: '/blog' | null;
             url?: string | null;
             label: string;
             /**
@@ -710,6 +715,62 @@ export interface Page {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Статии за блога.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: string;
+  title: string;
+  excerpt: string;
+  featuredImage?: (string | null) | Media;
+  publishedAt?: string | null;
+  categories?: (string | PostCategory)[] | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Незадължително. Изберете до 4 статии, които да се покажат под публикацията.
+   */
+  relatedPosts?: (string | Post)[] | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (string | null) | Media;
+  };
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "post-categories".
+ */
+export interface PostCategory {
+  id: string;
+  title: string;
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "CallToActionBlock".
  */
@@ -732,7 +793,7 @@ export interface CallToActionBlock {
   links?:
     | {
         link: {
-          type?: ('reference' | 'custom') | null;
+          type?: ('reference' | 'internal' | 'custom') | null;
           newTab?: boolean | null;
           reference?:
             | ({
@@ -746,7 +807,12 @@ export interface CallToActionBlock {
             | ({
                 relationTo: 'categories';
                 value: string | Category;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: string | Post;
               } | null);
+          internalPath?: '/blog' | null;
           url?: string | null;
           label: string;
           /**
@@ -786,7 +852,7 @@ export interface ContentBlock {
         } | null;
         enableLink?: boolean | null;
         link?: {
-          type?: ('reference' | 'custom') | null;
+          type?: ('reference' | 'internal' | 'custom') | null;
           newTab?: boolean | null;
           reference?:
             | ({
@@ -800,7 +866,12 @@ export interface ContentBlock {
             | ({
                 relationTo: 'categories';
                 value: string | Category;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: string | Post;
               } | null);
+          internalPath?: '/blog' | null;
           url?: string | null;
           label: string;
           /**
@@ -972,62 +1043,6 @@ export interface InfoStepsBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'infoSteps';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "post-categories".
- */
-export interface PostCategory {
-  id: string;
-  title: string;
-  slug?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Статии за блога.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "posts".
- */
-export interface Post {
-  id: string;
-  title: string;
-  excerpt: string;
-  featuredImage?: (string | null) | Media;
-  publishedAt?: string | null;
-  categories?: (string | PostCategory)[] | null;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  /**
-   * Незадължително. Изберете до 4 статии, които да се покажат под публикацията.
-   */
-  relatedPosts?: (string | Post)[] | null;
-  meta?: {
-    title?: string | null;
-    description?: string | null;
-    /**
-     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
-     */
-    image?: (string | null) | Media;
-  };
-  slug?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1275,6 +1290,7 @@ export interface PagesSelect<T extends boolean = true> {
                     type?: T;
                     newTab?: T;
                     reference?: T;
+                    internalPath?: T;
                     url?: T;
                     label?: T;
                     appearance?: T;
@@ -1324,6 +1340,7 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
               type?: T;
               newTab?: T;
               reference?: T;
+              internalPath?: T;
               url?: T;
               label?: T;
               appearance?: T;
@@ -1350,6 +1367,7 @@ export interface ContentBlockSelect<T extends boolean = true> {
               type?: T;
               newTab?: T;
               reference?: T;
+              internalPath?: T;
               url?: T;
               label?: T;
               appearance?: T;
@@ -1853,7 +1871,7 @@ export interface Header {
   navItems?:
     | {
         link: {
-          type?: ('reference' | 'custom') | null;
+          type?: ('reference' | 'internal' | 'custom') | null;
           newTab?: boolean | null;
           reference?:
             | ({
@@ -1867,7 +1885,12 @@ export interface Header {
             | ({
                 relationTo: 'categories';
                 value: string | Category;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: string | Post;
               } | null);
+          internalPath?: '/blog' | null;
           url?: string | null;
           label: string;
         };
@@ -1886,7 +1909,7 @@ export interface Footer {
   navItems?:
     | {
         link: {
-          type?: ('reference' | 'custom') | null;
+          type?: ('reference' | 'internal' | 'custom') | null;
           newTab?: boolean | null;
           reference?:
             | ({
@@ -1900,7 +1923,12 @@ export interface Footer {
             | ({
                 relationTo: 'categories';
                 value: string | Category;
+              } | null)
+            | ({
+                relationTo: 'posts';
+                value: string | Post;
               } | null);
+          internalPath?: '/blog' | null;
           url?: string | null;
           label: string;
         };
@@ -2094,6 +2122,7 @@ export interface HeaderSelect<T extends boolean = true> {
               type?: T;
               newTab?: T;
               reference?: T;
+              internalPath?: T;
               url?: T;
               label?: T;
             };
@@ -2117,6 +2146,7 @@ export interface FooterSelect<T extends boolean = true> {
               type?: T;
               newTab?: T;
               reference?: T;
+              internalPath?: T;
               url?: T;
               label?: T;
             };
