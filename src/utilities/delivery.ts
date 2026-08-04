@@ -1,6 +1,6 @@
 export type DeliveryMethod = 'address' | 'boxnow' | 'econt-office' | 'speedy-office'
 
-export const BOXNOW_FREE_SHIPPING_UNTIL_LABEL = '31 юли 2026 г.'
+export const BOXNOW_SHIPPING_FEE_EUR = 1.54
 
 const genericDeliveryPricingNote =
   'Цената не включва доставката. Тя се определя по тарифата на избраната куриерска компания и се заплаща при получаване на пратката.'
@@ -24,4 +24,12 @@ export const getDeliveryPricingNote = (deliveryMethod?: DeliveryMethod | null) =
   }
 
   return genericDeliveryPricingNote
+}
+
+export const getDeliveryShippingFee = (deliveryMethod?: DeliveryMethod | null) => {
+  if (deliveryMethod === 'boxnow') {
+    return BOXNOW_SHIPPING_FEE_EUR
+  }
+
+  return 0
 }

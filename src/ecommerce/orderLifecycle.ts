@@ -2,6 +2,7 @@ import type { Payload, PayloadRequest } from 'payload'
 
 import type { Address, Cart, Product, Transaction, User } from '@/payload-types'
 import type { DeliveryMethod } from '@/utilities/delivery'
+import { getDeliveryShippingFee } from '@/utilities/delivery'
 import { getServerSideURL } from '@/utilities/getURL'
 
 import {
@@ -258,9 +259,12 @@ export const createCheckoutTransactionData = ({
   user,
 }: CreateCheckoutTransactionArgs) => {
   const resolvedEmail = trimToUndefined(user?.email) || trimToUndefined(checkoutData.customerEmail)
+  const deliveryMethod = checkoutData.deliveryMethod || 'address'
+  const shippingFee = getDeliveryShippingFee(deliveryMethod)
+  const amount = (cart.subtotal || 0) + shippingFee
 
   return {
-    amount: cart.subtotal || 0,
+    amount,
     billingAddress: checkoutData.billingAddress,
     cart: cart.id,
     currency: cart.currency,
@@ -271,7 +275,7 @@ export const createCheckoutTransactionData = ({
     boxNowLockerName: trimToUndefined(checkoutData.boxNowLocker?.name),
     boxNowLockerPostalCode: trimToUndefined(checkoutData.boxNowLocker?.postalCode),
     customerNotes: trimToUndefined(checkoutData.customerNotes),
-    deliveryMethod: checkoutData.deliveryMethod || 'address',
+    deliveryMethod,
     econtOfficeAddress: formatEcontOfficeAddress(checkoutData.econtOffice),
     econtOfficeCode: trimToUndefined(checkoutData.econtOffice?.code),
     econtOfficeId: trimToUndefined(checkoutData.econtOffice?.id),
@@ -279,7 +283,7 @@ export const createCheckoutTransactionData = ({
     items: normalizeCartItems(cart.items),
     paymentMethod,
     shippingAddress: checkoutData.shippingAddress,
-    shippingFee: 0,
+    shippingFee,
     speedyOfficeAddress: formatSpeedyOfficeAddress(checkoutData.speedyOffice),
     speedyOfficeId: trimToUndefined(checkoutData.speedyOffice?.id),
     speedyOfficeName: trimToUndefined(checkoutData.speedyOffice?.name),

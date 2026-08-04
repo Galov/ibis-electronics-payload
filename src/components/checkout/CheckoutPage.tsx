@@ -24,7 +24,7 @@ import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 
 import type { Address } from '@/payload-types'
-import { getDeliveryPricingNote } from '@/utilities/delivery'
+import { getDeliveryPricingNote, getDeliveryShippingFee } from '@/utilities/delivery'
 
 export const CheckoutPage: React.FC<{
   freeShippingThreshold?: number
@@ -45,7 +45,7 @@ export const CheckoutPage: React.FC<{
   const [deliveryMethod, setDeliveryMethod] = useState<'address' | 'boxnow' | 'speedy-office' | 'econt-office'>(
     'boxnow',
   )
-  const orderTotal = cart?.subtotal || 0
+  const orderSubtotal = cart?.subtotal || 0
   const [boxNowLocker, setBoxNowLocker] = useState<{
     address: string
     id: string
@@ -180,6 +180,8 @@ export const CheckoutPage: React.FC<{
   )
 
   const deliveryPricingNote = getDeliveryPricingNote(deliveryMethod)
+  const shippingFee = getDeliveryShippingFee(deliveryMethod)
+  const orderTotal = orderSubtotal + shippingFee
 
   const customerContactAddress: Partial<Address> = {
     country: 'BG',
@@ -571,7 +573,7 @@ export const CheckoutPage: React.FC<{
           econtOffice={econtOffice}
           revolutPayEnabled={revolutPayEnabled}
           setProcessingPayment={setProcessingPayment}
-          shippingFee={0}
+          shippingFee={shippingFee}
           shippingAddress={resolvedShippingAddress}
           speedyOffice={speedyOffice}
           totalAmount={orderTotal}
@@ -626,6 +628,12 @@ export const CheckoutPage: React.FC<{
             <span className="type-eyebrow text-primary/45">Доставка</span>
             <p className="max-w-[16rem] text-right text-sm leading-6 text-primary/60">{deliveryPricingNote}</p>
           </div>
+          {shippingFee > 0 ? (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <span className="type-eyebrow text-primary/45">Цена на доставка</span>
+              <Price amount={shippingFee} className="text-sm text-primary/70" currencyCode="EUR" />
+            </div>
+          ) : null}
           <div className="flex items-center justify-between gap-2">
             <span className="type-eyebrow text-primary/45">Общо</span>
             <Price amount={orderTotal} className="text-2xl font-medium text-primary/80" currencyCode="EUR" />
