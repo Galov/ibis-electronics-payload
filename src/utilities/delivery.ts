@@ -20,7 +20,7 @@ export const getDeliveryMethodLabel = (deliveryMethod?: DeliveryMethod | null) =
 
 export const getDeliveryPricingNote = (deliveryMethod?: DeliveryMethod | null) => {
   if (deliveryMethod === 'boxnow') {
-    return 'Промоционална цена на доставка с BoxNow - 1,54 € / 3 лв. При получаване плащането е възможно само с карта, ако поръчката не е платена онлайн.'
+    return 'Промоционална цена на доставка с BoxNow - 1,54 €. При получаване плащането е възможно само с карта, ако поръчката не е платена онлайн.'
   }
 
   return genericDeliveryPricingNote
