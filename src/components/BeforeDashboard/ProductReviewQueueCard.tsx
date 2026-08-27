@@ -85,10 +85,18 @@ export const ProductReviewQueueCard = ({
   return (
     <section className={baseClass}>
       <div className={`${baseClass}__card`}>
-        <div className={`${baseClass}__header`}>
+        <div className={`${baseClass}__summary`}>
           <div>
             <p className={`${baseClass}__eyebrow`}>Product review queue</p>
             <h2>Нови продукти за преглед</h2>
+            {total > 0 ? (
+              <p className={`${baseClass}__description`}>
+                Има {total} продукта за преглед. Списъкът показва до {visibleProductsLimit} продукта
+                наведнъж.
+              </p>
+            ) : (
+              <p className={`${baseClass}__description`}>Няма нови непрегледани продукти.</p>
+            )}
           </div>
           <div className={`${baseClass}__headerActions`}>
             <strong className={`${baseClass}__count`}>{total}</strong>
@@ -107,10 +115,6 @@ export const ProductReviewQueueCard = ({
 
         {total > 0 ? (
           <>
-            <p className={`${baseClass}__description`}>
-              Има {total} продукта за преглед. Списъкът показва до {visibleProductsLimit} продукта
-              наведнъж.
-            </p>
             {error ? <p className={`${baseClass}__error`}>{error}</p> : null}
 
             {isOpen ? (
@@ -155,9 +159,7 @@ export const ProductReviewQueueCard = ({
               </>
             ) : null}
           </>
-        ) : (
-          <p className={`${baseClass}__description`}>Няма нови непрегледани продукти.</p>
-        )}
+        ) : null}
       </div>
     </section>
   )

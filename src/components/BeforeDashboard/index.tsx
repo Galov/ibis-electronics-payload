@@ -11,32 +11,15 @@ const BeforeDashboard = async () => {
   const result = await payload.find({
     collection: 'products',
     depth: 0,
+    draft: true,
     limit: visibleProductsLimit,
     overrideAccess: true,
     pagination: true,
     sort: '-createdAt',
     where: {
-      and: [
-        {
-          reviewStatus: {
-            equals: 'pending',
-          },
-        },
-        {
-          or: [
-            {
-              sku: {
-                exists: true,
-              },
-            },
-            {
-              title: {
-                exists: true,
-              },
-            },
-          ],
-        },
-      ],
+      reviewStatus: {
+        equals: 'pending',
+      },
     },
     select: {
       createdAt: true,
