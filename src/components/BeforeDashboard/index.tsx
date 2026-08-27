@@ -9,32 +9,50 @@ const visibleProductsLimit = 10
 const BeforeDashboard = async () => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
-    collection: 'products',
+    collection: 'product-review-items',
     depth: 0,
-    draft: true,
     limit: visibleProductsLimit,
     overrideAccess: true,
     pagination: true,
-    sort: '-createdAt',
+    sort: '-reviewRequiredAt',
     where: {
-      reviewStatus: {
+      status: {
         equals: 'pending',
       },
     },
     select: {
-      createdAt: true,
       id: true,
       productCreatedSource: true,
+      product: true,
+      productSku: true,
+      productSlug: true,
+      productTitle: true,
       reviewRequiredAt: true,
-      sku: true,
-      slug: true,
-      title: true,
     },
+  })
+
+  const products = result.docs.flatMap((item) => {
+    const rawProductID =
+      typeof item.product === 'object' && item.product ? item.product.id : item.product
+
+    if (typeof rawProductID !== 'string' && typeof rawProductID !== 'number') return []
+    const productID = String(rawProductID)
+
+    return [
+      {
+        id: productID,
+        productCreatedSource: item.productCreatedSource,
+        reviewRequiredAt: item.reviewRequiredAt,
+        sku: item.productSku,
+        slug: item.productSlug,
+        title: item.productTitle,
+      },
+    ]
   })
 
   return (
     <ProductReviewQueueCard
-      products={result.docs}
+      products={products}
       totalDocs={result.totalDocs}
       visibleProductsLimit={visibleProductsLimit}
     />

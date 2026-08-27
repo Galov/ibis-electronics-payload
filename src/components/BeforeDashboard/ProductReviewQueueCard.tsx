@@ -5,10 +5,10 @@ import { useState } from 'react'
 
 const baseClass = 'before-dashboard'
 const unreviewedProductsAdminHref =
-  '/admin/collections/products?' +
+  '/admin/collections/product-review-items?' +
   [
-    ['sort', '-createdAt'],
-    ['where[reviewStatus][equals]', 'pending'],
+    ['sort', '-reviewRequiredAt'],
+    ['where[status][equals]', 'pending'],
   ]
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&')

@@ -13,44 +13,42 @@ export const markProductReviewedHandler: PayloadHandler = async (req) => {
     return Response.json({ message: 'Липсва ID на продукт.' }, { status: 400 })
   }
 
-  const product = await req.payload.findByID({
-    collection: 'products',
+  const reviewItems = await req.payload.find({
+    collection: 'product-review-items',
     depth: 0,
-    id: productID,
+    limit: 1,
     overrideAccess: true,
+    pagination: false,
     req,
-    select: {
-      reviewRequiredAt: true,
-      reviewedAt: true,
-      title: true,
+    where: {
+      product: {
+        equals: productID,
+      },
     },
   })
 
-  if (!product?.reviewRequiredAt) {
-    return Response.json({ message: 'Този продукт не е в списъка за преглед.' }, { status: 400 })
+  const reviewItem = reviewItems.docs[0]
+  if (!reviewItem) {
+    return Response.json({ message: 'Продуктът не е част от опашката за преглед.' }, { status: 404 })
   }
 
-  if (product.reviewedAt) {
+  if (reviewItem.status === 'reviewed') {
     return Response.json({
       message: 'Продуктът вече е маркиран като прегледан.',
-      reviewedAt: product.reviewedAt,
+      reviewedAt: reviewItem.reviewedAt,
     })
   }
 
   const reviewedAt = new Date().toISOString()
 
   await req.payload.update({
-    collection: 'products',
-    context: {
-      skipProductReviewState: true,
-    },
+    collection: 'product-review-items',
     data: {
-      needsReview: false,
-      reviewStatus: 'reviewed',
       reviewedAt,
-      reviewedBy: String(req.user.id),
+      reviewedBy: req.user.id,
+      status: 'reviewed',
     },
-    id: productID,
+    id: reviewItem.id,
     overrideAccess: true,
     req,
   })

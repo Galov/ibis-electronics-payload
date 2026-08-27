@@ -81,6 +81,7 @@ export interface Config {
     partners: Partner;
     'contact-inquiries': ContactInquiry;
     media: Media;
+    'product-review-items': ProductReviewItem;
     addresses: Address;
     products: Product;
     carts: Cart;
@@ -108,6 +109,7 @@ export interface Config {
     partners: PartnersSelect<false> | PartnersSelect<true>;
     'contact-inquiries': ContactInquiriesSelect<false> | ContactInquiriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'product-review-items': ProductReviewItemsSelect<false> | ProductReviewItemsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     carts: CartsSelect<false> | CartsSelect<true>;
@@ -360,11 +362,6 @@ export interface Product {
   legacyModifiedAt?: string | null;
   published?: boolean | null;
   productCreatedSource?: ('manual' | 'nik' | 'other') | null;
-  needsReview?: boolean | null;
-  reviewStatus?: ('pending' | 'reviewed') | null;
-  reviewRequiredAt?: string | null;
-  reviewedAt?: string | null;
-  reviewedBy?: string | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -1092,6 +1089,26 @@ export interface ContactInquiry {
   createdAt: string;
 }
 /**
+ * Единен списък на новите продукти, които очакват преглед от администратор.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-review-items".
+ */
+export interface ProductReviewItem {
+  id: string;
+  product: string | Product;
+  productTitle: string;
+  productSku?: string | null;
+  productSlug?: string | null;
+  productCreatedSource: 'manual' | 'nik' | 'other';
+  status: 'pending' | 'reviewed';
+  reviewRequiredAt: string;
+  reviewedAt?: string | null;
+  reviewedBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1150,6 +1167,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'product-review-items';
+        value: string | ProductReviewItem;
       } | null)
     | ({
         relationTo: 'addresses';
@@ -1579,6 +1600,23 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-review-items_select".
+ */
+export interface ProductReviewItemsSelect<T extends boolean = true> {
+  product?: T;
+  productTitle?: T;
+  productSku?: T;
+  productSlug?: T;
+  productCreatedSource?: T;
+  status?: T;
+  reviewRequiredAt?: T;
+  reviewedAt?: T;
+  reviewedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "addresses_select".
  */
 export interface AddressesSelect<T extends boolean = true> {
@@ -1637,11 +1675,6 @@ export interface ProductsSelect<T extends boolean = true> {
   legacyModifiedAt?: T;
   published?: T;
   productCreatedSource?: T;
-  needsReview?: T;
-  reviewStatus?: T;
-  reviewRequiredAt?: T;
-  reviewedAt?: T;
-  reviewedBy?: T;
   generateSlug?: T;
   slug?: T;
   meta?:

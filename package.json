@@ -20,6 +20,7 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "preview:order-emails": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/previewOrderEmails.ts",
     "prices:recalculate": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/recalculateRetailPrices.ts",
+    "reviews:migrate": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/migrateProductReviewQueue.ts",
     "reinstall": "cross-env NODE_OPTIONS=--no-deprecation rm -rf node_modules package-lock.json && npm install",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "npm run test:int && npm run test:e2e",

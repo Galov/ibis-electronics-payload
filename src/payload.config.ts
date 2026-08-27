@@ -15,6 +15,7 @@ import { Pages } from '@/collections/Pages'
 import { PostCategories } from '@/collections/PostCategories'
 import { Posts } from '@/collections/Posts'
 import { Partners } from '@/collections/Partners'
+import { ProductReviewItems } from '@/collections/ProductReviewItems'
 import { boxNowLockersHandler } from '@/endpoints/boxnow-lockers'
 import { boxNowCreateShipmentHandler, boxNowParcelLabelHandler } from '@/endpoints/boxnow-order-shipment'
 import { Users } from '@/collections/Users'
@@ -60,7 +61,18 @@ export default buildConfig({
     dateFormat: 'dd.MM.yyyy, HH:mm',
     user: Users.slug,
   },
-  collections: [Users, Brands, Categories, Pages, PostCategories, Posts, Partners, ContactInquiries, Media],
+  collections: [
+    Users,
+    Brands,
+    Categories,
+    Pages,
+    PostCategories,
+    Posts,
+    Partners,
+    ContactInquiries,
+    Media,
+    ProductReviewItems,
+  ],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),

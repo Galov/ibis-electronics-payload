@@ -2,6 +2,10 @@ import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import type { Access } from 'payload'
 import { slugField } from 'payload'
 import { checkRole } from '@/access/utilities'
+import {
+  removeProductReviewQueueItemAfterDelete,
+  syncProductReviewQueueAfterChange,
+} from './hooks/syncProductReviewQueue'
 
 const normalizeCatalogCompatibilityFields = ({
   context,
@@ -101,53 +105,23 @@ const roundMoneyValue = (value?: null | number) =>
 
 const roundMoneyField = ({ value }: { value?: null | number }) => roundMoneyValue(value)
 
-const setProductReviewState = ({
+const setProductCreatedSource = ({
   context,
   data,
   operation,
-  originalDoc,
-  req,
 }: {
   context?: Record<string, unknown>
   data?: Record<string, unknown>
   operation?: string
-  originalDoc?: Record<string, unknown> | null
-  req: { user?: unknown }
 }) => {
-  if (context?.skipProductReviewState) {
-    return data
-  }
-
   data = data || {}
 
   if (operation === 'create') {
-    data.reviewRequiredAt = data.reviewRequiredAt || new Date().toISOString()
-    data.needsReview = data.reviewedAt ? false : data.needsReview ?? true
-    data.reviewStatus = data.reviewedAt ? 'reviewed' : data.reviewStatus || 'pending'
-    data.productCreatedSource = data.productCreatedSource || (context?.productCreatedSource === 'nik' ? 'nik' : 'manual')
-    return data
+    const contextSource = context?.productCreatedSource
+    data.productCreatedSource =
+      data.productCreatedSource ||
+      (contextSource === 'nik' || contextSource === 'other' ? contextSource : 'manual')
   }
-
-  if (data.reviewedAt || originalDoc?.reviewedAt) {
-    data.needsReview = false
-    data.reviewStatus = 'reviewed'
-    return data
-  }
-
-  if (
-    operation !== 'update' ||
-    !req.user ||
-    !originalDoc?.reviewRequiredAt ||
-    originalDoc.reviewedAt
-  ) {
-    return data
-  }
-
-  data.reviewedAt = new Date().toISOString()
-  data.reviewedBy =
-    typeof req.user === 'object' && req.user && 'id' in req.user ? String(req.user.id) : undefined
-  data.needsReview = false
-  data.reviewStatus = 'reviewed'
 
   return data
 }
@@ -172,11 +146,19 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
   },
   hooks: {
     ...defaultCollection.hooks,
+    afterChange: [
+      ...(defaultCollection.hooks?.afterChange || []),
+      syncProductReviewQueueAfterChange,
+    ],
+    afterDelete: [
+      ...(defaultCollection.hooks?.afterDelete || []),
+      removeProductReviewQueueItemAfterDelete,
+    ],
     afterRead: [...(defaultCollection.hooks?.afterRead || []), ensureCatalogCompatibilityFields],
     beforeChange: [
       ...(defaultCollection.hooks?.beforeChange || []),
       normalizeCatalogCompatibilityFields,
-      setProductReviewState,
+      setProductCreatedSource,
     ],
   },
   admin: {
@@ -547,65 +529,6 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
                   value: 'other',
                 },
               ],
-              admin: {
-                hidden: true,
-                readOnly: true,
-              },
-            },
-            {
-              name: 'needsReview',
-              label: 'Изисква преглед',
-              type: 'checkbox',
-              defaultValue: true,
-              index: true,
-              admin: {
-                hidden: true,
-                readOnly: true,
-              },
-            },
-            {
-              name: 'reviewStatus',
-              label: 'Статус на преглед',
-              type: 'select',
-              defaultValue: 'pending',
-              index: true,
-              options: [
-                {
-                  label: 'За преглед',
-                  value: 'pending',
-                },
-                {
-                  label: 'Прегледан',
-                  value: 'reviewed',
-                },
-              ],
-              admin: {
-                hidden: true,
-                readOnly: true,
-              },
-            },
-            {
-              name: 'reviewRequiredAt',
-              label: 'За преглед от',
-              type: 'date',
-              admin: {
-                hidden: true,
-                readOnly: true,
-              },
-            },
-            {
-              name: 'reviewedAt',
-              label: 'Прегледан от администратор',
-              type: 'date',
-              admin: {
-                hidden: true,
-                readOnly: true,
-              },
-            },
-            {
-              name: 'reviewedBy',
-              label: 'Прегледан от',
-              type: 'text',
               admin: {
                 hidden: true,
                 readOnly: true,
