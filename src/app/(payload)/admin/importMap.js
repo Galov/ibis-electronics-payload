@@ -30,6 +30,7 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { UploadToRomaniaButton as UploadToRomaniaButton_ecbc2102f2b9c6c59d3061bcecc3c414 } from '@/components/admin/UploadToRomaniaButton'
+import { MoneyCell as MoneyCell_4a3beab9aeb64215aca62667b2e66a58 } from '@/components/admin/MoneyCell'
 import { OrderItemsReadOnlyField as OrderItemsReadOnlyField_a5fb466e8411c12c06676e5255209cbf } from '@/components/admin/OrderItemsReadOnlyField'
 import { OrderShippingNameField as OrderShippingNameField_1940c6d036f51b489de6860064ba9ee8 } from '@/components/admin/OrderShippingNameField'
 import { BoxNowShipmentField as BoxNowShipmentField_9be7f7e1840ffbedb101b27f6ceab015 } from '@/components/admin/BoxNowShipmentField'
@@ -74,6 +75,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/components/admin/UploadToRomaniaButton#UploadToRomaniaButton": UploadToRomaniaButton_ecbc2102f2b9c6c59d3061bcecc3c414,
+  "@/components/admin/MoneyCell#MoneyCell": MoneyCell_4a3beab9aeb64215aca62667b2e66a58,
   "@/components/admin/OrderItemsReadOnlyField#OrderItemsReadOnlyField": OrderItemsReadOnlyField_a5fb466e8411c12c06676e5255209cbf,
   "@/components/admin/OrderShippingNameField#OrderShippingNameField": OrderShippingNameField_1940c6d036f51b489de6860064ba9ee8,
   "@/components/admin/BoxNowShipmentField#BoxNowShipmentField": BoxNowShipmentField_9be7f7e1840ffbedb101b27f6ceab015,

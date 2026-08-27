@@ -40,6 +40,13 @@ const normalizeMoneyAdminFields = (fields: any[]): any[] => {
     if (moneyFieldNames.has(nextField.name)) {
       nextField.admin = {
         ...nextField.admin,
+        components: {
+          ...nextField.admin?.components,
+          Cell: {
+            path: '@/components/admin/MoneyCell',
+            exportName: 'MoneyCell',
+          },
+        },
         step: 0.01,
       }
     }
@@ -50,9 +57,7 @@ const normalizeMoneyAdminFields = (fields: any[]): any[] => {
         readOnly: true,
       }
 
-      if (nextField.admin?.components) {
-        delete nextField.admin.components
-      }
+      delete nextField.admin?.components?.Field
     }
 
     return nextField
