@@ -123,12 +123,14 @@ const setProductReviewState = ({
   if (operation === 'create') {
     data.reviewRequiredAt = data.reviewRequiredAt || new Date().toISOString()
     data.needsReview = data.reviewedAt ? false : data.needsReview ?? true
+    data.reviewStatus = data.reviewedAt ? 'reviewed' : data.reviewStatus || 'pending'
     data.productCreatedSource = data.productCreatedSource || (context?.productCreatedSource === 'nik' ? 'nik' : 'manual')
     return data
   }
 
   if (data.reviewedAt || originalDoc?.reviewedAt) {
     data.needsReview = false
+    data.reviewStatus = 'reviewed'
     return data
   }
 
@@ -145,6 +147,7 @@ const setProductReviewState = ({
   data.reviewedBy =
     typeof req.user === 'object' && req.user && 'id' in req.user ? String(req.user.id) : undefined
   data.needsReview = false
+  data.reviewStatus = 'reviewed'
 
   return data
 }
@@ -555,6 +558,27 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               type: 'checkbox',
               defaultValue: true,
               index: true,
+              admin: {
+                hidden: true,
+                readOnly: true,
+              },
+            },
+            {
+              name: 'reviewStatus',
+              label: 'Статус на преглед',
+              type: 'select',
+              defaultValue: 'pending',
+              index: true,
+              options: [
+                {
+                  label: 'За преглед',
+                  value: 'pending',
+                },
+                {
+                  label: 'Прегледан',
+                  value: 'reviewed',
+                },
+              ],
               admin: {
                 hidden: true,
                 readOnly: true,

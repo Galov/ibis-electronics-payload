@@ -18,8 +18,8 @@ const BeforeDashboard = async () => {
     where: {
       and: [
         {
-          needsReview: {
-            equals: true,
+          reviewStatus: {
+            equals: 'pending',
           },
         },
         {

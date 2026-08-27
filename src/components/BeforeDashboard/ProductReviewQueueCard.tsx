@@ -8,7 +8,7 @@ const unreviewedProductsAdminHref =
   '/admin/collections/products?' +
   [
     ['sort', '-createdAt'],
-    ['where[needsReview][equals]', 'true'],
+    ['where[reviewStatus][equals]', 'pending'],
   ]
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&')

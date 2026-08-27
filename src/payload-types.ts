@@ -361,6 +361,7 @@ export interface Product {
   published?: boolean | null;
   productCreatedSource?: ('manual' | 'nik' | 'other') | null;
   needsReview?: boolean | null;
+  reviewStatus?: ('pending' | 'reviewed') | null;
   reviewRequiredAt?: string | null;
   reviewedAt?: string | null;
   reviewedBy?: string | null;
@@ -1637,6 +1638,7 @@ export interface ProductsSelect<T extends boolean = true> {
   published?: T;
   productCreatedSource?: T;
   needsReview?: T;
+  reviewStatus?: T;
   reviewRequiredAt?: T;
   reviewedAt?: T;
   reviewedBy?: T;

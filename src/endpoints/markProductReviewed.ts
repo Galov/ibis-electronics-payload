@@ -46,6 +46,7 @@ export const markProductReviewedHandler: PayloadHandler = async (req) => {
     },
     data: {
       needsReview: false,
+      reviewStatus: 'reviewed',
       reviewedAt,
       reviewedBy: String(req.user.id),
     },
