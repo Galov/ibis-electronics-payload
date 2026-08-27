@@ -122,8 +122,13 @@ const setProductReviewState = ({
 
   if (operation === 'create') {
     data.reviewRequiredAt = data.reviewRequiredAt || new Date().toISOString()
-    data.needsReview = data.needsReview ?? true
+    data.needsReview = data.reviewedAt ? false : data.needsReview ?? true
     data.productCreatedSource = data.productCreatedSource || (context?.productCreatedSource === 'nik' ? 'nik' : 'manual')
+    return data
+  }
+
+  if (data.reviewedAt || originalDoc?.reviewedAt) {
+    data.needsReview = false
     return data
   }
 
