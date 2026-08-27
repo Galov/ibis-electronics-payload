@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 
 const baseClass = 'before-dashboard'
@@ -110,9 +111,9 @@ export const ProductReviewQueueCard = ({
                   {visibleProducts.map((product) => (
                     <div className={`${baseClass}__item`} key={product.id}>
                       <div>
-                        <a href={`/admin/collections/products/${product.id}`}>
+                        <Link href={`/admin/collections/products/${product.id}`}>
                           {product.title || product.sku || product.id}
-                        </a>
+                        </Link>
                         <p>
                           {product.sku ? `SKU: ${product.sku}` : 'Без SKU'} · Източник:{' '}
                           {getSourceLabel(product.productCreatedSource)} · За преглед от:{' '}
@@ -120,11 +121,11 @@ export const ProductReviewQueueCard = ({
                         </p>
                       </div>
                       <div className={`${baseClass}__actions`}>
-                        <a href={`/admin/collections/products/${product.id}`}>Админ</a>
+                        <Link href={`/admin/collections/products/${product.id}`}>Админ</Link>
                         {product.slug ? (
-                          <a href={`/products/${product.slug}`} rel="noreferrer" target="_blank">
+                          <Link href={`/products/${product.slug}`} rel="noreferrer" target="_blank">
                             Публично
-                          </a>
+                          </Link>
                         ) : null}
                         <button
                           className={`${baseClass}__reviewButton`}
@@ -139,9 +140,9 @@ export const ProductReviewQueueCard = ({
                   ))}
                 </div>
                 {total > visibleProductsLimit ? (
-                  <a className={`${baseClass}__allLink`} href="/admin/collections/products">
+                  <Link className={`${baseClass}__allLink`} href="/admin/collections/products">
                     Виж всички продукти и филтрирай по непрегледани
-                  </a>
+                  </Link>
                 ) : null}
               </>
             ) : null}
