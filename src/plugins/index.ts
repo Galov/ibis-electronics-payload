@@ -20,6 +20,8 @@ const hasR2Config = Boolean(
     process.env.R2_ENDPOINT,
 )
 
+const moneyFieldNames = new Set(['amount', 'subtotal', 'price', 'productUnitPrice', 'shippingFee'])
+
 const normalizeMoneyAdminFields = (fields: any[]): any[] => {
   return fields.map((field) => {
     const nextField = { ...field }
@@ -33,6 +35,13 @@ const normalizeMoneyAdminFields = (fields: any[]): any[] => {
         ...tab,
         fields: Array.isArray(tab.fields) ? normalizeMoneyAdminFields(tab.fields) : tab.fields,
       }))
+    }
+
+    if (moneyFieldNames.has(nextField.name)) {
+      nextField.admin = {
+        ...nextField.admin,
+        step: 0.01,
+      }
     }
 
     if (nextField.name === 'amount' || nextField.name === 'subtotal') {
@@ -93,6 +102,7 @@ const addLineItemSnapshotFields = (fields: any[]): any[] => {
           label: 'Ед. цена',
           admin: {
             readOnly: true,
+            step: 0.01,
           },
         })
       }
@@ -789,6 +799,7 @@ export const plugins: Plugin[] = [
               hidden: true,
               position: 'sidebar',
               readOnly: true,
+              step: 0.01,
             },
             label: 'Цена на доставка',
           },

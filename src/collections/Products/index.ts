@@ -96,6 +96,52 @@ const syncInventoryFields = ({ data, siblingData, value }: { data?: Record<strin
   return typeof qty === 'number' ? qty : 0
 }
 
+const roundMoneyValue = (value?: null | number) =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.round(value * 100) / 100 : value
+
+const roundMoneyField = ({ value }: { value?: null | number }) => roundMoneyValue(value)
+
+const setProductReviewState = ({
+  context,
+  data,
+  operation,
+  originalDoc,
+  req,
+}: {
+  context?: Record<string, unknown>
+  data?: Record<string, unknown>
+  operation?: string
+  originalDoc?: Record<string, unknown> | null
+  req: { user?: unknown }
+}) => {
+  if (context?.skipProductReviewState) {
+    return data
+  }
+
+  data = data || {}
+
+  if (operation === 'create') {
+    data.reviewRequiredAt = data.reviewRequiredAt || new Date().toISOString()
+    data.productCreatedSource = data.productCreatedSource || (context?.productCreatedSource === 'nik' ? 'nik' : 'manual')
+    return data
+  }
+
+  if (
+    operation !== 'update' ||
+    !req.user ||
+    !originalDoc?.reviewRequiredAt ||
+    originalDoc.reviewedAt
+  ) {
+    return data
+  }
+
+  data.reviewedAt = new Date().toISOString()
+  data.reviewedBy =
+    typeof req.user === 'object' && req.user && 'id' in req.user ? String(req.user.id) : undefined
+
+  return data
+}
+
 const adminOrCatalogPublished: Access = ({ req: { user } }) => {
   if (user && checkRole(['admin'], user)) {
     return true
@@ -120,6 +166,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     beforeChange: [
       ...(defaultCollection.hooks?.beforeChange || []),
       normalizeCatalogCompatibilityFields,
+      setProductReviewState,
     ],
   },
   admin: {
@@ -156,6 +203,19 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
   },
   fields: [
     { name: 'title', label: 'Име', type: 'text', required: true },
+    {
+      name: 'uploadToRomanianSiteAction',
+      label: 'Румънски сайт',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: {
+            path: '@/components/admin/UploadToRomaniaButton',
+            exportName: 'UploadToRomaniaButton',
+          },
+        },
+      },
+    },
     {
       type: 'tabs',
       tabs: [
@@ -271,14 +331,24 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               type: 'number',
               defaultValue: 0,
               required: true,
+              admin: {
+                step: 0.01,
+              },
+              hooks: {
+                beforeChange: [roundMoneyField],
+              },
             },
             {
               name: 'sourcePrice',
               label: 'Изходна цена от Ник (EUR)',
               type: 'number',
               admin: {
+                step: 0.01,
                 readOnly: true,
                 description: 'Базовата цена, получена от Ibis Electronics преди надценката.',
+              },
+              hooks: {
+                beforeChange: [roundMoneyField],
               },
             },
             {
@@ -290,7 +360,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               },
               defaultValue: 0,
               hooks: {
-                beforeChange: [syncCatalogFields],
+                beforeChange: [syncCatalogFields, roundMoneyField],
               },
             },
             {
@@ -324,7 +394,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               },
               defaultValue: 0,
               hooks: {
-                beforeChange: [syncCatalogFields],
+                beforeChange: [syncCatalogFields, roundMoneyField],
               },
             },
             {
@@ -447,6 +517,57 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               label: 'Публикуван',
               type: 'checkbox',
               defaultValue: true,
+            },
+            {
+              name: 'productCreatedSource',
+              label: 'Източник на продукта',
+              type: 'select',
+              defaultValue: 'manual',
+              options: [
+                {
+                  label: 'Ръчно',
+                  value: 'manual',
+                },
+                {
+                  label: 'НИК',
+                  value: 'nik',
+                },
+                {
+                  label: 'Друг източник',
+                  value: 'other',
+                },
+              ],
+              admin: {
+                hidden: true,
+                readOnly: true,
+              },
+            },
+            {
+              name: 'reviewRequiredAt',
+              label: 'За преглед от',
+              type: 'date',
+              admin: {
+                hidden: true,
+                readOnly: true,
+              },
+            },
+            {
+              name: 'reviewedAt',
+              label: 'Прегледан от администратор',
+              type: 'date',
+              admin: {
+                hidden: true,
+                readOnly: true,
+              },
+            },
+            {
+              name: 'reviewedBy',
+              label: 'Прегледан от',
+              type: 'text',
+              admin: {
+                hidden: true,
+                readOnly: true,
+              },
             },
           ],
         },

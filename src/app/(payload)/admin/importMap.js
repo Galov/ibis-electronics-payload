@@ -29,6 +29,7 @@ import { StrikethroughFeatureClient as StrikethroughFeatureClient_e70f5e05f09f93
 import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { UploadToRomaniaButton as UploadToRomaniaButton_ecbc2102f2b9c6c59d3061bcecc3c414 } from '@/components/admin/UploadToRomaniaButton'
 import { OrderItemsReadOnlyField as OrderItemsReadOnlyField_a5fb466e8411c12c06676e5255209cbf } from '@/components/admin/OrderItemsReadOnlyField'
 import { OrderShippingNameField as OrderShippingNameField_1940c6d036f51b489de6860064ba9ee8 } from '@/components/admin/OrderShippingNameField'
 import { BoxNowShipmentField as BoxNowShipmentField_9be7f7e1840ffbedb101b27f6ceab015 } from '@/components/admin/BoxNowShipmentField'
@@ -36,6 +37,7 @@ import { RecalculateRetailPricesButton as RecalculateRetailPricesButton_a38d7cbd
 import { OrdersReportField as OrdersReportField_876ead1adbc671ac0f342158cff6ec03 } from '@/components/admin/OrdersReportField'
 import { AdminIcon as AdminIcon_048abc6671a4fc1f451175ea3afb1836 } from '@/components/Logo/AdminIcon'
 import { AdminLogo as AdminLogo_d0335e7a62aec198e4416a8134eda638 } from '@/components/Logo/AdminLogo'
+import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -71,6 +73,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#UnderlineFeatureClient": UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@/components/admin/UploadToRomaniaButton#UploadToRomaniaButton": UploadToRomaniaButton_ecbc2102f2b9c6c59d3061bcecc3c414,
   "@/components/admin/OrderItemsReadOnlyField#OrderItemsReadOnlyField": OrderItemsReadOnlyField_a5fb466e8411c12c06676e5255209cbf,
   "@/components/admin/OrderShippingNameField#OrderShippingNameField": OrderShippingNameField_1940c6d036f51b489de6860064ba9ee8,
   "@/components/admin/BoxNowShipmentField#BoxNowShipmentField": BoxNowShipmentField_9be7f7e1840ffbedb101b27f6ceab015,
@@ -78,6 +81,7 @@ export const importMap = {
   "@/components/admin/OrdersReportField#OrdersReportField": OrdersReportField_876ead1adbc671ac0f342158cff6ec03,
   "@/components/Logo/AdminIcon#AdminIcon": AdminIcon_048abc6671a4fc1f451175ea3afb1836,
   "@/components/Logo/AdminLogo#AdminLogo": AdminLogo_d0335e7a62aec198e4416a8134eda638,
+  "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

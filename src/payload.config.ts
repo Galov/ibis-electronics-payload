@@ -19,6 +19,7 @@ import { boxNowLockersHandler } from '@/endpoints/boxnow-lockers'
 import { boxNowCreateShipmentHandler, boxNowParcelLabelHandler } from '@/endpoints/boxnow-order-shipment'
 import { Users } from '@/collections/Users'
 import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
+import { markProductReviewedHandler } from '@/endpoints/markProductReviewed'
 import { ordersReportHandler } from '@/endpoints/orders-report'
 import { productVersionsAuditHandler, productVersionsRepairHandler } from '@/endpoints/productVersionsAudit'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
@@ -44,6 +45,7 @@ const defaultFromName = process.env.EMAIL_FROM_NAME || 'Ibis Electronics'
 export default buildConfig({
   admin: {
     components: {
+      beforeDashboard: ['@/components/BeforeDashboard'],
       graphics: {
         Icon: {
           exportName: 'AdminIcon',
@@ -143,6 +145,11 @@ export default buildConfig({
       handler: nikPriceSyncHandler,
       method: 'post',
       path: '/integrations/nik/products/price-sync',
+    },
+    {
+      handler: markProductReviewedHandler,
+      method: 'post',
+      path: '/maintenance/products/:id/reviewed',
     },
   ],
   globals: [Header, Footer, TermsPage, PrivacyPage, ContactPage, ShopPage, PricingSettings, OrderSettings],

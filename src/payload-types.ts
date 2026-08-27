@@ -359,6 +359,10 @@ export interface Product {
   legacyProductUrl?: string | null;
   legacyModifiedAt?: string | null;
   published?: boolean | null;
+  productCreatedSource?: ('manual' | 'nik' | 'other') | null;
+  reviewRequiredAt?: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -1630,6 +1634,10 @@ export interface ProductsSelect<T extends boolean = true> {
   legacyProductUrl?: T;
   legacyModifiedAt?: T;
   published?: T;
+  productCreatedSource?: T;
+  reviewRequiredAt?: T;
+  reviewedAt?: T;
+  reviewedBy?: T;
   generateSlug?: T;
   slug?: T;
   meta?:

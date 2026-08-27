@@ -72,8 +72,9 @@ const buildProductSlug = ({
   sku: string
   sourceId?: number | null
 }) => {
-  const suffix = sourceId ? `${sourceId}` : 'nik'
-  const base = `${title}-${sku}-${suffix}`
+  const baseParts = sourceId ? [title, sku, `${sourceId}`] : [title, sku]
+  const base = baseParts
+    .join('-')
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -490,6 +491,8 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
           stockQty,
           stockStatus: getStockStatus(stockQty),
           published: published ?? true,
+          productCreatedSource: 'nik',
+          reviewRequiredAt: new Date().toISOString(),
           ...(getString(item?.data?.description)
             ? { description: getString(item?.data?.description) }
             : {}),
@@ -511,6 +514,9 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
           ...(brandId ? { brand: brandId } : {}),
           ...(categoryIds.length ? { categories: categoryIds } : {}),
           ...(images.length ? { images } : {}),
+        },
+        context: {
+          productCreatedSource: 'nik',
         },
         draft: false,
         overrideAccess: true,
