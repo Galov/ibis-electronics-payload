@@ -45,6 +45,7 @@ export const markProductReviewedHandler: PayloadHandler = async (req) => {
       skipProductReviewState: true,
     },
     data: {
+      needsReview: false,
       reviewedAt,
       reviewedBy: String(req.user.id),
     },

@@ -122,6 +122,7 @@ const setProductReviewState = ({
 
   if (operation === 'create') {
     data.reviewRequiredAt = data.reviewRequiredAt || new Date().toISOString()
+    data.needsReview = data.needsReview ?? true
     data.productCreatedSource = data.productCreatedSource || (context?.productCreatedSource === 'nik' ? 'nik' : 'manual')
     return data
   }
@@ -138,6 +139,7 @@ const setProductReviewState = ({
   data.reviewedAt = new Date().toISOString()
   data.reviewedBy =
     typeof req.user === 'object' && req.user && 'id' in req.user ? String(req.user.id) : undefined
+  data.needsReview = false
 
   return data
 }
@@ -537,6 +539,17 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
                   value: 'other',
                 },
               ],
+              admin: {
+                hidden: true,
+                readOnly: true,
+              },
+            },
+            {
+              name: 'needsReview',
+              label: 'Изисква преглед',
+              type: 'checkbox',
+              defaultValue: true,
+              index: true,
               admin: {
                 hidden: true,
                 readOnly: true,

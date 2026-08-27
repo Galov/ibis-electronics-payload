@@ -360,6 +360,7 @@ export interface Product {
   legacyModifiedAt?: string | null;
   published?: boolean | null;
   productCreatedSource?: ('manual' | 'nik' | 'other') | null;
+  needsReview?: boolean | null;
   reviewRequiredAt?: string | null;
   reviewedAt?: string | null;
   reviewedBy?: string | null;
@@ -1635,6 +1636,7 @@ export interface ProductsSelect<T extends boolean = true> {
   legacyModifiedAt?: T;
   published?: T;
   productCreatedSource?: T;
+  needsReview?: T;
   reviewRequiredAt?: T;
   reviewedAt?: T;
   reviewedBy?: T;

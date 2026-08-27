@@ -4,6 +4,14 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 const baseClass = 'before-dashboard'
+const unreviewedProductsAdminHref =
+  '/admin/collections/products?' +
+  [
+    ['sort', '-createdAt'],
+    ['where[needsReview][equals]', 'true'],
+  ]
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&')
 
 type ProductReviewQueueItem = {
   createdAt?: null | string
@@ -140,8 +148,8 @@ export const ProductReviewQueueCard = ({
                   ))}
                 </div>
                 {total > visibleProductsLimit ? (
-                  <Link className={`${baseClass}__allLink`} href="/admin/collections/products">
-                    Виж всички продукти и филтрирай по непрегледани
+                  <Link className={`${baseClass}__allLink`} href={unreviewedProductsAdminHref}>
+                    Виж всички непрегледани продукти
                   </Link>
                 ) : null}
               </>

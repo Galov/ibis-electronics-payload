@@ -18,8 +18,8 @@ const BeforeDashboard = async () => {
     where: {
       and: [
         {
-          reviewRequiredAt: {
-            exists: true,
+          needsReview: {
+            equals: true,
           },
         },
         {
@@ -32,20 +32,6 @@ const BeforeDashboard = async () => {
             {
               title: {
                 exists: true,
-              },
-            },
-          ],
-        },
-        {
-          or: [
-            {
-              reviewedAt: {
-                exists: false,
-              },
-            },
-            {
-              reviewedAt: {
-                equals: null,
               },
             },
           ],

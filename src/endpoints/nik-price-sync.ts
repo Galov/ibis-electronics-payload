@@ -491,6 +491,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
           stockQty,
           stockStatus: getStockStatus(stockQty),
           published: published ?? true,
+          needsReview: true,
           productCreatedSource: 'nik',
           reviewRequiredAt: new Date().toISOString(),
           ...(getString(item?.data?.description)
