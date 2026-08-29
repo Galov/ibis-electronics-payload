@@ -40,13 +40,22 @@ const safeStatus = async (req: Parameters<PayloadHandler>[0], id: string) => {
     approvalStatus: state.approvalStatus || 'never_sent',
     commerceStatus:
       approved && fingerprints.commerce !== state.lastCommerceFingerprint
-        ? 'blocked_contract'
+        ? state.commerceStatus === 'error'
+          ? 'error'
+          : 'pending'
         : state.commerceStatus || 'current',
     contentStatus:
       approved && fingerprints.content !== state.lastContentFingerprint
         ? 'changed'
         : state.contentStatus || 'current',
-    lastError: state.lastError || latest?.lastError || null,
+    commerceLastError: state.commerceLastError || null,
+    contentLastError: state.contentLastError || state.lastError || null,
+    lastError:
+      state.commerceLastError ||
+      state.contentLastError ||
+      state.lastError ||
+      latest?.lastError ||
+      null,
     lastSuccessfulAt: state.lastSuccessfulAt || null,
     lastSuccessfulEventId: state.lastSuccessfulEventId || null,
     latest: latest

@@ -7,8 +7,10 @@ import { useEffect, useState } from 'react'
 type CatalogSyncAdminStatus = {
   approved: boolean
   approvalStatus: 'approved' | 'error' | 'never_sent' | 'pending'
-  commerceStatus: 'blocked_contract' | 'current' | 'error' | 'pending'
+  commerceStatus: 'current' | 'error' | 'pending'
   contentStatus: 'changed' | 'current' | 'error' | 'pending'
+  commerceLastError: null | string
+  contentLastError: null | string
   lastError: null | string
   lastSuccessfulAt: null | string
   latest: null | {
@@ -54,7 +56,6 @@ const statusLabels = {
     pending: 'Първоначалното изпращане чака',
   },
   commerce: {
-    blocked_contract: 'Има търговска промяна, блокирана до Catalog Sync 1.1',
     current: 'Търговските данни са актуални',
     error: 'Грешка при търговската синхронизация',
     pending: 'Търговската синхронизация чака',
@@ -158,8 +159,13 @@ export function UploadToRomaniaButton() {
         </div>
       ) : null}
       {formModified ? <span>Първо запишете текущите промени в продукта.</span> : null}
-      {status?.lastError || error ? (
-        <span style={{ color: 'var(--theme-error-500)' }}>{error || status?.lastError}</span>
+      {status?.commerceLastError ? (
+        <span style={{ color: 'var(--theme-error-500)' }}>
+          Търговска синхронизация: {status.commerceLastError}
+        </span>
+      ) : null}
+      {status?.contentLastError || error ? (
+        <span style={{ color: 'var(--theme-error-500)' }}>{error || status?.contentLastError}</span>
       ) : null}
       {canSend ? (
         <button disabled={loading} onClick={send} style={buttonStyle} type="button">

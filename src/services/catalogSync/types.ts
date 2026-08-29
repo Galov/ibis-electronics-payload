@@ -1,5 +1,7 @@
 export const catalogSyncSchemaVersion = '1.0' as const
 export const catalogSyncEventType = 'product.upsert' as const
+export const catalogSyncCommerceSchemaVersion = '1.1' as const
+export const catalogSyncCommerceEventType = 'product.commerce_updated' as const
 
 export const catalogSyncStockStatuses = ['instock', 'outofstock', 'onbackorder', 'unknown'] as const
 
@@ -44,6 +46,24 @@ export type CatalogSyncEvent = {
   sourceContentHash: string
   sourceUpdatedAt: string
 }
+
+export type CatalogSyncCommerceProduct = {
+  sourcePriceEUR: number
+  sourceProductId: string
+  stockQty: number
+  stockStatus: CatalogSyncStockStatus
+}
+
+export type CatalogSyncCommerceEvent = {
+  eventId: string
+  eventType: typeof catalogSyncCommerceEventType
+  product: CatalogSyncCommerceProduct
+  schemaVersion: typeof catalogSyncCommerceSchemaVersion
+  sourceCommerceHash: string
+  sourceUpdatedAt: string
+}
+
+export type CatalogSyncOutboundEvent = CatalogSyncCommerceEvent | CatalogSyncEvent
 
 export type CatalogSyncSourceProduct = {
   brand?: null | string | { id: number | string; title?: null | string }

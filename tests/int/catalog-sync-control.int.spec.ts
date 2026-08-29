@@ -117,7 +117,7 @@ describe('controlled Romanian catalog synchronization', () => {
     expect(req.payload.create).not.toHaveBeenCalled()
   })
 
-  it('records approved commerce drift durably but keeps it contract-blocked', async () => {
+  it('records approved commerce drift as a pending Catalog Sync 1.1 event', async () => {
     const baseline = product()
     const fingerprints = buildCatalogSyncFingerprints(baseline)
     const changed = product({
@@ -142,7 +142,14 @@ describe('controlled Romanian catalog synchronization', () => {
 
     expect(req.payload.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ action: 'commerce', status: 'blocked_contract' }),
+        data: expect.objectContaining({
+          action: 'commerce',
+          eventPayload: expect.objectContaining({
+            eventType: 'product.commerce_updated',
+            schemaVersion: '1.1',
+          }),
+          status: 'pending',
+        }),
       }),
     )
     expect(req.payload.update).toHaveBeenCalledWith(
@@ -150,7 +157,7 @@ describe('controlled Romanian catalog synchronization', () => {
         context: { skipRomanianCatalogSync: true },
         data: expect.objectContaining({
           catalogSync: expect.objectContaining({
-            commerceStatus: 'blocked_contract',
+            commerceStatus: 'pending',
             contentStatus: 'current',
           }),
         }),
@@ -237,7 +244,8 @@ describe('controlled Romanian catalog synchronization', () => {
       req,
       transport: {
         getStatus: vi.fn(),
-        send: vi.fn().mockRejectedValue(new Error('fetch failed')),
+        sendCommerce: vi.fn(),
+        sendContent: vi.fn().mockRejectedValue(new Error('fetch failed')),
       },
     })
 
@@ -284,7 +292,8 @@ describe('controlled Romanian catalog synchronization', () => {
       req,
       transport: {
         getStatus: vi.fn(),
-        send: vi.fn().mockResolvedValue({ eventId: event.eventId, status: 'succeeded' }),
+        sendCommerce: vi.fn(),
+        sendContent: vi.fn().mockResolvedValue({ eventId: event.eventId, status: 'succeeded' }),
       },
     })
 

@@ -7,8 +7,10 @@ export const catalogSyncContext = {
 export type CatalogSyncProductState = {
   approved?: boolean | null
   approvalStatus?: 'never_sent' | 'pending' | 'approved' | 'error' | null
-  commerceStatus?: 'current' | 'blocked_contract' | 'pending' | 'error' | null
+  commerceStatus?: 'current' | 'pending' | 'error' | null
+  commerceLastError?: string | null
   contentStatus?: 'current' | 'changed' | 'pending' | 'error' | null
+  contentLastError?: string | null
   lastAttemptCount?: number | null
   lastCommerceFingerprint?: string | null
   lastContentFingerprint?: string | null

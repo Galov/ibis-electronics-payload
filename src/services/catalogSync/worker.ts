@@ -1,17 +1,23 @@
-import { createLocalReq, type Payload, type PayloadRequest } from 'payload'
+import { createLocalReq, type Payload, type PayloadRequest, type Where } from 'payload'
 
 import type { CatalogSyncOutbox } from '@/payload-types'
 
+import { parseCatalogSyncCommerceEvent } from './commerceContract'
 import { CatalogSyncError } from './errors'
 import { buildCatalogSyncFingerprints } from './fingerprints'
 import {
+  enqueueCatalogCommerceSync,
   loadCatalogSyncProductSystem,
   parseOutboxEvent,
   productIDFromOutbox,
-  recordBlockedCommerceSync,
 } from './outbox'
 import { updateCatalogSyncProductState } from './state'
-import { getCatalogSyncEventStatus, sendCatalogSyncEvent } from './transport'
+import {
+  getCatalogSyncEventStatus,
+  getEnabledCatalogSyncWorkerActions,
+  sendCatalogSyncCommerceEvent,
+  sendCatalogSyncEvent,
+} from './transport'
 
 const maxAttempts = 8
 const statusPollDelayMs = 15_000
@@ -19,12 +25,14 @@ const leaseDurationMs = 60_000
 
 type CatalogSyncWorkerTransport = {
   getStatus: typeof getCatalogSyncEventStatus
-  send: typeof sendCatalogSyncEvent
+  sendCommerce: typeof sendCatalogSyncCommerceEvent
+  sendContent: typeof sendCatalogSyncEvent
 }
 
 const defaultTransport: CatalogSyncWorkerTransport = {
   getStatus: getCatalogSyncEventStatus,
-  send: sendCatalogSyncEvent,
+  sendCommerce: sendCatalogSyncCommerceEvent,
+  sendContent: sendCatalogSyncEvent,
 }
 
 const retryDelay = (attempts: number) =>
@@ -53,11 +61,13 @@ const updateOutbox = ({
   })
 
 const markProductSyncError = async ({
+  action,
   attempts,
   error,
   productId,
   req,
 }: {
+  action: CatalogSyncOutbox['action']
   attempts: number
   error: string
   productId: string
@@ -65,18 +75,41 @@ const markProductSyncError = async ({
 }) => {
   const product = await loadCatalogSyncProductSystem({ productId, req })
   await updateCatalogSyncProductState({
-    patch: {
-      approvalStatus: product.catalogSync?.approved ? 'approved' : 'error',
-      contentStatus: 'error',
-      lastAttemptCount: attempts,
-      lastError: error,
-    },
+    patch:
+      action === 'commerce'
+        ? {
+            commerceLastError: error,
+            commerceStatus: 'error',
+            lastAttemptCount: attempts,
+          }
+        : {
+            approvalStatus: product.catalogSync?.approved ? 'approved' : 'error',
+            contentLastError: error,
+            contentStatus: 'error',
+            lastAttemptCount: attempts,
+            lastError: error,
+          },
     product,
     req,
   })
 }
 
-const completeOutbox = async ({
+const markOutboxSucceeded = ({
+  completedAt,
+  item,
+  req,
+}: {
+  completedAt: string
+  item: CatalogSyncOutbox
+  req: PayloadRequest
+}) =>
+  updateOutbox({
+    data: { completedAt, lastError: null, leaseExpiresAt: null, status: 'succeeded' },
+    id: item.id,
+    req,
+  })
+
+const completeContentOutbox = async ({
   item,
   req,
 }: {
@@ -88,22 +121,16 @@ const completeOutbox = async ({
   const product = await loadCatalogSyncProductSystem({ productId, req })
   const current = buildCatalogSyncFingerprints(product)
   const completedAt = new Date().toISOString()
+  const commerceChanged = current.commerce !== item.commerceFingerprint
 
-  if (current.commerce !== item.commerceFingerprint) {
-    await recordBlockedCommerceSync({ product, req })
-  }
-
-  await updateOutbox({
-    data: { completedAt, lastError: null, leaseExpiresAt: null, status: 'succeeded' },
-    id: item.id,
-    req,
-  })
+  await markOutboxSucceeded({ completedAt, item, req })
   await updateCatalogSyncProductState({
     patch: {
       approved: true,
       approvalStatus: 'approved',
-      commerceStatus:
-        current.commerce === item.commerceFingerprint ? 'current' : 'blocked_contract',
+      commerceLastError: null,
+      commerceStatus: commerceChanged ? 'pending' : 'current',
+      contentLastError: null,
       contentStatus: current.content === item.contentFingerprint ? 'current' : 'changed',
       lastAttemptCount: item.attempts || 0,
       lastCommerceFingerprint: item.commerceFingerprint,
@@ -115,6 +142,82 @@ const completeOutbox = async ({
     product,
     req,
   })
+
+  if (commerceChanged) {
+    const approvedProduct = await loadCatalogSyncProductSystem({ productId, req })
+    await enqueueCatalogCommerceSync({ product: approvedProduct, req })
+  }
+}
+
+const completeCommerceOutbox = async ({
+  item,
+  remoteStatus,
+  req,
+}: {
+  item: CatalogSyncOutbox
+  remoteStatus: 'succeeded' | 'superseded'
+  req: PayloadRequest
+}) => {
+  const productId = productIDFromOutbox(item.product)
+  if (!productId) throw new Error('Outbox item has no product ID.')
+  const product = await loadCatalogSyncProductSystem({ productId, req })
+  const current = buildCatalogSyncFingerprints(product)
+  const completedAt = new Date().toISOString()
+  const commerceChanged = current.commerce !== item.commerceFingerprint
+
+  await markOutboxSucceeded({ completedAt, item, req })
+
+  if (remoteStatus === 'superseded') {
+    const alreadyCurrent = current.commerce === product.catalogSync?.lastCommerceFingerprint
+    await updateCatalogSyncProductState({
+      patch: {
+        commerceLastError: alreadyCurrent
+          ? null
+          : 'Румънският сайт вече има по-ново търговско събитие.',
+        commerceStatus: alreadyCurrent ? 'current' : 'error',
+        lastAttemptCount: item.attempts || 0,
+        lastSuccessfulAt: completedAt,
+        lastSuccessfulEventId: item.eventId,
+      },
+      product,
+      req,
+    })
+    return
+  }
+
+  await updateCatalogSyncProductState({
+    patch: {
+      commerceLastError: null,
+      commerceStatus: commerceChanged ? 'pending' : 'current',
+      lastAttemptCount: item.attempts || 0,
+      lastCommerceFingerprint: item.commerceFingerprint,
+      lastSuccessfulAt: completedAt,
+      lastSuccessfulEventId: item.eventId,
+    },
+    product,
+    req,
+  })
+
+  if (commerceChanged) {
+    const latestProduct = await loadCatalogSyncProductSystem({ productId, req })
+    await enqueueCatalogCommerceSync({ product: latestProduct, req })
+  }
+}
+
+const completeOutbox = async ({
+  item,
+  remoteStatus,
+  req,
+}: {
+  item: CatalogSyncOutbox
+  remoteStatus: 'succeeded' | 'superseded'
+  req: PayloadRequest
+}) => {
+  if (item.action === 'commerce') {
+    await completeCommerceOutbox({ item, remoteStatus, req })
+    return
+  }
+  await completeContentOutbox({ item, req })
 }
 
 const handleRemoteStatus = async ({
@@ -128,7 +231,7 @@ const handleRemoteStatus = async ({
 }) => {
   const response = await transport.getStatus(String(item.eventId))
   if (response.status === 'succeeded' || response.status === 'superseded') {
-    await completeOutbox({ item, req })
+    await completeOutbox({ item, remoteStatus: response.status, req })
     return
   }
   if (response.status === 'failed') {
@@ -150,6 +253,30 @@ const handleRemoteStatus = async ({
   })
 }
 
+const rejectUnapprovedCommerceItem = async ({
+  item,
+  productId,
+  req,
+}: {
+  item: CatalogSyncOutbox
+  productId: string
+  req: PayloadRequest
+}) => {
+  const message = 'Commerce sync requires a successfully approved Romanian product.'
+  await updateOutbox({
+    data: { lastError: message, leaseExpiresAt: null, nextAttemptAt: null, status: 'failed' },
+    id: item.id,
+    req,
+  })
+  await markProductSyncError({
+    action: 'commerce',
+    attempts: item.attempts || 0,
+    error: message,
+    productId,
+    req,
+  })
+}
+
 export const processCatalogSyncOutboxItem = async ({
   item,
   req,
@@ -159,11 +286,18 @@ export const processCatalogSyncOutboxItem = async ({
   req: PayloadRequest
   transport?: CatalogSyncWorkerTransport
 }) => {
-  if (item.action === 'commerce') return
   const productId = productIDFromOutbox(item.product)
   if (!productId) throw new Error('Outbox item has no product ID.')
-  const attempts = Number(item.attempts || 0) + (item.status === 'accepted' ? 0 : 1)
 
+  if (item.action === 'commerce') {
+    const product = await loadCatalogSyncProductSystem({ productId, req })
+    if (product.catalogSync?.approved !== true) {
+      await rejectUnapprovedCommerceItem({ item, productId, req })
+      return
+    }
+  }
+
+  const attempts = Number(item.attempts || 0) + (item.status === 'accepted' ? 0 : 1)
   await updateOutbox({
     data: {
       attempts,
@@ -180,10 +314,12 @@ export const processCatalogSyncOutboxItem = async ({
       return
     }
 
-    const event = parseOutboxEvent(item.eventPayload)
-    const response = await transport.send(event)
+    const response =
+      item.action === 'commerce'
+        ? await transport.sendCommerce(parseCatalogSyncCommerceEvent(item.eventPayload))
+        : await transport.sendContent(parseOutboxEvent(item.eventPayload))
     if (response.status === 'succeeded' || response.status === 'superseded') {
-      await completeOutbox({ item: { ...item, attempts }, req })
+      await completeOutbox({ item: { ...item, attempts }, remoteStatus: response.status, req })
       return
     }
     await updateOutbox({
@@ -212,28 +348,17 @@ export const processCatalogSyncOutboxItem = async ({
       id: item.id,
       req,
     })
-    await markProductSyncError({ attempts, error: message, productId, req })
+    await markProductSyncError({ action: item.action, attempts, error: message, productId, req })
   }
 }
 
-export const runCatalogSyncOutboxBatch = async ({
-  limit = 5,
-  payload,
-}: {
-  limit?: number
-  payload: Payload
-}) => {
-  const req = await createLocalReq({}, payload)
-  const now = new Date().toISOString()
-  const result = await payload.find({
-    collection: 'catalog-sync-outbox',
-    depth: 0,
-    limit,
-    overrideAccess: true,
-    pagination: false,
-    req,
-    sort: 'createdAt',
-    where: {
+export const buildCatalogSyncOutboxWhere = (
+  enabledActions: CatalogSyncOutbox['action'][],
+  now: string,
+): Where => ({
+  and: [
+    { action: { in: enabledActions } },
+    {
       or: [
         {
           and: [
@@ -251,6 +376,31 @@ export const runCatalogSyncOutboxBatch = async ({
         },
       ],
     },
+  ],
+})
+
+export const runCatalogSyncOutboxBatch = async ({
+  enabledActions = getEnabledCatalogSyncWorkerActions(),
+  limit = 5,
+  payload,
+}: {
+  enabledActions?: CatalogSyncOutbox['action'][]
+  limit?: number
+  payload: Payload
+}) => {
+  if (enabledActions.length === 0) return 0
+
+  const req = await createLocalReq({}, payload)
+  const now = new Date().toISOString()
+  const result = await payload.find({
+    collection: 'catalog-sync-outbox',
+    depth: 0,
+    limit,
+    overrideAccess: true,
+    pagination: false,
+    req,
+    sort: 'createdAt',
+    where: buildCatalogSyncOutboxWhere(enabledActions, now),
   })
 
   for (const item of result.docs) {

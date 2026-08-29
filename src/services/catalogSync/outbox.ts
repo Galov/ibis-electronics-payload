@@ -1,6 +1,7 @@
 import type { PayloadRequest } from 'payload'
 
 import { buildCatalogSyncEvent } from './contract'
+import { buildCatalogSyncCommerceEvent } from './commerceContract'
 import { buildCatalogSyncFingerprints } from './fingerprints'
 import { updateCatalogSyncProductState } from './state'
 import type { CatalogSyncProductState } from './state'
@@ -63,6 +64,35 @@ const findOutboxByDedupeKey = async ({
     pagination: false,
     req,
     where: { dedupeKey: { equals: dedupeKey } },
+  })
+  return result.docs[0]
+}
+
+const findActiveCommerceOutbox = async ({
+  commerceFingerprint,
+  productId,
+  req,
+}: {
+  commerceFingerprint: string
+  productId: string
+  req: PayloadRequest
+}) => {
+  const result = await req.payload.find({
+    collection: 'catalog-sync-outbox',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    req,
+    sort: '-createdAt',
+    where: {
+      and: [
+        { action: { equals: 'commerce' } },
+        { product: { equals: productId } },
+        { commerceFingerprint: { equals: commerceFingerprint } },
+        { status: { in: ['pending', 'sending', 'accepted', 'retry_wait', 'failed'] } },
+      ],
+    },
   })
   return result.docs[0]
 }
@@ -132,40 +162,52 @@ export const enqueueCatalogContentSync = async ({
   return { action, event, fingerprints, outbox, reused: false }
 }
 
-export const recordBlockedCommerceSync = async ({
+export const enqueueCatalogCommerceSync = async ({
   product,
   req,
 }: {
   product: CatalogSyncProductDocument
   req: PayloadRequest
 }) => {
+  if (product.catalogSync?.approved !== true) return null
+
   const fingerprints = buildCatalogSyncFingerprints(product)
-  const dedupeKey = `commerce:${String(product.id)}:${fingerprints.commerce}`
-  const existing = await findOutboxByDedupeKey({ dedupeKey, req })
-  if (!existing) {
+  const event = buildCatalogSyncCommerceEvent(product)
+  const dedupeKey = `commerce:${event.eventId}`
+  const existing = await findActiveCommerceOutbox({
+    commerceFingerprint: fingerprints.commerce,
+    productId: String(product.id),
+    req,
+  })
+  if (existing?.status === 'failed') {
+    await req.payload.update({
+      collection: 'catalog-sync-outbox',
+      data: { lastError: null, nextAttemptAt: new Date().toISOString(), status: 'pending' },
+      id: existing.id,
+      overrideAccess: true,
+      req,
+    })
+  } else if (!existing) {
     await req.payload.create({
       collection: 'catalog-sync-outbox',
       data: {
         action: 'commerce',
         attempts: 0,
         commerceFingerprint: fingerprints.commerce,
-        commerceSnapshot: {
-          schemaVersion: 'blocked-until-romanian-contract',
-          sourcePriceEUR: product.price,
-          sourceProductId: String(product.id),
-          stockQty: product.stockQty,
-          stockStatus: product.stockStatus || 'unknown',
-        },
+        commerceSnapshot: event.product,
         contentFingerprint: fingerprints.content,
         dedupeKey,
+        eventId: event.eventId,
+        eventPayload: event,
+        nextAttemptAt: new Date().toISOString(),
         product: product.id,
-        status: 'blocked_contract',
+        status: 'pending',
       },
       overrideAccess: true,
       req,
     })
   }
-  return fingerprints
+  return { event, fingerprints, outbox: existing || null }
 }
 
 export const productIDFromOutbox = (product: unknown) => relationID(product)

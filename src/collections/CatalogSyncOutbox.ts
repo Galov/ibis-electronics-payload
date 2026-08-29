@@ -56,7 +56,6 @@ export const CatalogSyncOutbox: CollectionConfig = {
         { label: 'Чака повторен опит', value: 'retry_wait' },
         { label: 'Успешно', value: 'succeeded' },
         { label: 'Постоянна грешка', value: 'failed' },
-        { label: 'Блокирано от договора', value: 'blocked_contract' },
       ],
       required: true,
     },

@@ -2,8 +2,8 @@ import type { CollectionAfterChangeHook } from 'payload'
 
 import {
   buildCatalogSyncFingerprints,
+  enqueueCatalogCommerceSync,
   loadCatalogSyncProductSystem,
-  recordBlockedCommerceSync,
   updateCatalogSyncProductState,
 } from '@/services/catalogSync'
 
@@ -21,12 +21,13 @@ export const syncRomanianCatalogAfterChange: CollectionAfterChangeHook = async (
     const commerceChanged = fingerprints.commerce !== product.catalogSync?.lastCommerceFingerprint
 
     if (commerceChanged) {
-      await recordBlockedCommerceSync({ product, req })
+      await enqueueCatalogCommerceSync({ product, req })
     }
 
     await updateCatalogSyncProductState({
       patch: {
-        commerceStatus: commerceChanged ? 'blocked_contract' : 'current',
+        ...(commerceChanged ? { commerceLastError: null } : {}),
+        commerceStatus: commerceChanged ? 'pending' : 'current',
         contentStatus: contentChanged ? 'changed' : 'current',
       },
       product,

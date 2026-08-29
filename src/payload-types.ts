@@ -311,12 +311,14 @@ export interface Product {
     approved?: boolean | null;
     approvalStatus?: ('never_sent' | 'pending' | 'approved' | 'error') | null;
     contentStatus?: ('current' | 'changed' | 'pending' | 'error') | null;
-    commerceStatus?: ('current' | 'blocked_contract' | 'pending' | 'error') | null;
+    commerceStatus?: ('current' | 'pending' | 'error') | null;
     lastSuccessfulEventId?: string | null;
     lastContentFingerprint?: string | null;
     lastCommerceFingerprint?: string | null;
     lastSuccessfulAt?: string | null;
     lastError?: string | null;
+    contentLastError?: string | null;
+    commerceLastError?: string | null;
     lastAttemptCount?: number | null;
   };
   /**
@@ -1112,7 +1114,7 @@ export interface CatalogSyncOutbox {
   id: string;
   product: string | Product;
   action: 'initial' | 'content' | 'commerce';
-  status: 'pending' | 'sending' | 'accepted' | 'retry_wait' | 'succeeded' | 'failed' | 'blocked_contract';
+  status: 'pending' | 'sending' | 'accepted' | 'retry_wait' | 'succeeded' | 'failed';
   dedupeKey: string;
   eventId?: string | null;
   contentFingerprint: string;
@@ -1736,6 +1738,8 @@ export interface ProductsSelect<T extends boolean = true> {
         lastCommerceFingerprint?: T;
         lastSuccessfulAt?: T;
         lastError?: T;
+        contentLastError?: T;
+        commerceLastError?: T;
         lastAttemptCount?: T;
       };
   description?: T;
