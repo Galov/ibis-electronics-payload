@@ -6,6 +6,7 @@ import {
   removeProductReviewQueueItemAfterDelete,
   syncProductReviewQueueAfterChange,
 } from './hooks/syncProductReviewQueue'
+import { syncRomanianCatalogAfterChange } from './hooks/syncRomanianCatalog'
 
 const normalizeCatalogCompatibilityFields = ({
   context,
@@ -55,11 +56,7 @@ const normalizeCatalogCompatibilityFields = ({
   return data
 }
 
-const ensureCatalogCompatibilityFields = ({
-  doc,
-}: {
-  doc?: Record<string, unknown> | null
-}) => {
+const ensureCatalogCompatibilityFields = ({ doc }: { doc?: Record<string, unknown> | null }) => {
   if (!doc) {
     return doc
   }
@@ -90,12 +87,28 @@ const ensureCatalogCompatibilityFields = ({
   return doc
 }
 
-const syncCatalogFields = ({ data, siblingData, value }: { data?: Record<string, unknown>; siblingData?: Record<string, unknown>; value?: number | null }) => {
+const syncCatalogFields = ({
+  data,
+  siblingData,
+  value,
+}: {
+  data?: Record<string, unknown>
+  siblingData?: Record<string, unknown>
+  value?: number | null
+}) => {
   const price = value ?? siblingData?.price ?? data?.price
   return typeof price === 'number' ? price : 0
 }
 
-const syncInventoryFields = ({ data, siblingData, value }: { data?: Record<string, unknown>; siblingData?: Record<string, unknown>; value?: number | null }) => {
+const syncInventoryFields = ({
+  data,
+  siblingData,
+  value,
+}: {
+  data?: Record<string, unknown>
+  siblingData?: Record<string, unknown>
+  value?: number | null
+}) => {
   const qty = value ?? siblingData?.stockQty ?? data?.stockQty
   return typeof qty === 'number' ? qty : 0
 }
@@ -149,6 +162,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     afterChange: [
       ...(defaultCollection.hooks?.afterChange || []),
       syncProductReviewQueueAfterChange,
+      syncRomanianCatalogAfterChange,
     ],
     afterDelete: [
       ...(defaultCollection.hooks?.afterDelete || []),
@@ -207,6 +221,47 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
           },
         },
       },
+    },
+    {
+      name: 'catalogSync',
+      label: 'Състояние на румънската синхронизация',
+      type: 'group',
+      access: {
+        create: () => false,
+        read: ({ req: { user } }) => Boolean(user && checkRole(['admin'], user)),
+        update: () => false,
+      },
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+      fields: [
+        { name: 'approved', type: 'checkbox', defaultValue: false },
+        {
+          name: 'approvalStatus',
+          type: 'select',
+          defaultValue: 'never_sent',
+          options: ['never_sent', 'pending', 'approved', 'error'],
+        },
+        {
+          name: 'contentStatus',
+          type: 'select',
+          defaultValue: 'current',
+          options: ['current', 'changed', 'pending', 'error'],
+        },
+        {
+          name: 'commerceStatus',
+          type: 'select',
+          defaultValue: 'current',
+          options: ['current', 'blocked_contract', 'pending', 'error'],
+        },
+        { name: 'lastSuccessfulEventId', type: 'text' },
+        { name: 'lastContentFingerprint', type: 'text' },
+        { name: 'lastCommerceFingerprint', type: 'text' },
+        { name: 'lastSuccessfulAt', type: 'date' },
+        { name: 'lastError', type: 'textarea' },
+        { name: 'lastAttemptCount', type: 'number', defaultValue: 0 },
+      ],
     },
     {
       type: 'tabs',
@@ -365,7 +420,15 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               defaultValue: false,
               hooks: {
                 beforeChange: [
-                  ({ data, siblingData, value }: { data?: Record<string, unknown>; siblingData?: Record<string, unknown>; value?: boolean | null }) => {
+                  ({
+                    data,
+                    siblingData,
+                    value,
+                  }: {
+                    data?: Record<string, unknown>
+                    siblingData?: Record<string, unknown>
+                    value?: boolean | null
+                  }) => {
                     const price =
                       siblingData?.priceInEUR ??
                       siblingData?.price ??
@@ -399,7 +462,15 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
               defaultValue: false,
               hooks: {
                 beforeChange: [
-                  ({ data, siblingData, value }: { data?: Record<string, unknown>; siblingData?: Record<string, unknown>; value?: boolean | null }) => {
+                  ({
+                    data,
+                    siblingData,
+                    value,
+                  }: {
+                    data?: Record<string, unknown>
+                    siblingData?: Record<string, unknown>
+                    value?: boolean | null
+                  }) => {
                     const price =
                       siblingData?.priceInUSD ??
                       siblingData?.price ??

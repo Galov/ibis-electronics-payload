@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 import { Brands } from '@/collections/Brands'
 import { Categories } from '@/collections/Categories'
 import { ContactInquiries } from '@/collections/ContactInquiries'
+import { CatalogSyncOutbox } from '@/collections/CatalogSyncOutbox'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
 import { PostCategories } from '@/collections/PostCategories'
@@ -17,12 +18,22 @@ import { Posts } from '@/collections/Posts'
 import { Partners } from '@/collections/Partners'
 import { ProductReviewItems } from '@/collections/ProductReviewItems'
 import { boxNowLockersHandler } from '@/endpoints/boxnow-lockers'
-import { boxNowCreateShipmentHandler, boxNowParcelLabelHandler } from '@/endpoints/boxnow-order-shipment'
+import {
+  boxNowCreateShipmentHandler,
+  boxNowParcelLabelHandler,
+} from '@/endpoints/boxnow-order-shipment'
 import { Users } from '@/collections/Users'
 import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
 import { markProductReviewedHandler } from '@/endpoints/markProductReviewed'
+import {
+  catalogSyncAdminSendHandler,
+  catalogSyncAdminStatusHandler,
+} from '@/endpoints/catalogSyncAdmin'
 import { ordersReportHandler } from '@/endpoints/orders-report'
-import { productVersionsAuditHandler, productVersionsRepairHandler } from '@/endpoints/productVersionsAudit'
+import {
+  productVersionsAuditHandler,
+  productVersionsRepairHandler,
+} from '@/endpoints/productVersionsAudit'
 import { recalculateRetailPricesHandler } from '@/endpoints/recalculateRetailPrices'
 import { econtOfficesHandler } from '@/endpoints/econt-offices'
 import { speedyOfficesHandler } from '@/endpoints/speedy-offices'
@@ -70,6 +81,7 @@ export default buildConfig({
     Posts,
     Partners,
     ContactInquiries,
+    CatalogSyncOutbox,
     Media,
     ProductReviewItems,
   ],
@@ -96,7 +108,8 @@ export default buildConfig({
           ...ecommerceBg.translations,
           general: {
             ...payloadBg.translations.general,
-            noResults: 'Няма намерени {{label}}. {{label}} не съществуват или не отговарят на зададените филтри.',
+            noResults:
+              'Няма намерени {{label}}. {{label}} не съществуват или не отговарят на зададените филтри.',
           },
         },
       },
@@ -163,8 +176,27 @@ export default buildConfig({
       method: 'post',
       path: '/maintenance/products/:id/reviewed',
     },
+    {
+      handler: catalogSyncAdminStatusHandler,
+      method: 'get',
+      path: '/maintenance/products/:id/catalog-sync',
+    },
+    {
+      handler: catalogSyncAdminSendHandler,
+      method: 'post',
+      path: '/maintenance/products/:id/catalog-sync',
+    },
   ],
-  globals: [Header, Footer, TermsPage, PrivacyPage, ContactPage, ShopPage, PricingSettings, OrderSettings],
+  globals: [
+    Header,
+    Footer,
+    TermsPage,
+    PrivacyPage,
+    ContactPage,
+    ShopPage,
+    PricingSettings,
+    OrderSettings,
+  ],
   plugins,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

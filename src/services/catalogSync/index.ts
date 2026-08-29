@@ -5,11 +5,26 @@ import { sendCatalogSyncEvent, type CatalogSyncEnvironment } from './transport'
 
 export { CatalogSyncError } from './errors'
 export { buildCatalogSyncEvent, stableStringify, validateCatalogSyncEvent } from './contract'
+export { buildCatalogSyncFingerprints } from './fingerprints'
+export {
+  enqueueCatalogContentSync,
+  loadCatalogSyncProductForUser,
+  loadCatalogSyncProductSystem,
+  parseOutboxEvent,
+  productIDFromOutbox,
+  recordBlockedCommerceSync,
+} from './outbox'
+export {
+  catalogSyncContext,
+  updateCatalogSyncProductState,
+  type CatalogSyncProductState,
+} from './state'
 export {
   assertCatalogSyncSendingEnabled,
   getCatalogSyncEventStatus,
   sendCatalogSyncEvent,
 } from './transport'
+export { processCatalogSyncOutboxItem, runCatalogSyncOutboxBatch } from './worker'
 export type * from './types'
 
 export const loadCatalogSyncEvent = async ({

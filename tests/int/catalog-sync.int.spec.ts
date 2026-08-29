@@ -242,6 +242,19 @@ describe('Romanian catalog sync transport', () => {
     expect(eventIds).toEqual([event.eventId, event.eventId])
   })
 
+  it('accepts an idempotent HTTP 200 replay from the Romanian endpoint', async () => {
+    const event = buildCatalogSyncEvent(pilotProduct)
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ eventId: event.eventId, replay: true, status: 'succeeded' }), {
+        status: 200,
+      }),
+    )
+
+    await expect(
+      sendCatalogSyncEvent(event, { env: enabledEnvironment(), fetchImpl }),
+    ).resolves.toMatchObject({ eventId: event.eventId, replay: true, status: 'succeeded' })
+  })
+
   it('rejects invalid JSON without exposing request credentials', async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()

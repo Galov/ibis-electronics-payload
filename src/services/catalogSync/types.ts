@@ -70,6 +70,8 @@ export type CatalogSyncSourceProduct = {
 
 export type CatalogSyncAcceptedResponse = {
   eventId: string
+  productId?: null | string
+  replay?: boolean
   status: string
 }
 

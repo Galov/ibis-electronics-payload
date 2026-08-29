@@ -141,7 +141,7 @@ export const sendCatalogSyncEvent = async (
     url: `${catalogSyncBaseURL}/api/catalog-sync/products`,
   })
 
-  if (response.status !== 202) {
+  if (response.status !== 200 && response.status !== 202) {
     throw new CatalogSyncError(
       `CATALOG_SYNC_HTTP_${response.status}`,
       `Romanian catalog sync rejected the event with HTTP ${response.status}.`,

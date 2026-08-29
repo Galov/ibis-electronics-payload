@@ -86,7 +86,7 @@ const stableValue = (value: unknown): unknown => {
 
 export const stableStringify = (value: unknown) => JSON.stringify(stableValue(value))
 
-const sha256 = (value: string) => createHash('sha256').update(value).digest('hex')
+export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex')
 
 const deterministicEventID = ({
   sourceContentHash,
@@ -153,19 +153,14 @@ const normalizeImages = (
     }
   })
 
-export const buildCatalogSyncEvent = (source: CatalogSyncSourceProduct): CatalogSyncEvent => {
+export const normalizeCatalogSyncProduct = (
+  source: CatalogSyncSourceProduct,
+): CatalogSyncProduct => {
   const sourceProductId = requireText(
     typeof source.id === 'string' || typeof source.id === 'number' ? String(source.id) : null,
     'id',
   )
-  const updatedAt = requireText(source.updatedAt, 'updatedAt')
-  const updatedAtDate = new Date(updatedAt)
-  if (!Number.isFinite(updatedAtDate.getTime())) {
-    throw new CatalogSyncError('CATALOG_SYNC_INVALID_PRODUCT', 'updatedAt must be ISO-8601.')
-  }
-  const sourceUpdatedAt = updatedAtDate.toISOString()
-
-  const product: CatalogSyncProduct = {
+  return {
     brand: normalizeBrand(source.brand),
     categories: normalizeCategories(source.categories),
     characteristics: [],
@@ -182,9 +177,23 @@ export const buildCatalogSyncEvent = (source: CatalogSyncSourceProduct): Catalog
     stockStatus: normalizeStockStatus(source.stockStatus),
     title: requireText(source.title, 'title'),
   }
+}
+
+export const buildCatalogSyncEvent = (source: CatalogSyncSourceProduct): CatalogSyncEvent => {
+  const updatedAt = requireText(source.updatedAt, 'updatedAt')
+  const updatedAtDate = new Date(updatedAt)
+  if (!Number.isFinite(updatedAtDate.getTime())) {
+    throw new CatalogSyncError('CATALOG_SYNC_INVALID_PRODUCT', 'updatedAt must be ISO-8601.')
+  }
+  const sourceUpdatedAt = updatedAtDate.toISOString()
+  const product = normalizeCatalogSyncProduct(source)
 
   const sourceContentHash = sha256(stableStringify(product))
-  const eventId = deterministicEventID({ sourceContentHash, sourceProductId, sourceUpdatedAt })
+  const eventId = deterministicEventID({
+    sourceContentHash,
+    sourceProductId: product.sourceProductId,
+    sourceUpdatedAt,
+  })
 
   const event: CatalogSyncEvent = {
     eventId,
