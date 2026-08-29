@@ -7,4 +7,10 @@ services:
     ports:
       - '3000:3000'
     restart: unless-stopped
-
+  catalog-sync-worker:
+    image: ghcr.io/galov/ibis-electronics-payload:main
+    container_name: ibis-electronics-catalog-sync-worker
+    command: npm run catalog-sync:worker
+    env_file:
+      - .env.production
+    restart: unless-stopped
