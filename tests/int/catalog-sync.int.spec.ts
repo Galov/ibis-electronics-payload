@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import {
+  assertCatalogSyncSendingEnabled,
   buildCatalogSyncEvent,
   CatalogSyncError,
   getCatalogSyncEventStatus,
@@ -192,6 +193,12 @@ describe('Romanian catalog sync contract', () => {
 })
 
 describe('Romanian catalog sync transport', () => {
+  it('can reject the CLI send preflight before Payload initialization', () => {
+    expect(() => assertCatalogSyncSendingEnabled({})).toThrowError(
+      expect.objectContaining({ code: 'CATALOG_SYNC_SEND_DISABLED' }),
+    )
+  })
+
   it('refuses to send when the explicit send guard is disabled', async () => {
     const fetchImpl = vi.fn<typeof fetch>()
 

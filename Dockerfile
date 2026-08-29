@@ -47,8 +47,11 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.js ./next.config.js
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/redirects.js ./redirects.js
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 RUN mkdir -p ./scripts
 COPY --from=builder /app/scripts/backfillR2ImageCacheHeaders.ts ./scripts/backfillR2ImageCacheHeaders.ts
+COPY --from=builder /app/scripts/catalogSyncProductToRomania.ts ./scripts/catalogSyncProductToRomania.ts
 
 EXPOSE 3000
 

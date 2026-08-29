@@ -1,9 +1,7 @@
 import 'dotenv/config'
 
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-
 import {
+  assertCatalogSyncSendingEnabled,
   CatalogSyncError,
   getCatalogSyncEventStatus,
   sendCatalogSyncProduct,
@@ -17,8 +15,6 @@ const run = async () => {
     throw new CatalogSyncError('CATALOG_SYNC_INVALID_COMMAND', usage)
   }
 
-  const payload = await getPayload({ config: configPromise })
-
   if (action === 'status') {
     const response = await getCatalogSyncEventStatus(identifier)
     console.log(
@@ -31,6 +27,12 @@ const run = async () => {
     return
   }
 
+  assertCatalogSyncSendingEnabled()
+  const [{ default: configPromise }, { getPayload }] = await Promise.all([
+    import('@payload-config'),
+    import('payload'),
+  ])
+  const payload = await getPayload({ config: configPromise })
   const { event, response } = await sendCatalogSyncProduct({
     payload,
     productId: identifier,

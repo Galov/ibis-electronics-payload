@@ -5,7 +5,11 @@ import { sendCatalogSyncEvent, type CatalogSyncEnvironment } from './transport'
 
 export { CatalogSyncError } from './errors'
 export { buildCatalogSyncEvent, stableStringify, validateCatalogSyncEvent } from './contract'
-export { getCatalogSyncEventStatus, sendCatalogSyncEvent } from './transport'
+export {
+  assertCatalogSyncSendingEnabled,
+  getCatalogSyncEventStatus,
+  sendCatalogSyncEvent,
+} from './transport'
 export type * from './types'
 
 export const loadCatalogSyncEvent = async ({

@@ -26,6 +26,17 @@ const resolveEnvironment = (env?: CatalogSyncEnvironment): CatalogSyncEnvironmen
     CATALOG_SYNC_SEND_ENABLED: process.env.CATALOG_SYNC_SEND_ENABLED,
   }
 
+export const assertCatalogSyncSendingEnabled = (env?: CatalogSyncEnvironment) => {
+  const resolvedEnvironment = resolveEnvironment(env)
+  if (resolvedEnvironment.CATALOG_SYNC_SEND_ENABLED !== 'true') {
+    throw new CatalogSyncError(
+      'CATALOG_SYNC_SEND_DISABLED',
+      'Catalog sync sending is disabled. Set CATALOG_SYNC_SEND_ENABLED=true explicitly.',
+    )
+  }
+  return resolvedEnvironment
+}
+
 const getAPIKey = (env: CatalogSyncEnvironment) => {
   const apiKey = env.CATALOG_SYNC_API_KEY
   if (!apiKey) {
@@ -119,13 +130,7 @@ export const sendCatalogSyncEvent = async (
   options: CatalogSyncTransportOptions = {},
 ): Promise<CatalogSyncAcceptedResponse> => {
   validateCatalogSyncEvent(event)
-  const env = resolveEnvironment(options.env)
-  if (env.CATALOG_SYNC_SEND_ENABLED !== 'true') {
-    throw new CatalogSyncError(
-      'CATALOG_SYNC_SEND_DISABLED',
-      'Catalog sync sending is disabled. Set CATALOG_SYNC_SEND_ENABLED=true explicitly.',
-    )
-  }
+  const env = assertCatalogSyncSendingEnabled(options.env)
   const apiKey = getAPIKey(env)
   const response = await request({
     apiKey,
