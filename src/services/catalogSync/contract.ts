@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { CatalogSyncError } from './errors'
 import {
   catalogSyncEventType,
+  catalogSyncProductSchemaVersion,
   catalogSyncSchemaVersion,
   catalogSyncStockStatuses,
   type CatalogSyncEvent,
@@ -128,7 +129,23 @@ const normalizeCategories = (
         `Product category at index ${index} must be populated before catalog sync.`,
       )
     }
+    if (!Array.isArray(category.ancestors)) {
+      throw new CatalogSyncError(
+        'CATALOG_SYNC_RELATION_NOT_POPULATED',
+        `Product category path at index ${index} must be resolved before catalog sync.`,
+      )
+    }
     return {
+      ancestors: category.ancestors.map((ancestor, ancestorIndex) => ({
+        sourceCategoryId: requireText(
+          ancestor.sourceCategoryId,
+          `categories[${index}].ancestors[${ancestorIndex}].sourceCategoryId`,
+        ),
+        title: requireText(
+          ancestor.title,
+          `categories[${index}].ancestors[${ancestorIndex}].title`,
+        ),
+      })),
       sourceCategoryId: String(category.id),
       title: requireText(category.title, `categories[${index}].title`),
     }
@@ -168,7 +185,7 @@ export const normalizeCatalogSyncProduct = (
     imageAlts: normalizeImages(source.images),
     manufacturerCode: normalizeOptionalText(source.manufacturerCode),
     originalSku: normalizeOptionalText(source.originalSku),
-    schemaVersion: catalogSyncSchemaVersion,
+    schemaVersion: catalogSyncProductSchemaVersion,
     shortDescription: normalizeOptionalText(source.shortDescription),
     sku: requireText(source.sku, 'sku'),
     sourcePriceEUR: requireNonNegativeNumber(source.price, 'price'),
@@ -229,7 +246,18 @@ export const validateCatalogSyncEvent = (event: CatalogSyncEvent) => {
     assertExactKeys(event.product.brand, ['sourceBrandId', 'title'], 'product.brand')
   }
   event.product.categories.forEach((category, index) => {
-    assertExactKeys(category, ['sourceCategoryId', 'title'], `product.categories[${index}]`)
+    assertExactKeys(
+      category,
+      ['ancestors', 'sourceCategoryId', 'title'],
+      `product.categories[${index}]`,
+    )
+    category.ancestors.forEach((ancestor, ancestorIndex) => {
+      assertExactKeys(
+        ancestor,
+        ['sourceCategoryId', 'title'],
+        `product.categories[${index}].ancestors[${ancestorIndex}]`,
+      )
+    })
   })
   event.product.characteristics.forEach((characteristic, index) => {
     assertExactKeys(characteristic, ['key', 'label', 'value'], `product.characteristics[${index}]`)
@@ -240,6 +268,12 @@ export const validateCatalogSyncEvent = (event: CatalogSyncEvent) => {
 
   if (event.schemaVersion !== catalogSyncSchemaVersion) {
     throw new CatalogSyncError('CATALOG_SYNC_INVALID_CONTRACT', 'Unsupported event schemaVersion.')
+  }
+  if (event.product.schemaVersion !== catalogSyncProductSchemaVersion) {
+    throw new CatalogSyncError(
+      'CATALOG_SYNC_INVALID_CONTRACT',
+      'Unsupported product schemaVersion.',
+    )
   }
   if (event.eventType !== catalogSyncEventType) {
     throw new CatalogSyncError('CATALOG_SYNC_INVALID_CONTRACT', 'Unsupported eventType.')

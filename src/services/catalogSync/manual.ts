@@ -1,5 +1,6 @@
 import type { PayloadRequest } from 'payload'
 
+import { resolveCatalogSyncProductCategoriesForUser } from './categories'
 import { buildCatalogSyncEvent } from './contract'
 import { CatalogSyncError } from './errors'
 import { buildCatalogSyncContentFingerprint } from './fingerprints'
@@ -82,8 +83,8 @@ export const loadCatalogSyncProductForUser = async ({
 }: {
   productId: string
   req: PayloadRequest
-}) =>
-  (await req.payload.findByID({
+}) => {
+  const product = (await req.payload.findByID({
     collection: 'products',
     depth: 2,
     id: productId,
@@ -91,6 +92,12 @@ export const loadCatalogSyncProductForUser = async ({
     req,
     user: req.user,
   })) as unknown as CatalogSyncProductDocument
+
+  return (await resolveCatalogSyncProductCategoriesForUser({
+    product,
+    req,
+  })) as CatalogSyncProductDocument
+}
 
 const persistState = async ({
   patch,
