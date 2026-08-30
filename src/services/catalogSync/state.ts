@@ -1,22 +1,25 @@
 import type { PayloadRequest } from 'payload'
 
 export const catalogSyncContext = {
-  skipRomanianCatalogSync: true,
+  skipProductReviewQueue: true,
 } as const
 
 export type CatalogSyncProductState = {
   approved?: boolean | null
   approvalStatus?: 'never_sent' | 'pending' | 'approved' | 'error' | null
-  commerceStatus?: 'current' | 'pending' | 'error' | null
-  commerceLastError?: string | null
   contentStatus?: 'current' | 'changed' | 'pending' | 'error' | null
-  contentLastError?: string | null
-  lastAttemptCount?: number | null
-  lastCommerceFingerprint?: string | null
   lastContentFingerprint?: string | null
+  lastAttemptedAt?: string | null
   lastError?: string | null
+  lastErrorAt?: string | null
+  lastErrorNotifiedEventId?: string | null
+  lastEventId?: string | null
+  lastEventSourceHash?: string | null
+  lastEventSourceUpdatedAt?: string | null
+  lastRemoteStatus?: string | null
   lastSuccessfulAt?: string | null
   lastSuccessfulEventId?: string | null
+  pendingContentFingerprint?: string | null
 }
 
 type ProductWithCatalogSync = {

@@ -80,7 +80,6 @@ export interface Config {
     posts: Post;
     partners: Partner;
     'contact-inquiries': ContactInquiry;
-    'catalog-sync-outbox': CatalogSyncOutbox;
     media: Media;
     'product-review-items': ProductReviewItem;
     addresses: Address;
@@ -109,7 +108,6 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     partners: PartnersSelect<false> | PartnersSelect<true>;
     'contact-inquiries': ContactInquiriesSelect<false> | ContactInquiriesSelect<true>;
-    'catalog-sync-outbox': CatalogSyncOutboxSelect<false> | CatalogSyncOutboxSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'product-review-items': ProductReviewItemsSelect<false> | ProductReviewItemsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -311,15 +309,18 @@ export interface Product {
     approved?: boolean | null;
     approvalStatus?: ('never_sent' | 'pending' | 'approved' | 'error') | null;
     contentStatus?: ('current' | 'changed' | 'pending' | 'error') | null;
-    commerceStatus?: ('current' | 'pending' | 'error') | null;
+    lastEventId?: string | null;
+    lastEventSourceHash?: string | null;
+    lastEventSourceUpdatedAt?: string | null;
+    lastRemoteStatus?: string | null;
+    pendingContentFingerprint?: string | null;
     lastSuccessfulEventId?: string | null;
     lastContentFingerprint?: string | null;
-    lastCommerceFingerprint?: string | null;
+    lastAttemptedAt?: string | null;
     lastSuccessfulAt?: string | null;
     lastError?: string | null;
-    contentLastError?: string | null;
-    commerceLastError?: string | null;
-    lastAttemptCount?: number | null;
+    lastErrorAt?: string | null;
+    lastErrorNotifiedEventId?: string | null;
   };
   /**
    * Основното описание, което се вижда на продуктовата страница.
@@ -1105,48 +1106,6 @@ export interface ContactInquiry {
   createdAt: string;
 }
 /**
- * Устойчива опашка за синхронизация към румънския каталог.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "catalog-sync-outbox".
- */
-export interface CatalogSyncOutbox {
-  id: string;
-  product: string | Product;
-  action: 'initial' | 'content' | 'commerce';
-  status: 'pending' | 'sending' | 'accepted' | 'retry_wait' | 'succeeded' | 'failed';
-  dedupeKey: string;
-  eventId?: string | null;
-  contentFingerprint: string;
-  commerceFingerprint: string;
-  eventPayload?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  commerceSnapshot?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  attempts: number;
-  nextAttemptAt?: string | null;
-  leaseExpiresAt?: string | null;
-  lastError?: string | null;
-  acceptedAt?: string | null;
-  completedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Единен списък на новите продукти, които очакват преглед от администратор.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1221,10 +1180,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'contact-inquiries';
         value: string | ContactInquiry;
-      } | null)
-    | ({
-        relationTo: 'catalog-sync-outbox';
-        value: string | CatalogSyncOutbox;
       } | null)
     | ({
         relationTo: 'media';
@@ -1643,29 +1598,6 @@ export interface ContactInquiriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "catalog-sync-outbox_select".
- */
-export interface CatalogSyncOutboxSelect<T extends boolean = true> {
-  product?: T;
-  action?: T;
-  status?: T;
-  dedupeKey?: T;
-  eventId?: T;
-  contentFingerprint?: T;
-  commerceFingerprint?: T;
-  eventPayload?: T;
-  commerceSnapshot?: T;
-  attempts?: T;
-  nextAttemptAt?: T;
-  leaseExpiresAt?: T;
-  lastError?: T;
-  acceptedAt?: T;
-  completedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -1732,15 +1664,18 @@ export interface ProductsSelect<T extends boolean = true> {
         approved?: T;
         approvalStatus?: T;
         contentStatus?: T;
-        commerceStatus?: T;
+        lastEventId?: T;
+        lastEventSourceHash?: T;
+        lastEventSourceUpdatedAt?: T;
+        lastRemoteStatus?: T;
+        pendingContentFingerprint?: T;
         lastSuccessfulEventId?: T;
         lastContentFingerprint?: T;
-        lastCommerceFingerprint?: T;
+        lastAttemptedAt?: T;
         lastSuccessfulAt?: T;
         lastError?: T;
-        contentLastError?: T;
-        commerceLastError?: T;
-        lastAttemptCount?: T;
+        lastErrorAt?: T;
+        lastErrorNotifiedEventId?: T;
       };
   description?: T;
   shortDescription?: T;

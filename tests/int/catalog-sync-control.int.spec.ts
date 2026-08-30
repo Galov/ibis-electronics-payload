@@ -3,13 +3,13 @@ import path from 'node:path'
 
 import { describe, expect, it, vi } from 'vitest'
 
-import { syncRomanianCatalogAfterChange } from '@/collections/Products/hooks/syncRomanianCatalog'
-import { catalogSyncAdminSendHandler } from '@/endpoints/catalogSyncAdmin'
 import {
+  buildCatalogSyncContentFingerprint,
   buildCatalogSyncEvent,
-  buildCatalogSyncFingerprints,
-  enqueueCatalogContentSync,
-  processCatalogSyncOutboxItem,
+  getCatalogSyncProductStatus,
+  loadCatalogSyncProductForUser,
+  refreshCatalogSyncProductStatus,
+  sendCatalogSyncProductForUser,
   type CatalogSyncProductState,
   type CatalogSyncSourceProduct,
 } from '@/services/catalogSync'
@@ -38,298 +38,293 @@ const product = (patch: Partial<TestProduct> = {}): TestProduct => ({
   ...patch,
 })
 
-const adminUser = { id: 'admin-1', roles: ['admin'] }
+const request = () => {
+  const updates: Array<Record<string, any>> = []
+  const payload = {
+    findGlobal: vi.fn().mockResolvedValue({
+      notificationRecipients: [{ email: 'operations@example.com' }],
+    }),
+    logger: { error: vi.fn(), warn: vi.fn() },
+    sendEmail: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn(async (args) => {
+      updates.push(args)
+      return args.data
+    }),
+  }
+  return { payload, req: { payload, user: { id: 'admin-1', roles: ['admin'] } } as any, updates }
+}
 
-describe('controlled Romanian catalog synchronization', () => {
-  it('creates the initial outbox item only through the authenticated manual endpoint', async () => {
-    let outbox: Record<string, any> | null = null
-    let productRecord = product()
-    const payload = {
-      create: vi.fn(async ({ data }) => {
-        outbox = { ...data, id: 'outbox-1' }
-        return outbox
-      }),
-      find: vi.fn(async () => ({ docs: outbox ? [outbox] : [] })),
-      findByID: vi.fn(async () => productRecord),
-      update: vi.fn(async ({ collection, data }) => {
-        if (collection === 'products') {
-          productRecord = { ...productRecord, catalogSync: data.catalogSync }
-        }
-        return data
-      }),
-    }
-    const req = {
-      payload,
-      routeParams: { id: 'product-1' },
-      user: adminUser,
-    } as any
+describe('direct manual Romanian catalog synchronization', () => {
+  it('loads the selected product with the authenticated administrator access', async () => {
+    const source = product()
+    const findByID = vi.fn().mockResolvedValue(source)
+    const req = { payload: { findByID }, user: { id: 'admin-1', roles: ['admin'] } } as any
 
-    const response = await catalogSyncAdminSendHandler(req)
-    expect(response.status).toBe(202)
-    await expect(response.json()).resolves.toMatchObject({
+    await expect(loadCatalogSyncProductForUser({ productId: source.id, req })).resolves.toBe(source)
+    expect(findByID).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'products',
+        depth: 2,
+        id: source.id,
+        overrideAccess: false,
+        req,
+        user: req.user,
+      }),
+    )
+  })
+
+  it('sends the existing Catalog Sync 1.0 event directly and stores the remote event state', async () => {
+    const source = product()
+    const { req, updates } = request()
+    const send = vi.fn(async (event) => ({ eventId: event.eventId, status: 'queued' }))
+
+    const result = await sendCatalogSyncProductForUser({
+      product: source,
+      req,
+      transport: { getStatus: vi.fn(), send },
+    })
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'product.upsert', schemaVersion: '1.0' }),
+    )
+    expect(result.response.status).toBe('queued')
+    expect(getCatalogSyncProductStatus(result.product)).toMatchObject({
       approvalStatus: 'pending',
-      message: 'Продуктът е добавен в опашката за румънския сайт.',
+      contentStatus: 'pending',
+      lastEventId: result.event.eventId,
+      lastRemoteStatus: 'queued',
     })
-    expect(payload.findByID).toHaveBeenCalledWith(
-      expect.objectContaining({ overrideAccess: false, user: adminUser }),
-    )
-    expect(payload.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        collection: 'catalog-sync-outbox',
-        data: expect.objectContaining({ action: 'initial', status: 'pending' }),
-      }),
-    )
-  })
-
-  it('reuses one deterministic outbox item for repeated manual clicks', async () => {
-    let outbox: Record<string, any> | null = null
-    const req = {
-      payload: {
-        create: vi.fn(async ({ data }) => {
-          outbox = { ...data, id: 'outbox-1' }
-          return outbox
-        }),
-        find: vi.fn(async () => ({ docs: outbox ? [outbox] : [] })),
-        update: vi.fn().mockResolvedValue({}),
-      },
-    } as any
-    const source = product()
-
-    const first = await enqueueCatalogContentSync({ product: source, req })
-    const second = await enqueueCatalogContentSync({ product: source, req })
-
-    expect(first.reused).toBe(false)
-    expect(second.reused).toBe(true)
-    expect(first.event.eventId).toBe(second.event.eventId)
-    expect(req.payload.create).toHaveBeenCalledOnce()
-  })
-
-  it('does not enqueue automatic work before manual approval', async () => {
-    const req = { payload: { create: vi.fn(), findByID: vi.fn(), update: vi.fn() } } as any
-
-    await syncRomanianCatalogAfterChange({
-      context: {},
-      doc: product({ catalogSync: { approved: false } }),
-      req,
-    } as any)
-
-    expect(req.payload.findByID).not.toHaveBeenCalled()
-    expect(req.payload.create).not.toHaveBeenCalled()
-  })
-
-  it('records approved commerce drift as a pending Catalog Sync 1.1 event', async () => {
-    const baseline = product()
-    const fingerprints = buildCatalogSyncFingerprints(baseline)
-    const changed = product({
-      catalogSync: {
-        approved: true,
-        lastCommerceFingerprint: fingerprints.commerce,
-        lastContentFingerprint: fingerprints.content,
-      },
-      price: 12,
-    })
-    const req = {
-      payload: {
-        create: vi.fn().mockResolvedValue({ id: 'commerce-outbox' }),
-        find: vi.fn().mockResolvedValue({ docs: [] }),
-        findByID: vi.fn().mockResolvedValue(changed),
-        logger: { error: vi.fn() },
-        update: vi.fn().mockResolvedValue({}),
-      },
-    } as any
-
-    await syncRomanianCatalogAfterChange({ context: {}, doc: changed, req } as any)
-
-    expect(req.payload.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          action: 'commerce',
-          eventPayload: expect.objectContaining({
-            eventType: 'product.commerce_updated',
-            schemaVersion: '1.1',
-          }),
-          status: 'pending',
-        }),
-      }),
-    )
-    expect(req.payload.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        context: { skipRomanianCatalogSync: true },
-        data: expect.objectContaining({
-          catalogSync: expect.objectContaining({
-            commerceStatus: 'pending',
-            contentStatus: 'current',
-          }),
-        }),
-      }),
-    )
-  })
-
-  it('marks approved content drift without enqueueing a content event', async () => {
-    const baseline = product()
-    const fingerprints = buildCatalogSyncFingerprints(baseline)
-    const changed = product({
-      catalogSync: {
-        approved: true,
-        lastCommerceFingerprint: fingerprints.commerce,
-        lastContentFingerprint: fingerprints.content,
-      },
-      description: 'Редактирано описание',
-    })
-    const req = {
-      payload: {
-        create: vi.fn(),
-        find: vi.fn(),
-        findByID: vi.fn().mockResolvedValue(changed),
-        logger: { error: vi.fn() },
-        update: vi.fn().mockResolvedValue({}),
-      },
-    } as any
-
-    await syncRomanianCatalogAfterChange({ context: {}, doc: changed, req } as any)
-
-    expect(req.payload.create).not.toHaveBeenCalled()
-    expect(req.payload.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          catalogSync: expect.objectContaining({ contentStatus: 'changed' }),
-        }),
-      }),
-    )
-  })
-
-  it('keeps content and commerce fingerprints deterministic and independent', () => {
-    const baseline = buildCatalogSyncFingerprints(product())
-    expect(buildCatalogSyncFingerprints(structuredClone(product()))).toEqual(baseline)
-
-    const priceChange = buildCatalogSyncFingerprints(product({ price: 11 }))
-    expect(priceChange.content).toBe(baseline.content)
-    expect(priceChange.commerce).not.toBe(baseline.commerce)
-
-    const contentChange = buildCatalogSyncFingerprints(product({ description: 'Ново описание' }))
-    expect(contentChange.content).not.toBe(baseline.content)
-    expect(contentChange.commerce).toBe(baseline.commerce)
-  })
-
-  it('keeps a failed network delivery retryable with the same event ID', async () => {
-    const source = product()
-    const event = buildCatalogSyncEvent(source)
-    const fingerprints = buildCatalogSyncFingerprints(source)
-    const updates: Array<Record<string, any>> = []
-    const req = {
-      payload: {
-        findByID: vi.fn().mockResolvedValue(product()),
-        update: vi.fn(async (args) => {
-          updates.push(args)
-          return args.data
-        }),
-      },
-    } as any
-
-    await processCatalogSyncOutboxItem({
-      item: {
-        action: 'initial',
-        attempts: 0,
-        commerceFingerprint: fingerprints.commerce,
-        contentFingerprint: fingerprints.content,
-        createdAt: '2026-08-29T10:00:00.000Z',
-        dedupeKey: `initial:${event.eventId}`,
-        eventId: event.eventId,
-        eventPayload: event,
-        id: 'outbox-1',
-        product: 'product-1',
-        status: 'pending',
-        updatedAt: '2026-08-29T10:00:00.000Z',
-      },
-      req,
-      transport: {
-        getStatus: vi.fn(),
-        sendCommerce: vi.fn(),
-        sendContent: vi.fn().mockRejectedValue(new Error('fetch failed')),
-      },
-    })
-
-    expect(updates).toContainEqual(
-      expect.objectContaining({
-        collection: 'catalog-sync-outbox',
-        data: expect.objectContaining({ attempts: 1, status: 'retry_wait' }),
-        id: 'outbox-1',
-      }),
-    )
-    expect(event.eventId).toBe(buildCatalogSyncEvent(source).eventId)
-  })
-
-  it('marks the product approved only after a successful Romanian result', async () => {
-    const source = product()
-    const event = buildCatalogSyncEvent(source)
-    const fingerprints = buildCatalogSyncFingerprints(source)
-    const updates: Array<Record<string, any>> = []
-    const req = {
-      payload: {
-        findByID: vi.fn().mockResolvedValue(source),
-        update: vi.fn(async (args) => {
-          updates.push(args)
-          return args.data
-        }),
-      },
-    } as any
-
-    await processCatalogSyncOutboxItem({
-      item: {
-        action: 'initial',
-        attempts: 0,
-        commerceFingerprint: fingerprints.commerce,
-        contentFingerprint: fingerprints.content,
-        createdAt: '2026-08-29T10:00:00.000Z',
-        dedupeKey: `initial:${event.eventId}`,
-        eventId: event.eventId,
-        eventPayload: event,
-        id: 'outbox-1',
-        product: 'product-1',
-        status: 'pending',
-        updatedAt: '2026-08-29T10:00:00.000Z',
-      },
-      req,
-      transport: {
-        getStatus: vi.fn(),
-        sendCommerce: vi.fn(),
-        sendContent: vi.fn().mockResolvedValue({ eventId: event.eventId, status: 'succeeded' }),
-      },
-    })
-
     expect(updates).toContainEqual(
       expect.objectContaining({
         collection: 'products',
-        context: { skipRomanianCatalogSync: true },
-        data: expect.objectContaining({
-          catalogSync: expect.objectContaining({
-            approved: true,
-            approvalStatus: 'approved',
-            lastSuccessfulEventId: event.eventId,
-          }),
-        }),
+        context: { skipProductReviewQueue: true },
+        req,
       }),
     )
   })
 
-  it('skips all synchronization work for recursion-guarded writes', async () => {
-    const req = { payload: { findByID: vi.fn(), update: vi.fn() } } as any
-    await syncRomanianCatalogAfterChange({
-      context: { skipRomanianCatalogSync: true },
-      doc: product({ catalogSync: { approved: true } }),
-      req,
-    } as any)
-    expect(req.payload.findByID).not.toHaveBeenCalled()
-    expect(req.payload.update).not.toHaveBeenCalled()
+  it('uses the same deterministic event ID for an explicit retry of unchanged content', async () => {
+    const source = product()
+    const { req } = request()
+    const sentEventIds: string[] = []
+    const transport = {
+      getStatus: vi.fn(),
+      send: vi.fn(async (event) => {
+        sentEventIds.push(event.eventId)
+        return { eventId: event.eventId, status: 'queued' }
+      }),
+    }
+
+    await sendCatalogSyncProductForUser({ product: source, req, transport })
+    await sendCatalogSyncProductForUser({ product: source, req, transport })
+
+    expect(sentEventIds).toEqual([
+      buildCatalogSyncEvent(source).eventId,
+      buildCatalogSyncEvent(source).eventId,
+    ])
   })
 
-  it('keeps the API key and Romanian endpoint out of the client component', async () => {
+  it('keeps retries stable across internal status writes and versions real A-B-A changes', async () => {
+    let storedProduct = product()
+    let clock = new Date('2026-08-30T08:00:00.000Z').getTime()
+    const sentEvents: ReturnType<typeof buildCatalogSyncEvent>[] = []
+    const payload = {
+      findByID: vi.fn(async () => structuredClone(storedProduct)),
+      findGlobal: vi.fn().mockResolvedValue({ notificationRecipients: [] }),
+      logger: { error: vi.fn(), warn: vi.fn() },
+      sendEmail: vi.fn(),
+      update: vi.fn(async ({ data }) => {
+        clock += 1
+        storedProduct = {
+          ...storedProduct,
+          catalogSync: data.catalogSync,
+          updatedAt: new Date(clock).toISOString(),
+        }
+        return structuredClone(storedProduct)
+      }),
+    }
+    const req = { payload, user: { id: 'admin-1', roles: ['admin'] } } as any
+    const transport = {
+      getStatus: vi.fn(),
+      send: vi.fn(async (event) => {
+        sentEvents.push(event)
+        return { eventId: event.eventId, status: 'queued' }
+      }),
+    }
+    const load = () => loadCatalogSyncProductForUser({ productId: storedProduct.id, req })
+    const sendLoaded = async () =>
+      sendCatalogSyncProductForUser({ product: await load(), req, transport })
+
+    const firstA = await sendLoaded()
+    const updatedAtAfterInternalWrites = storedProduct.updatedAt
+    const retryA = await sendLoaded()
+
+    expect(updatedAtAfterInternalWrites).not.toBe(firstA.event.sourceUpdatedAt)
+    expect(retryA.event.eventId).toBe(firstA.event.eventId)
+    expect(retryA.event.sourceUpdatedAt).toBe(firstA.event.sourceUpdatedAt)
+
+    clock += 1_000
+    storedProduct = {
+      ...storedProduct,
+      title: 'Версия B',
+      updatedAt: new Date(clock).toISOString(),
+    }
+    const versionB = await sendLoaded()
+    expect(versionB.event.eventId).not.toBe(firstA.event.eventId)
+
+    clock += 1_000
+    storedProduct = {
+      ...storedProduct,
+      title: product().title,
+      updatedAt: new Date(clock).toISOString(),
+    }
+    const secondA = await sendLoaded()
+
+    expect(secondA.event.eventId).not.toBe(firstA.event.eventId)
+    expect(secondA.event.eventId).not.toBe(versionB.event.eventId)
+    expect(new Date(secondA.event.sourceUpdatedAt).getTime()).toBeGreaterThan(
+      new Date(versionB.event.sourceUpdatedAt).getTime(),
+    )
+    expect(sentEvents).toHaveLength(4)
+  })
+
+  it('tracks translation and then marks the same content event as successful', async () => {
+    const source = product()
+    const event = buildCatalogSyncEvent(source)
+    const fingerprint = buildCatalogSyncContentFingerprint(source)
+    const pending = product({
+      catalogSync: {
+        approvalStatus: 'pending',
+        contentStatus: 'pending',
+        lastEventId: event.eventId,
+        lastRemoteStatus: 'queued',
+        pendingContentFingerprint: fingerprint,
+      },
+    })
+    const { req } = request()
+    const getStatus = vi
+      .fn()
+      .mockResolvedValueOnce({ eventId: event.eventId, status: 'translating' })
+      .mockResolvedValueOnce({ eventId: event.eventId, status: 'succeeded' })
+    const transport = { getStatus, send: vi.fn() }
+
+    const translating = await refreshCatalogSyncProductStatus({ product: pending, req, transport })
+    expect(getCatalogSyncProductStatus(translating)).toMatchObject({
+      contentStatus: 'pending',
+      lastRemoteStatus: 'translating',
+    })
+
+    const succeeded = await refreshCatalogSyncProductStatus({
+      product: translating,
+      req,
+      transport,
+    })
+    expect(getCatalogSyncProductStatus(succeeded)).toMatchObject({
+      approved: true,
+      approvalStatus: 'approved',
+      contentStatus: 'current',
+      lastRemoteStatus: 'succeeded',
+      lastSuccessfulEventId: event.eventId,
+    })
+  })
+
+  it('detects edited content after the last successful fingerprint without an automatic hook', () => {
+    const baseline = product()
+    const lastContentFingerprint = buildCatalogSyncContentFingerprint(baseline)
+    const changed = product({
+      catalogSync: {
+        approved: true,
+        approvalStatus: 'approved',
+        contentStatus: 'current',
+        lastContentFingerprint,
+      },
+      description: 'Редактирано описание',
+    })
+
+    expect(getCatalogSyncProductStatus(changed).contentStatus).toBe('changed')
+    expect(buildCatalogSyncContentFingerprint(product({ price: 12, stockQty: 9 }))).toBe(
+      lastContentFingerprint,
+    )
+  })
+
+  it('records and emails a synchronously observed send failure', async () => {
+    const source = product()
+    const event = buildCatalogSyncEvent(source)
+    const { payload, req, updates } = request()
+
+    await expect(
+      sendCatalogSyncProductForUser({
+        product: source,
+        req,
+        transport: {
+          getStatus: vi.fn(),
+          send: vi.fn().mockRejectedValue(new Error('fetch failed')),
+        },
+      }),
+    ).rejects.toThrow('fetch failed')
+
+    expect(updates).toContainEqual(
+      expect.objectContaining({
+        data: {
+          catalogSync: expect.objectContaining({
+            contentStatus: 'error',
+            lastError: 'fetch failed',
+            lastErrorAt: expect.any(String),
+            lastEventId: event.eventId,
+          }),
+        },
+      }),
+    )
+    expect(payload.sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: expect.stringContaining('Грешка при изпращане към румънския сайт'),
+        to: 'operations@example.com',
+      }),
+    )
+  })
+
+  it('records and emails an asynchronously observed Romanian failure only once per attempt', async () => {
+    const source = product()
+    const event = buildCatalogSyncEvent(source)
+    const pending = product({
+      catalogSync: {
+        approvalStatus: 'pending',
+        contentStatus: 'pending',
+        lastEventId: event.eventId,
+        pendingContentFingerprint: buildCatalogSyncContentFingerprint(source),
+      },
+    })
+    const { payload, req } = request()
+    const transport = {
+      getStatus: vi.fn().mockResolvedValue({
+        error: 'Translation failed',
+        eventId: event.eventId,
+        status: 'failed',
+      }),
+      send: vi.fn(),
+    }
+
+    const failed = await refreshCatalogSyncProductStatus({ product: pending, req, transport })
+    expect(getCatalogSyncProductStatus(failed)).toMatchObject({
+      approvalStatus: 'error',
+      contentStatus: 'error',
+      lastError: 'Translation failed',
+      lastErrorAt: expect.any(String),
+    })
+    expect(payload.sendEmail).toHaveBeenCalledOnce()
+
+    await refreshCatalogSyncProductStatus({ product: failed, req, transport })
+    expect(payload.sendEmail).toHaveBeenCalledOnce()
+  })
+
+  it('keeps secrets, RO URLs, commerce state, and worker concepts out of the admin client', async () => {
     const source = await readFile(
       path.join(process.cwd(), 'src/components/admin/UploadToRomaniaButton.tsx'),
       'utf8',
     )
     expect(source).not.toContain('CATALOG_SYNC_API_KEY')
     expect(source).not.toContain('ibis-electronics.ro/api')
+    expect(source).not.toMatch(/commerce|worker|outbox/iu)
     expect(source).toContain('/api/maintenance/products/')
   })
 })

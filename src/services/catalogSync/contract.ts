@@ -179,8 +179,11 @@ export const normalizeCatalogSyncProduct = (
   }
 }
 
-export const buildCatalogSyncEvent = (source: CatalogSyncSourceProduct): CatalogSyncEvent => {
-  const updatedAt = requireText(source.updatedAt, 'updatedAt')
+export const buildCatalogSyncEvent = (
+  source: CatalogSyncSourceProduct,
+  options: { sourceUpdatedAt?: string } = {},
+): CatalogSyncEvent => {
+  const updatedAt = requireText(options.sourceUpdatedAt ?? source.updatedAt, 'updatedAt')
   const updatedAtDate = new Date(updatedAt)
   if (!Number.isFinite(updatedAtDate.getTime())) {
     throw new CatalogSyncError('CATALOG_SYNC_INVALID_PRODUCT', 'updatedAt must be ISO-8601.')
