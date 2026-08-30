@@ -1,15 +1,7 @@
 import { normalizeCatalogSyncProduct, sha256, stableStringify } from './contract'
-import { buildCatalogSyncCommerceFingerprint } from './commerceContract'
 import type { CatalogSyncSourceProduct } from './types'
 
-export type CatalogSyncFingerprints = {
-  commerce: string
-  content: string
-}
-
-export const buildCatalogSyncFingerprints = (
-  source: CatalogSyncSourceProduct,
-): CatalogSyncFingerprints => {
+export const buildCatalogSyncContentFingerprint = (source: CatalogSyncSourceProduct) => {
   const product = normalizeCatalogSyncProduct(source)
   const {
     sourcePriceEUR: _sourcePriceEUR,
@@ -18,8 +10,5 @@ export const buildCatalogSyncFingerprints = (
     ...content
   } = product
 
-  return {
-    commerce: buildCatalogSyncCommerceFingerprint(source),
-    content: sha256(stableStringify(content)),
-  }
+  return sha256(stableStringify(content))
 }

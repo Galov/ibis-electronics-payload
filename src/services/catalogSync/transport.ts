@@ -1,9 +1,7 @@
 import { CatalogSyncError } from './errors'
 import { validateCatalogSyncEvent } from './contract'
-import { validateCatalogSyncCommerceEvent } from './commerceContract'
 import type {
   CatalogSyncAcceptedResponse,
-  CatalogSyncCommerceEvent,
   CatalogSyncEvent,
   CatalogSyncStatusResponse,
 } from './types'
@@ -13,7 +11,6 @@ const defaultTimeoutMs = 15_000
 
 export type CatalogSyncEnvironment = {
   CATALOG_SYNC_API_KEY?: string
-  CATALOG_SYNC_COMMERCE_SEND_ENABLED?: string
   CATALOG_SYNC_SEND_ENABLED?: string
 }
 
@@ -26,7 +23,6 @@ type CatalogSyncTransportOptions = {
 const resolveEnvironment = (env?: CatalogSyncEnvironment): CatalogSyncEnvironment =>
   env || {
     CATALOG_SYNC_API_KEY: process.env.CATALOG_SYNC_API_KEY,
-    CATALOG_SYNC_COMMERCE_SEND_ENABLED: process.env.CATALOG_SYNC_COMMERCE_SEND_ENABLED,
     CATALOG_SYNC_SEND_ENABLED: process.env.CATALOG_SYNC_SEND_ENABLED,
   }
 
@@ -39,29 +35,6 @@ export const assertCatalogSyncSendingEnabled = (env?: CatalogSyncEnvironment) =>
     )
   }
   return resolvedEnvironment
-}
-
-export const assertCatalogSyncCommerceSendingEnabled = (env?: CatalogSyncEnvironment) => {
-  const resolvedEnvironment = resolveEnvironment(env)
-  if (resolvedEnvironment.CATALOG_SYNC_COMMERCE_SEND_ENABLED !== 'true') {
-    throw new CatalogSyncError(
-      'CATALOG_SYNC_COMMERCE_SEND_DISABLED',
-      'Catalog commerce sending is disabled. Set CATALOG_SYNC_COMMERCE_SEND_ENABLED=true explicitly.',
-    )
-  }
-  return resolvedEnvironment
-}
-
-export const getEnabledCatalogSyncWorkerActions = (env?: CatalogSyncEnvironment) => {
-  const resolvedEnvironment = resolveEnvironment(env)
-  const actions: Array<'commerce' | 'content' | 'initial'> = []
-  if (resolvedEnvironment.CATALOG_SYNC_SEND_ENABLED === 'true') {
-    actions.push('initial', 'content')
-  }
-  if (resolvedEnvironment.CATALOG_SYNC_COMMERCE_SEND_ENABLED === 'true') {
-    actions.push('commerce')
-  }
-  return actions
 }
 
 const getAPIKey = (env: CatalogSyncEnvironment) => {
@@ -172,36 +145,6 @@ export const sendCatalogSyncEvent = async (
     throw new CatalogSyncError(
       `CATALOG_SYNC_HTTP_${response.status}`,
       `Romanian catalog sync rejected the event with HTTP ${response.status}.`,
-      { status: response.status },
-    )
-  }
-
-  return requireResponseIdentity(
-    await parseJSON(response),
-    event.eventId,
-  ) as CatalogSyncAcceptedResponse
-}
-
-export const sendCatalogSyncCommerceEvent = async (
-  event: CatalogSyncCommerceEvent,
-  options: CatalogSyncTransportOptions = {},
-): Promise<CatalogSyncAcceptedResponse> => {
-  validateCatalogSyncCommerceEvent(event)
-  const env = assertCatalogSyncCommerceSendingEnabled(options.env)
-  const apiKey = getAPIKey(env)
-  const response = await request({
-    apiKey,
-    body: JSON.stringify(event),
-    fetchImpl: options.fetchImpl || fetch,
-    method: 'POST',
-    timeoutMs: options.timeoutMs || defaultTimeoutMs,
-    url: `${catalogSyncBaseURL}/api/catalog-sync/products`,
-  })
-
-  if (response.status !== 200 && response.status !== 202) {
-    throw new CatalogSyncError(
-      `CATALOG_SYNC_HTTP_${response.status}`,
-      `Romanian catalog sync rejected the commerce event with HTTP ${response.status}.`,
       { status: response.status },
     )
   }

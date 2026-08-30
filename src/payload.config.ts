@@ -10,7 +10,6 @@ import { fileURLToPath } from 'url'
 import { Brands } from '@/collections/Brands'
 import { Categories } from '@/collections/Categories'
 import { ContactInquiries } from '@/collections/ContactInquiries'
-import { CatalogSyncOutbox } from '@/collections/CatalogSyncOutbox'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
 import { PostCategories } from '@/collections/PostCategories'
@@ -81,7 +80,6 @@ export default buildConfig({
     Posts,
     Partners,
     ContactInquiries,
-    CatalogSyncOutbox,
     Media,
     ProductReviewItems,
   ],

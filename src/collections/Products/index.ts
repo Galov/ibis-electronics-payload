@@ -6,7 +6,6 @@ import {
   removeProductReviewQueueItemAfterDelete,
   syncProductReviewQueueAfterChange,
 } from './hooks/syncProductReviewQueue'
-import { syncRomanianCatalogAfterChange } from './hooks/syncRomanianCatalog'
 
 const normalizeCatalogCompatibilityFields = ({
   context,
@@ -162,7 +161,6 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     afterChange: [
       ...(defaultCollection.hooks?.afterChange || []),
       syncProductReviewQueueAfterChange,
-      syncRomanianCatalogAfterChange,
     ],
     afterDelete: [
       ...(defaultCollection.hooks?.afterDelete || []),
@@ -249,20 +247,16 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
           defaultValue: 'current',
           options: ['current', 'changed', 'pending', 'error'],
         },
-        {
-          name: 'commerceStatus',
-          type: 'select',
-          defaultValue: 'current',
-          options: ['current', 'pending', 'error'],
-        },
+        { name: 'lastEventId', type: 'text' },
+        { name: 'lastRemoteStatus', type: 'text' },
+        { name: 'pendingContentFingerprint', type: 'text' },
         { name: 'lastSuccessfulEventId', type: 'text' },
         { name: 'lastContentFingerprint', type: 'text' },
-        { name: 'lastCommerceFingerprint', type: 'text' },
+        { name: 'lastAttemptedAt', type: 'date' },
         { name: 'lastSuccessfulAt', type: 'date' },
         { name: 'lastError', type: 'textarea' },
-        { name: 'contentLastError', type: 'textarea' },
-        { name: 'commerceLastError', type: 'textarea' },
-        { name: 'lastAttemptCount', type: 'number', defaultValue: 0 },
+        { name: 'lastErrorAt', type: 'date' },
+        { name: 'lastErrorNotifiedEventId', type: 'text' },
       ],
     },
     {

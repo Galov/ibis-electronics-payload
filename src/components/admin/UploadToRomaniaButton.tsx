@@ -7,18 +7,14 @@ import { useEffect, useState } from 'react'
 type CatalogSyncAdminStatus = {
   approved: boolean
   approvalStatus: 'approved' | 'error' | 'never_sent' | 'pending'
-  commerceStatus: 'current' | 'error' | 'pending'
   contentStatus: 'changed' | 'current' | 'error' | 'pending'
-  commerceLastError: null | string
-  contentLastError: null | string
+  lastAttemptedAt: null | string
   lastError: null | string
+  lastErrorAt: null | string
+  lastEventId: null | string
+  lastRemoteStatus: null | string
   lastSuccessfulAt: null | string
-  latest: null | {
-    action: 'commerce' | 'content' | 'initial'
-    attempts: number
-    eventId: null | string
-    status: string
-  }
+  lastSuccessfulEventId: null | string
   message?: string
 }
 
@@ -55,11 +51,6 @@ const statusLabels = {
     never_sent: 'Никога не е изпращан',
     pending: 'Първоначалното изпращане чака',
   },
-  commerce: {
-    current: 'Търговските данни са актуални',
-    error: 'Грешка при търговската синхронизация',
-    pending: 'Търговската синхронизация чака',
-  },
   content: {
     changed: 'Има неизпратени промени в съдържанието',
     current: 'Съдържанието е актуално',
@@ -68,10 +59,18 @@ const statusLabels = {
   },
 } as const
 
-const isPending = (status: CatalogSyncAdminStatus | null) =>
-  status?.approvalStatus === 'pending' ||
-  status?.contentStatus === 'pending' ||
-  ['accepted', 'pending', 'retry_wait', 'sending'].includes(status?.latest?.status || '')
+const remoteStatusLabels: Record<string, string> = {
+  accepted: 'Събитието е прието от румънския сайт',
+  pending: 'Събитието чака обработка',
+  processing: 'Продуктът се обработва',
+  queued: 'Продуктът чака превод',
+  sending: 'Продуктът се изпраща',
+  succeeded: 'Преводът и записът са завършени успешно',
+  superseded: 'По-нова версия на продукта вече е обработена',
+  translating: 'Продуктът се превежда',
+}
+
+const isPending = (status: CatalogSyncAdminStatus | null) => status?.contentStatus === 'pending'
 
 export function UploadToRomaniaButton() {
   const { id } = useDocumentInfo()
@@ -84,6 +83,7 @@ export function UploadToRomaniaButton() {
   useEffect(() => {
     if (!productID) return
     let cancelled = false
+    let timeout: number | undefined
 
     const load = async () => {
       try {
@@ -103,13 +103,15 @@ export function UploadToRomaniaButton() {
       }
     }
 
-    void load()
-    const interval = window.setInterval(() => {
-      void load()
-    }, 5000)
+    const poll = async () => {
+      await load()
+      if (!cancelled) timeout = window.setTimeout(poll, 5000)
+    }
+
+    void poll()
     return () => {
       cancelled = true
-      window.clearInterval(interval)
+      if (timeout) window.clearTimeout(timeout)
     }
   }, [productID])
 
@@ -149,28 +151,35 @@ export function UploadToRomaniaButton() {
       {status ? (
         <div style={{ display: 'grid', gap: '0.3rem' }}>
           <span>{statusLabels.approval[status.approvalStatus]}</span>
-          <span>{statusLabels.content[status.contentStatus]}</span>
-          {status.approved ? <span>{statusLabels.commerce[status.commerceStatus]}</span> : null}
-          {status.latest ? (
+          {status.approved || status.approvalStatus !== 'never_sent' ? (
+            <span>{statusLabels.content[status.contentStatus]}</span>
+          ) : null}
+          {status.lastRemoteStatus ? (
             <small>
-              Последна задача: {status.latest.status}, опити: {status.latest.attempts}
+              {remoteStatusLabels[status.lastRemoteStatus] ||
+                `Статус от румънския сайт: ${status.lastRemoteStatus}`}
+            </small>
+          ) : null}
+          {status.lastSuccessfulAt ? (
+            <small>
+              Последен успешен превод: {new Date(status.lastSuccessfulAt).toLocaleString('bg-BG')}
             </small>
           ) : null}
         </div>
       ) : null}
       {formModified ? <span>Първо запишете текущите промени в продукта.</span> : null}
-      {status?.commerceLastError ? (
+      {status?.lastError || error ? (
         <span style={{ color: 'var(--theme-error-500)' }}>
-          Търговска синхронизация: {status.commerceLastError}
+          {error || status?.lastError}
+          {!error && status?.lastErrorAt
+            ? ` (${new Date(status.lastErrorAt).toLocaleString('bg-BG')})`
+            : ''}
         </span>
-      ) : null}
-      {status?.contentLastError || error ? (
-        <span style={{ color: 'var(--theme-error-500)' }}>{error || status?.contentLastError}</span>
       ) : null}
       {canSend ? (
         <button disabled={loading} onClick={send} style={buttonStyle} type="button">
           <span aria-hidden="true">🇷🇴</span>
-          <span>{loading ? 'Добавя се в опашката…' : buttonLabel}</span>
+          <span>{loading ? 'Изпраща се…' : buttonLabel}</span>
         </button>
       ) : null}
     </div>

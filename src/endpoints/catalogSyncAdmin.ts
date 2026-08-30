@@ -2,9 +2,11 @@ import type { PayloadHandler } from 'payload'
 
 import { checkRole } from '@/access/utilities'
 import {
-  buildCatalogSyncFingerprints,
-  enqueueCatalogContentSync,
+  CatalogSyncError,
+  getCatalogSyncProductStatus,
   loadCatalogSyncProductForUser,
+  refreshCatalogSyncProductStatus,
+  sendCatalogSyncProductForUser,
 } from '@/services/catalogSync'
 
 const unauthorized = () => Response.json({ message: 'Unauthorized' }, { status: 401 })
@@ -14,60 +16,23 @@ const productID = (req: Parameters<PayloadHandler>[0]) => {
   return typeof id === 'string' && id ? id : null
 }
 
-const findLatestOutbox = async (req: Parameters<PayloadHandler>[0], id: string) => {
-  const result = await req.payload.find({
-    collection: 'catalog-sync-outbox',
-    depth: 0,
-    limit: 1,
-    overrideAccess: true,
-    pagination: false,
-    req,
-    sort: '-createdAt',
-    where: { product: { equals: id } },
-  })
-  return result.docs[0] || null
-}
-
-const safeStatus = async (req: Parameters<PayloadHandler>[0], id: string) => {
-  const product = await loadCatalogSyncProductForUser({ productId: id, req })
-  const fingerprints = buildCatalogSyncFingerprints(product)
-  const state = product.catalogSync || {}
-  const latest = await findLatestOutbox(req, id)
-  const approved = state.approved === true
-
-  return {
-    approved,
-    approvalStatus: state.approvalStatus || 'never_sent',
-    commerceStatus:
-      approved && fingerprints.commerce !== state.lastCommerceFingerprint
-        ? state.commerceStatus === 'error'
-          ? 'error'
-          : 'pending'
-        : state.commerceStatus || 'current',
-    contentStatus:
-      approved && fingerprints.content !== state.lastContentFingerprint
-        ? 'changed'
-        : state.contentStatus || 'current',
-    commerceLastError: state.commerceLastError || null,
-    contentLastError: state.contentLastError || state.lastError || null,
-    lastError:
-      state.commerceLastError ||
-      state.contentLastError ||
-      state.lastError ||
-      latest?.lastError ||
-      null,
-    lastSuccessfulAt: state.lastSuccessfulAt || null,
-    lastSuccessfulEventId: state.lastSuccessfulEventId || null,
-    latest: latest
-      ? {
-          action: latest.action,
-          attempts: latest.attempts,
-          eventId: latest.eventId || null,
-          status: latest.status,
-        }
-      : null,
+const responseStatus = (error: unknown) => {
+  if (!(error instanceof CatalogSyncError)) return 500
+  if (error.code === 'CATALOG_SYNC_SEND_DISABLED') return 503
+  if (error.code === 'CATALOG_SYNC_API_KEY_MISSING') return 500
+  if (error.code === 'CATALOG_SYNC_TIMEOUT') return 504
+  if (
+    error.code === 'CATALOG_SYNC_INVALID_PRODUCT' ||
+    error.code === 'CATALOG_SYNC_RELATION_NOT_POPULATED' ||
+    error.code === 'CATALOG_SYNC_MISSING_STORAGE_KEY'
+  ) {
+    return 400
   }
+  return 502
 }
+
+const messageFromError = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback
 
 export const catalogSyncAdminStatusHandler: PayloadHandler = async (req) => {
   if (!req.user || !checkRole(['admin'], req.user)) return unauthorized()
@@ -75,10 +40,14 @@ export const catalogSyncAdminStatusHandler: PayloadHandler = async (req) => {
   if (!id) return Response.json({ message: 'Липсва ID на продукт.' }, { status: 400 })
 
   try {
-    return Response.json(await safeStatus(req, id))
+    const product = await loadCatalogSyncProductForUser({ productId: id, req })
+    const refreshed = await refreshCatalogSyncProductStatus({ product, req })
+    return Response.json(getCatalogSyncProductStatus(refreshed))
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Статусът не може да бъде зареден.'
-    return Response.json({ message }, { status: 400 })
+    return Response.json(
+      { message: messageFromError(error, 'Статусът не може да бъде зареден.') },
+      { status: responseStatus(error) },
+    )
   }
 }
 
@@ -89,18 +58,29 @@ export const catalogSyncAdminSendHandler: PayloadHandler = async (req) => {
 
   try {
     const product = await loadCatalogSyncProductForUser({ productId: id, req })
-    const result = await enqueueCatalogContentSync({ product, req })
+    const { product: updated, response } = await sendCatalogSyncProductForUser({ product, req })
+    const status = getCatalogSyncProductStatus(updated)
+    if (response.status === 'failed') {
+      return Response.json(
+        { ...status, message: status.lastError || 'Румънската обработка завърши с грешка.' },
+        { status: 502 },
+      )
+    }
+    const completed = response.status === 'succeeded' || response.status === 'superseded'
+
     return Response.json(
       {
-        ...(await safeStatus(req, id)),
-        message: result.reused
-          ? 'Същото съдържание вече чака обработка.'
-          : 'Продуктът е добавен в опашката за румънския сайт.',
+        ...status,
+        message: completed
+          ? 'Продуктът е обработен успешно от румънския сайт.'
+          : 'Продуктът е приет от румънския сайт и се обработва.',
       },
-      { status: 202 },
+      { status: completed ? 200 : 202 },
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Продуктът не може да бъде изпратен.'
-    return Response.json({ message }, { status: 400 })
+    return Response.json(
+      { message: messageFromError(error, 'Продуктът не може да бъде изпратен.') },
+      { status: responseStatus(error) },
+    )
   }
 }
