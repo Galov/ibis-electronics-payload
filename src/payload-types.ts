@@ -310,6 +310,8 @@ export interface Product {
     approvalStatus?: ('never_sent' | 'pending' | 'approved' | 'error') | null;
     contentStatus?: ('current' | 'changed' | 'pending' | 'error') | null;
     lastEventId?: string | null;
+    lastEventSourceHash?: string | null;
+    lastEventSourceUpdatedAt?: string | null;
     lastRemoteStatus?: string | null;
     pendingContentFingerprint?: string | null;
     lastSuccessfulEventId?: string | null;
@@ -1663,6 +1665,8 @@ export interface ProductsSelect<T extends boolean = true> {
         approvalStatus?: T;
         contentStatus?: T;
         lastEventId?: T;
+        lastEventSourceHash?: T;
+        lastEventSourceUpdatedAt?: T;
         lastRemoteStatus?: T;
         pendingContentFingerprint?: T;
         lastSuccessfulEventId?: T;

@@ -32,6 +32,35 @@ const defaultTransport: CatalogSyncManualTransport = {
 const successfulStatuses = new Set(['succeeded', 'superseded'])
 const failedStatuses = new Set(['failed'])
 
+const nextSourceUpdatedAt = (current: string, previous?: null | string) => {
+  if (!previous) return current
+  const currentTime = new Date(current).getTime()
+  const previousTime = new Date(previous).getTime()
+  if (
+    !Number.isFinite(currentTime) ||
+    !Number.isFinite(previousTime) ||
+    currentTime > previousTime
+  ) {
+    return current
+  }
+  return new Date(previousTime + 1).toISOString()
+}
+
+const buildVersionedEvent = (product: CatalogSyncProductDocument) => {
+  const candidate = buildCatalogSyncEvent(product)
+  const state = product.catalogSync || {}
+
+  if (state.lastEventSourceHash === candidate.sourceContentHash && state.lastEventSourceUpdatedAt) {
+    return buildCatalogSyncEvent(product, {
+      sourceUpdatedAt: state.lastEventSourceUpdatedAt,
+    })
+  }
+
+  return buildCatalogSyncEvent(product, {
+    sourceUpdatedAt: nextSourceUpdatedAt(candidate.sourceUpdatedAt, state.lastEventSourceUpdatedAt),
+  })
+}
+
 const errorMessage = (error: unknown) =>
   error instanceof CatalogSyncError || error instanceof Error
     ? error.message
@@ -243,7 +272,7 @@ export const sendCatalogSyncProductForUser = async ({
   req: PayloadRequest
   transport?: CatalogSyncManualTransport
 }) => {
-  const event = buildCatalogSyncEvent(product)
+  const event = buildVersionedEvent(product)
   const contentFingerprint = buildCatalogSyncContentFingerprint(product)
   const attemptedAt = new Date().toISOString()
   const pending = await persistState({
@@ -255,6 +284,8 @@ export const sendCatalogSyncProductForUser = async ({
       lastErrorAt: null,
       lastErrorNotifiedEventId: null,
       lastEventId: event.eventId,
+      lastEventSourceHash: event.sourceContentHash,
+      lastEventSourceUpdatedAt: event.sourceUpdatedAt,
       lastRemoteStatus: 'sending',
       pendingContentFingerprint: contentFingerprint,
     },

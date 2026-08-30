@@ -248,6 +248,8 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
           options: ['current', 'changed', 'pending', 'error'],
         },
         { name: 'lastEventId', type: 'text' },
+        { name: 'lastEventSourceHash', type: 'text' },
+        { name: 'lastEventSourceUpdatedAt', type: 'date' },
         { name: 'lastRemoteStatus', type: 'text' },
         { name: 'pendingContentFingerprint', type: 'text' },
         { name: 'lastSuccessfulEventId', type: 'text' },

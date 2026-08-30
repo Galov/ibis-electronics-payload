@@ -124,6 +124,70 @@ describe('direct manual Romanian catalog synchronization', () => {
     ])
   })
 
+  it('keeps retries stable across internal status writes and versions real A-B-A changes', async () => {
+    let storedProduct = product()
+    let clock = new Date('2026-08-30T08:00:00.000Z').getTime()
+    const sentEvents: ReturnType<typeof buildCatalogSyncEvent>[] = []
+    const payload = {
+      findByID: vi.fn(async () => structuredClone(storedProduct)),
+      findGlobal: vi.fn().mockResolvedValue({ notificationRecipients: [] }),
+      logger: { error: vi.fn(), warn: vi.fn() },
+      sendEmail: vi.fn(),
+      update: vi.fn(async ({ data }) => {
+        clock += 1
+        storedProduct = {
+          ...storedProduct,
+          catalogSync: data.catalogSync,
+          updatedAt: new Date(clock).toISOString(),
+        }
+        return structuredClone(storedProduct)
+      }),
+    }
+    const req = { payload, user: { id: 'admin-1', roles: ['admin'] } } as any
+    const transport = {
+      getStatus: vi.fn(),
+      send: vi.fn(async (event) => {
+        sentEvents.push(event)
+        return { eventId: event.eventId, status: 'queued' }
+      }),
+    }
+    const load = () => loadCatalogSyncProductForUser({ productId: storedProduct.id, req })
+    const sendLoaded = async () =>
+      sendCatalogSyncProductForUser({ product: await load(), req, transport })
+
+    const firstA = await sendLoaded()
+    const updatedAtAfterInternalWrites = storedProduct.updatedAt
+    const retryA = await sendLoaded()
+
+    expect(updatedAtAfterInternalWrites).not.toBe(firstA.event.sourceUpdatedAt)
+    expect(retryA.event.eventId).toBe(firstA.event.eventId)
+    expect(retryA.event.sourceUpdatedAt).toBe(firstA.event.sourceUpdatedAt)
+
+    clock += 1_000
+    storedProduct = {
+      ...storedProduct,
+      title: 'Версия B',
+      updatedAt: new Date(clock).toISOString(),
+    }
+    const versionB = await sendLoaded()
+    expect(versionB.event.eventId).not.toBe(firstA.event.eventId)
+
+    clock += 1_000
+    storedProduct = {
+      ...storedProduct,
+      title: product().title,
+      updatedAt: new Date(clock).toISOString(),
+    }
+    const secondA = await sendLoaded()
+
+    expect(secondA.event.eventId).not.toBe(firstA.event.eventId)
+    expect(secondA.event.eventId).not.toBe(versionB.event.eventId)
+    expect(new Date(secondA.event.sourceUpdatedAt).getTime()).toBeGreaterThan(
+      new Date(versionB.event.sourceUpdatedAt).getTime(),
+    )
+    expect(sentEvents).toHaveLength(4)
+  })
+
   it('tracks translation and then marks the same content event as successful', async () => {
     const source = product()
     const event = buildCatalogSyncEvent(source)

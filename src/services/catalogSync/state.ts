@@ -14,6 +14,8 @@ export type CatalogSyncProductState = {
   lastErrorAt?: string | null
   lastErrorNotifiedEventId?: string | null
   lastEventId?: string | null
+  lastEventSourceHash?: string | null
+  lastEventSourceUpdatedAt?: string | null
   lastRemoteStatus?: string | null
   lastSuccessfulAt?: string | null
   lastSuccessfulEventId?: string | null
