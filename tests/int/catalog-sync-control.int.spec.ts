@@ -22,7 +22,7 @@ type TestProduct = CatalogSyncSourceProduct & {
 const product = (patch: Partial<TestProduct> = {}): TestProduct => ({
   brand: { id: 'brand-1', title: 'Марка' },
   catalogSync: {},
-  categories: [{ id: 'category-1', title: 'Категория' }],
+  categories: [{ ancestors: [], id: 'category-1', title: 'Категория' }],
   description: 'Подробно описание',
   id: 'product-1',
   images: [{ alt: 'Снимка', storageKey: 'products/product-1.jpg' }],
@@ -57,10 +57,14 @@ const request = () => {
 describe('direct manual Romanian catalog synchronization', () => {
   it('loads the selected product with the authenticated administrator access', async () => {
     const source = product()
-    const findByID = vi.fn().mockResolvedValue(source)
+    const findByID = vi.fn(async ({ collection }) =>
+      collection === 'products' ? source : { id: 'category-1', parent: null, title: 'Категория' },
+    )
     const req = { payload: { findByID }, user: { id: 'admin-1', roles: ['admin'] } } as any
 
-    await expect(loadCatalogSyncProductForUser({ productId: source.id, req })).resolves.toBe(source)
+    await expect(loadCatalogSyncProductForUser({ productId: source.id, req })).resolves.toEqual(
+      source,
+    )
     expect(findByID).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'products',
@@ -73,7 +77,7 @@ describe('direct manual Romanian catalog synchronization', () => {
     )
   })
 
-  it('sends the existing Catalog Sync 1.0 event directly and stores the remote event state', async () => {
+  it('sends the Catalog Sync 1.2 event directly and stores the remote event state', async () => {
     const source = product()
     const { req, updates } = request()
     const send = vi.fn(async (event) => ({ eventId: event.eventId, status: 'queued' }))
@@ -85,7 +89,7 @@ describe('direct manual Romanian catalog synchronization', () => {
     })
 
     expect(send).toHaveBeenCalledWith(
-      expect.objectContaining({ eventType: 'product.upsert', schemaVersion: '1.0' }),
+      expect.objectContaining({ eventType: 'product.upsert', schemaVersion: '1.2' }),
     )
     expect(result.response.status).toBe('queued')
     expect(getCatalogSyncProductStatus(result.product)).toMatchObject({
@@ -129,7 +133,11 @@ describe('direct manual Romanian catalog synchronization', () => {
     let clock = new Date('2026-08-30T08:00:00.000Z').getTime()
     const sentEvents: ReturnType<typeof buildCatalogSyncEvent>[] = []
     const payload = {
-      findByID: vi.fn(async () => structuredClone(storedProduct)),
+      findByID: vi.fn(async ({ collection }) =>
+        collection === 'products'
+          ? structuredClone(storedProduct)
+          : { id: 'category-1', parent: null, title: 'Категория' },
+      ),
       findGlobal: vi.fn().mockResolvedValue({ notificationRecipients: [] }),
       logger: { error: vi.fn(), warn: vi.fn() },
       sendEmail: vi.fn(),

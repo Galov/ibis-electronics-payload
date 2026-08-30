@@ -24,7 +24,8 @@ const responseStatus = (error: unknown) => {
   if (
     error.code === 'CATALOG_SYNC_INVALID_PRODUCT' ||
     error.code === 'CATALOG_SYNC_RELATION_NOT_POPULATED' ||
-    error.code === 'CATALOG_SYNC_MISSING_STORAGE_KEY'
+    error.code === 'CATALOG_SYNC_MISSING_STORAGE_KEY' ||
+    error.code.startsWith('CATALOG_SYNC_CATEGORY_')
   ) {
     return 400
   }

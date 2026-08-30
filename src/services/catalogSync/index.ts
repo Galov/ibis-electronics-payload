@@ -1,9 +1,11 @@
 import type { Payload } from 'payload'
 
+import { resolveCatalogSyncProductCategories } from './categories'
 import { buildCatalogSyncEvent } from './contract'
 import { sendCatalogSyncEvent, type CatalogSyncEnvironment } from './transport'
 
 export { CatalogSyncError } from './errors'
+export { resolveCatalogSyncCategoryPaths } from './categories'
 export { buildCatalogSyncEvent, stableStringify, validateCatalogSyncEvent } from './contract'
 export {
   getCatalogSyncProductStatus,
@@ -38,7 +40,8 @@ export const loadCatalogSyncEvent = async ({
     overrideAccess: true,
   })
 
-  return buildCatalogSyncEvent(product)
+  const resolvedProduct = await resolveCatalogSyncProductCategories({ payload, product })
+  return buildCatalogSyncEvent(resolvedProduct)
 }
 
 export const sendCatalogSyncProduct = async ({

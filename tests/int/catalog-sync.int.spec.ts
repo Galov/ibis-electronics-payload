@@ -58,7 +58,7 @@ afterAll(() => {
 })
 
 describe('Romanian catalog sync contract', () => {
-  it('transforms the selected Payload product into contract 1.0', () => {
+  it('transforms the selected Payload product into contract 1.2/1.1', () => {
     const event = buildCatalogSyncEvent(pilotProduct)
 
     expect(event.product).toEqual({
@@ -77,7 +77,7 @@ describe('Romanian catalog sync contract', () => {
       ],
       manufacturerCode: 'ORIGINAL',
       originalSku: '00468264,BBZ41FP',
-      schemaVersion: '1.0',
+      schemaVersion: '1.1',
       shortDescription: null,
       sku: '803PE531OR',
       sourcePriceEUR: 9.77,
@@ -86,6 +86,7 @@ describe('Romanian catalog sync contract', () => {
       stockStatus: 'instock',
       title: 'Оригинални торбички за прахосмукачка Bosch, Siemens - 00468264',
     })
+    expect(event.schemaVersion).toBe('1.2')
     expect(event.sourceUpdatedAt).toBe('2026-08-28T14:32:49.866Z')
   })
 
@@ -127,7 +128,7 @@ describe('Romanian catalog sync contract', () => {
   it('uses Payload IDs for product, brand and categories', () => {
     const event = buildCatalogSyncEvent({
       ...pilotProduct,
-      categories: [{ id: 'payload-category-id', title: 'Торбички' }],
+      categories: [{ ancestors: [], id: 'payload-category-id', title: 'Торбички' }],
     })
 
     expect(event.product.sourceProductId).toBe('6a918d8ba5b0f1e1420cb292')

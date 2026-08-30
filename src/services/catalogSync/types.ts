@@ -1,19 +1,35 @@
-export const catalogSyncSchemaVersion = '1.0' as const
+export const catalogSyncSchemaVersion = '1.2' as const
+export const catalogSyncProductSchemaVersion = '1.1' as const
 export const catalogSyncEventType = 'product.upsert' as const
 
 export const catalogSyncStockStatuses = ['instock', 'outofstock', 'onbackorder', 'unknown'] as const
 
 export type CatalogSyncStockStatus = (typeof catalogSyncStockStatuses)[number]
 
+export type CatalogSyncCategoryIdentity = {
+  sourceCategoryId: string
+  title: string
+}
+
+export type CatalogSyncSourceCategory = {
+  ancestors?: CatalogSyncCategoryIdentity[] | null
+  id: number | string
+  title?: null | string
+}
+
+export type CatalogSyncResolvedSourceCategory = CatalogSyncSourceCategory & {
+  ancestors: CatalogSyncCategoryIdentity[]
+  title: string
+}
+
 export type CatalogSyncProduct = {
   brand: null | {
     sourceBrandId: string
     title: string
   }
-  categories: {
-    sourceCategoryId: string
-    title: string
-  }[]
+  categories: (CatalogSyncCategoryIdentity & {
+    ancestors: CatalogSyncCategoryIdentity[]
+  })[]
   characteristics: {
     key: string
     label: string
@@ -26,7 +42,7 @@ export type CatalogSyncProduct = {
   }[]
   manufacturerCode: null | string
   originalSku: null | string
-  schemaVersion: typeof catalogSyncSchemaVersion
+  schemaVersion: typeof catalogSyncProductSchemaVersion
   shortDescription: null | string
   sku: string
   sourcePriceEUR: number
@@ -47,7 +63,7 @@ export type CatalogSyncEvent = {
 
 export type CatalogSyncSourceProduct = {
   brand?: null | string | { id: number | string; title?: null | string }
-  categories?: null | (number | string | { id: number | string; title?: null | string })[]
+  categories?: null | (number | string | CatalogSyncSourceCategory)[]
   description?: null | string
   id: number | string
   images?:
