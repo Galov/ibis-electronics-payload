@@ -5,11 +5,22 @@ import { buildCatalogSyncEvent } from './contract'
 import { sendCatalogSyncEvent, type CatalogSyncEnvironment } from './transport'
 
 export { CatalogSyncError } from './errors'
+export {
+  createPayloadBatchPersistence,
+  loadCatalogSyncBatchCandidates,
+  runCatalogSyncBatch,
+  type CatalogSyncBatchMode,
+  type CatalogSyncBatchReport,
+  type RunCatalogSyncBatchOptions,
+} from './batch'
 export { resolveCatalogSyncCategoryPaths } from './categories'
 export { buildCatalogSyncEvent, stableStringify, validateCatalogSyncEvent } from './contract'
 export {
+  buildVersionedCatalogSyncEvent,
   getCatalogSyncProductStatus,
+  loadCatalogSyncProductForServer,
   loadCatalogSyncProductForUser,
+  markCatalogSyncProductFailed,
   refreshCatalogSyncProductStatus,
   sendCatalogSyncProductForUser,
 } from './manual'

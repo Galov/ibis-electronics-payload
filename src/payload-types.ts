@@ -82,6 +82,7 @@ export interface Config {
     'contact-inquiries': ContactInquiry;
     media: Media;
     'product-review-items': ProductReviewItem;
+    'catalog-sync-batch-runs': CatalogSyncBatchRun;
     addresses: Address;
     products: Product;
     carts: Cart;
@@ -110,6 +111,7 @@ export interface Config {
     'contact-inquiries': ContactInquiriesSelect<false> | ContactInquiriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'product-review-items': ProductReviewItemsSelect<false> | ProductReviewItemsSelect<true>;
+    'catalog-sync-batch-runs': CatalogSyncBatchRunsSelect<false> | CatalogSyncBatchRunsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     carts: CartsSelect<false> | CartsSelect<true>;
@@ -1127,6 +1129,50 @@ export interface ProductReviewItem {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "catalog-sync-batch-runs".
+ */
+export interface CatalogSyncBatchRun {
+  id: string;
+  mode: 'send' | 'retry-failed';
+  status: 'running' | 'completed';
+  completionReason?: ('exhausted' | 'limit_reached') | null;
+  limit: number;
+  timeoutMs: number;
+  pollIntervalMs: number;
+  nextIndex: number;
+  sentCount: number;
+  succeededCount: number;
+  failedCount: number;
+  invalidCount: number;
+  skippedCurrentCount: number;
+  snapshot:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  results:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  activeProductId?: string | null;
+  activeEventId?: string | null;
+  activeCounted: boolean;
+  startedAt: string;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1188,6 +1234,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'product-review-items';
         value: string | ProductReviewItem;
+      } | null)
+    | ({
+        relationTo: 'catalog-sync-batch-runs';
+        value: string | CatalogSyncBatchRun;
       } | null)
     | ({
         relationTo: 'addresses';
@@ -1629,6 +1679,33 @@ export interface ProductReviewItemsSelect<T extends boolean = true> {
   reviewRequiredAt?: T;
   reviewedAt?: T;
   reviewedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "catalog-sync-batch-runs_select".
+ */
+export interface CatalogSyncBatchRunsSelect<T extends boolean = true> {
+  mode?: T;
+  status?: T;
+  completionReason?: T;
+  limit?: T;
+  timeoutMs?: T;
+  pollIntervalMs?: T;
+  nextIndex?: T;
+  sentCount?: T;
+  succeededCount?: T;
+  failedCount?: T;
+  invalidCount?: T;
+  skippedCurrentCount?: T;
+  snapshot?: T;
+  results?: T;
+  activeProductId?: T;
+  activeEventId?: T;
+  activeCounted?: T;
+  startedAt?: T;
+  completedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

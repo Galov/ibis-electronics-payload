@@ -52,6 +52,7 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 RUN mkdir -p ./scripts
 COPY --from=builder /app/scripts/backfillR2ImageCacheHeaders.ts ./scripts/backfillR2ImageCacheHeaders.ts
 COPY --from=builder /app/scripts/catalogSyncProductToRomania.ts ./scripts/catalogSyncProductToRomania.ts
+COPY --from=builder /app/scripts/catalogSyncBatchToRomania.ts ./scripts/catalogSyncBatchToRomania.ts
 
 EXPOSE 3000
 

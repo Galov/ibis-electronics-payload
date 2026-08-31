@@ -158,9 +158,11 @@ export const resolveCatalogSyncProductCategoriesForUser = async ({
 export const resolveCatalogSyncProductCategories = async ({
   payload,
   product,
+  req,
 }: {
   payload: Payload
   product: CatalogSyncSourceProduct
+  req?: PayloadRequest
 }) =>
   withResolvedCategories(product, async (id) =>
     payload.findByID({
@@ -168,5 +170,6 @@ export const resolveCatalogSyncProductCategories = async ({
       depth: 0,
       id,
       overrideAccess: true,
+      ...(req ? { req } : {}),
     }),
   )
