@@ -8,6 +8,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Brands } from '@/collections/Brands'
+import { CatalogSyncBatchRuns } from '@/collections/CatalogSyncBatchRuns'
 import { Categories } from '@/collections/Categories'
 import { ContactInquiries } from '@/collections/ContactInquiries'
 import { Media } from '@/collections/Media'
@@ -82,6 +83,7 @@ export default buildConfig({
     ContactInquiries,
     Media,
     ProductReviewItems,
+    CatalogSyncBatchRuns,
   ],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',

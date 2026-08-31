@@ -1,6 +1,9 @@
 import type { PayloadRequest } from 'payload'
 
-import { resolveCatalogSyncProductCategoriesForUser } from './categories'
+import {
+  resolveCatalogSyncProductCategories,
+  resolveCatalogSyncProductCategoriesForUser,
+} from './categories'
 import { buildCatalogSyncEvent } from './contract'
 import { CatalogSyncError } from './errors'
 import { buildCatalogSyncContentFingerprint } from './fingerprints'
@@ -20,7 +23,7 @@ export type CatalogSyncProductDocument = CatalogSyncSourceProduct & {
   id: string
 }
 
-type CatalogSyncManualTransport = {
+export type CatalogSyncManualTransport = {
   getStatus: (eventId: string) => Promise<CatalogSyncStatusResponse>
   send: (event: CatalogSyncEvent) => Promise<CatalogSyncAcceptedResponse>
 }
@@ -47,7 +50,7 @@ const nextSourceUpdatedAt = (current: string, previous?: null | string) => {
   return new Date(previousTime + 1).toISOString()
 }
 
-const buildVersionedEvent = (product: CatalogSyncProductDocument) => {
+export const buildVersionedCatalogSyncEvent = (product: CatalogSyncProductDocument) => {
   const candidate = buildCatalogSyncEvent(product)
   const state = product.catalogSync || {}
 
@@ -60,6 +63,28 @@ const buildVersionedEvent = (product: CatalogSyncProductDocument) => {
   return buildCatalogSyncEvent(product, {
     sourceUpdatedAt: nextSourceUpdatedAt(candidate.sourceUpdatedAt, state.lastEventSourceUpdatedAt),
   })
+}
+
+export const loadCatalogSyncProductForServer = async ({
+  productId,
+  req,
+}: {
+  productId: string
+  req: PayloadRequest
+}) => {
+  const product = (await req.payload.findByID({
+    collection: 'products',
+    depth: 2,
+    id: productId,
+    overrideAccess: true,
+    req,
+  })) as unknown as CatalogSyncProductDocument
+
+  return (await resolveCatalogSyncProductCategories({
+    payload: req.payload,
+    product,
+    req,
+  })) as CatalogSyncProductDocument
 }
 
 const errorMessage = (error: unknown) =>
@@ -153,11 +178,13 @@ const notifyFailure = async ({
 const markFailed = async ({
   error,
   eventId,
+  notify = true,
   product,
   req,
 }: {
   error: string
   eventId: string
+  notify?: boolean
   product: CatalogSyncProductDocument
   req: PayloadRequest
 }) => {
@@ -174,9 +201,11 @@ const markFailed = async ({
     product,
     req,
   })
-  await notifyFailure({ error, errorAt, eventId, product: failed, req })
+  if (notify) await notifyFailure({ error, errorAt, eventId, product: failed, req })
   return failed
 }
+
+export const markCatalogSyncProductFailed = markFailed
 
 const markSucceeded = async ({
   eventId,
@@ -213,10 +242,12 @@ const markSucceeded = async ({
 }
 
 const applyRemoteStatus = async ({
+  notifyOnFailure = true,
   product,
   req,
   response,
 }: {
+  notifyOnFailure?: boolean
   product: CatalogSyncProductDocument
   req: PayloadRequest
   response: CatalogSyncStatusResponse
@@ -233,6 +264,7 @@ const applyRemoteStatus = async ({
     return markFailed({
       error: remoteErrorMessage(response),
       eventId: response.eventId,
+      notify: notifyOnFailure,
       product,
       req,
     })
@@ -271,15 +303,17 @@ export const getCatalogSyncProductStatus = (product: CatalogSyncProductDocument)
 }
 
 export const sendCatalogSyncProductForUser = async ({
+  notifyOnFailure = true,
   product,
   req,
   transport = defaultTransport,
 }: {
+  notifyOnFailure?: boolean
   product: CatalogSyncProductDocument
   req: PayloadRequest
   transport?: CatalogSyncManualTransport
 }) => {
-  const event = buildVersionedEvent(product)
+  const event = buildVersionedCatalogSyncEvent(product)
   const contentFingerprint = buildCatalogSyncContentFingerprint(product)
   const attemptedAt = new Date().toISOString()
   const pending = await persistState({
@@ -302,20 +336,28 @@ export const sendCatalogSyncProductForUser = async ({
 
   try {
     const response = await transport.send(event)
-    const updated = await applyRemoteStatus({ product: pending, req, response })
+    const updated = await applyRemoteStatus({ notifyOnFailure, product: pending, req, response })
     return { event, product: updated, response }
   } catch (error) {
     const message = errorMessage(error)
-    await markFailed({ error: message, eventId: event.eventId, product: pending, req })
+    await markFailed({
+      error: message,
+      eventId: event.eventId,
+      notify: notifyOnFailure,
+      product: pending,
+      req,
+    })
     throw error
   }
 }
 
 export const refreshCatalogSyncProductStatus = async ({
+  notifyOnFailure = true,
   product,
   req,
   transport = defaultTransport,
 }: {
+  notifyOnFailure?: boolean
   product: CatalogSyncProductDocument
   req: PayloadRequest
   transport?: CatalogSyncManualTransport
@@ -324,5 +366,5 @@ export const refreshCatalogSyncProductStatus = async ({
   if (state.contentStatus !== 'pending' || !state.lastEventId) return product
 
   const response = await transport.getStatus(state.lastEventId)
-  return applyRemoteStatus({ product, req, response })
+  return applyRemoteStatus({ notifyOnFailure, product, req, response })
 }
