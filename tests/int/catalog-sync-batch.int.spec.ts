@@ -75,7 +75,7 @@ const request = (initialProducts: TestProduct[]) => {
     logger: { error: vi.fn(), warn: vi.fn() },
     update,
   }
-  return { create, find, payload, products, req: { payload } as any, update }
+  return { create, find, findByID, payload, products, req: { payload } as any, update }
 }
 
 const persistence = () => {
@@ -86,7 +86,11 @@ const persistence = () => {
       current = { ...clone(run), id: 'run-1' }
       return clone(current)
     }),
-    findRunningRun: vi.fn(async () => (current?.status === 'running' ? clone(current) : null)),
+    findResumableRun: vi.fn(async () =>
+      current?.status === 'running' || current?.completionReason === 'limit_reached'
+        ? clone(current)
+        : null,
+    ),
     get current() {
       return current
     },
@@ -347,11 +351,11 @@ describe('controlled Catalog Sync batch', () => {
     expect(send).toHaveBeenCalledTimes(1)
   })
 
-  it('limits real sends to 20, then sends only the remaining 5 on the next run', async () => {
-    const products = Array.from({ length: 25 }, (_, index) =>
-      product(`product-${String(index + 1).padStart(2, '0')}`),
+  it('continues from the checkpoint with a fresh per-command limit', async () => {
+    const products = Array.from({ length: 125 }, (_, index) =>
+      product(`product-${String(index + 1).padStart(3, '0')}`),
     )
-    const { req } = request(products)
+    const { findByID, req } = request(products)
     const store = persistence()
     const send = vi.fn(async (event) => ({ eventId: event.eventId, status: 'succeeded' }))
     const transport = { getStatus: vi.fn(), send }
@@ -368,13 +372,14 @@ describe('controlled Catalog Sync batch', () => {
       ([event]) => event.product.sourceProductId as string,
     )
 
-    expect(firstReport.counts).toMatchObject({ eligible: 25, sent: 20, succeeded: 20 })
+    expect(firstReport.counts).toMatchObject({ eligible: 125, sent: 20, succeeded: 20 })
     expect(store.current.completionReason).toBe('limit_reached')
     expect(firstRunProductIds).toEqual(products.slice(0, 20).map(({ id }) => id))
+    findByID.mockClear()
 
     const secondReport = await runCatalogSyncBatch({
       env: enabled,
-      limit: 20,
+      limit: 100,
       mode: 'send',
       persistence: store,
       req,
@@ -385,14 +390,38 @@ describe('controlled Catalog Sync batch', () => {
     )
 
     expect(secondReport.counts).toMatchObject({
-      alreadyCurrent: 20,
-      eligible: 25,
+      alreadyCurrent: 0,
+      eligible: 125,
+      sent: 100,
+      succeeded: 100,
+    })
+    expect(secondReport.resumedRun).toBe(true)
+    expect(store.current.completionReason).toBe('limit_reached')
+    expect(allSentProductIds.slice(20)).toEqual(products.slice(20, 120).map(({ id }) => id))
+    expect(new Set(allSentProductIds).size).toBe(120)
+    expect(send).toHaveBeenCalledTimes(120)
+    expect(
+      findByID.mock.calls
+        .filter(([args]) => args.collection === 'products')
+        .map(([args]) => args.id),
+    ).toEqual(products.slice(20, 120).map(({ id }) => id))
+
+    const finalReport = await runCatalogSyncBatch({
+      env: enabled,
+      limit: 100,
+      mode: 'send',
+      persistence: store,
+      req,
+      transport,
+    })
+
+    expect(finalReport.counts).toMatchObject({
+      alreadyCurrent: 0,
+      eligible: 125,
       sent: 5,
       succeeded: 5,
     })
     expect(store.current.completionReason).toBe('exhausted')
-    expect(allSentProductIds.slice(20)).toEqual(products.slice(20).map(({ id }) => id))
-    expect(new Set(allSentProductIds).size).toBe(25)
-    expect(send).toHaveBeenCalledTimes(25)
+    expect(send).toHaveBeenCalledTimes(125)
   })
 })

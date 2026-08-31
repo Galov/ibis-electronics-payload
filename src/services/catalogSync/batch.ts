@@ -80,7 +80,7 @@ export type CatalogSyncBatchReport = {
 
 type BatchPersistence = {
   createRun: (run: Omit<BatchRun, 'id'>) => Promise<BatchRun>
-  findRunningRun: (mode: Exclude<CatalogSyncBatchMode, 'dry-run'>) => Promise<BatchRun | null>
+  findResumableRun: (mode: Exclude<CatalogSyncBatchMode, 'dry-run'>) => Promise<BatchRun | null>
   updateRun: (run: BatchRun) => Promise<BatchRun>
 }
 
@@ -205,7 +205,7 @@ export const createPayloadBatchPersistence = (req: PayloadRequest): BatchPersist
         req,
       })) as unknown as Record<string, unknown>,
     ),
-  findRunningRun: async (mode) => {
+  findResumableRun: async (mode) => {
     const result = await req.payload.find({
       collection: 'catalog-sync-batch-runs',
       depth: 0,
@@ -213,7 +213,22 @@ export const createPayloadBatchPersistence = (req: PayloadRequest): BatchPersist
       overrideAccess: true,
       req,
       sort: '-createdAt',
-      where: { and: [{ mode: { equals: mode } }, { status: { equals: 'running' } }] },
+      where: {
+        and: [
+          { mode: { equals: mode } },
+          {
+            or: [
+              { status: { equals: 'running' } },
+              {
+                and: [
+                  { status: { equals: 'completed' } },
+                  { completionReason: { equals: 'limit_reached' } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     })
     return result.docs[0]
       ? normalizeRun(result.docs[0] as unknown as Record<string, unknown>)
@@ -265,12 +280,14 @@ const reportFromResults = ({
   results,
   resumedRun,
   run,
+  sent,
 }: {
   eligible: number
   mode: CatalogSyncBatchMode
   results: BatchResult[]
   resumedRun: boolean
   run: BatchRun | null
+  sent?: number
 }): CatalogSyncBatchReport => ({
   counts: {
     alreadyCurrent: results.filter(({ outcome }) => outcome === 'already-current').length,
@@ -278,7 +295,7 @@ const reportFromResults = ({
     failed: results.filter(({ outcome }) => outcome === 'failed').length,
     invalid: results.filter(({ outcome }) => outcome === 'invalid').length,
     needsSend: results.filter(({ outcome }) => outcome === 'needs-send').length,
-    sent: run?.sentCount || 0,
+    sent: sent ?? run?.sentCount ?? 0,
     succeeded: results.filter(({ outcome }) => outcome === 'succeeded').length,
     superseded: results.filter(({ outcome }) => outcome === 'superseded').length,
     valid: eligible - results.filter(({ outcome }) => outcome === 'invalid').length,
@@ -404,7 +421,7 @@ export const runCatalogSyncBatch = async ({
 
   assertCatalogSyncSendingEnabled(env)
   const store = persistence || createPayloadBatchPersistence(req)
-  let run = await store.findRunningRun(mode)
+  let run = await store.findResumableRun(mode)
   const resumedRun = Boolean(run)
 
   if (!run) {
@@ -426,10 +443,21 @@ export const runCatalogSyncBatch = async ({
       status: 'running',
       timeoutMs,
     })
+  } else {
+    run.status = 'running'
+    run.completionReason = null
+    run.completedAt = null
+    run.limit = limit
+    run.pollIntervalMs = pollIntervalMs
+    run.timeoutMs = timeoutMs
+    run = await store.updateRun(run)
   }
 
+  const initialSentCount = run.sentCount
+  const initialResultCount = run.results.length
+
   while (run.nextIndex < run.snapshot.length) {
-    if (!run.activeProductId && run.sentCount >= run.limit) break
+    if (!run.activeProductId && run.sentCount - initialSentCount >= limit) break
     const candidate = run.snapshot[run.nextIndex]
     let result: BatchResult
 
@@ -581,8 +609,9 @@ export const runCatalogSyncBatch = async ({
   return reportFromResults({
     eligible: run.snapshot.length,
     mode,
-    results: run.results,
+    results: run.results.slice(initialResultCount),
     resumedRun,
     run,
+    sent: run.sentCount - initialSentCount,
   })
 }
