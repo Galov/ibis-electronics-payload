@@ -62,6 +62,7 @@ const run = async () => {
   const req = await createLocalReq({}, payload)
   const report = await runCatalogSyncBatch({
     ...options,
+    createRequest: () => createLocalReq({}, payload),
     onResult: (result) => console.log(JSON.stringify({ type: 'product', ...result })),
     req,
   })

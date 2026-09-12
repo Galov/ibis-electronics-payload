@@ -85,6 +85,7 @@ type BatchPersistence = {
 }
 
 export type RunCatalogSyncBatchOptions = {
+  createRequest?: () => Promise<PayloadRequest>
   env?: CatalogSyncEnvironment
   limit?: number
   mode?: CatalogSyncBatchMode
@@ -103,11 +104,76 @@ const defaultPollIntervalMs = 2_000
 const defaultTimeoutMs = 10 * 60_000
 const pageSize = 100
 const terminalSuccess = new Set(['succeeded', 'superseded'])
+const transientMongoRetryDelays = [2_000, 5_000, 10_000]
+
+const errorChain = (error: unknown) => {
+  const chain: unknown[] = []
+  let current = error
+  while (current && !chain.includes(current)) {
+    chain.push(current)
+    current =
+      typeof current === 'object' && current !== null && 'cause' in current
+        ? (current as { cause?: unknown }).cause
+        : null
+  }
+  return chain
+}
+
+export const isTransientCatalogSyncMongoError = (error: unknown) =>
+  errorChain(error).some((candidate) => {
+    if (typeof candidate !== 'object' || candidate === null) return false
+    const value = candidate as {
+      errorLabels?: unknown
+      hasErrorLabel?: (label: string) => boolean
+      message?: unknown
+      name?: unknown
+    }
+    if (value.hasErrorLabel?.('TransientTransactionError')) return true
+    if (
+      Array.isArray(value.errorLabels) &&
+      value.errorLabels.includes('TransientTransactionError')
+    ) {
+      return true
+    }
+    const name = typeof value.name === 'string' ? value.name : ''
+    const message = typeof value.message === 'string' ? value.message : ''
+    return (
+      name === 'MongoNetworkError' ||
+      name === 'MongoServerSelectionError' ||
+      /Transaction with \{ txnNumber: \d+ \} has been aborted\./i.test(message) ||
+      /server monitor timeout/i.test(message)
+    )
+  })
 
 const asMessage = (error: unknown) =>
   error instanceof CatalogSyncError || error instanceof Error
     ? error.message
     : 'Неизвестна грешка при Catalog Sync batch обработката.'
+
+const withTransientMongoRetries = async <Result>({
+  createRequest,
+  initialRequest,
+  operation,
+  sleep,
+}: {
+  createRequest: () => Promise<PayloadRequest>
+  initialRequest: PayloadRequest
+  operation: (request: PayloadRequest) => Promise<Result>
+  sleep: (milliseconds: number) => Promise<void>
+}) => {
+  let operationRequest = initialRequest
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await operation(operationRequest)
+    } catch (error) {
+      if (!isTransientCatalogSyncMongoError(error) || attempt >= transientMongoRetryDelays.length) {
+        throw error
+      }
+      await sleep(transientMongoRetryDelays[attempt])
+      operationRequest = await createRequest()
+    }
+  }
+}
 
 const positiveInteger = (value: number, field: string) => {
   if (!Number.isSafeInteger(value) || value <= 0) {
@@ -195,75 +261,102 @@ const normalizeRun = (document: Record<string, unknown>): BatchRun => ({
   timeoutMs: Number(document.timeoutMs),
 })
 
-export const createPayloadBatchPersistence = (req: PayloadRequest): BatchPersistence => ({
+export const createPayloadBatchPersistence = (
+  req: PayloadRequest,
+  {
+    createRequest = async () => req,
+    sleep = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
+  }: {
+    createRequest?: () => Promise<PayloadRequest>
+    sleep?: (milliseconds: number) => Promise<void>
+  } = {},
+): BatchPersistence => ({
   createRun: async (run) =>
-    normalizeRun(
-      (await req.payload.create({
-        collection: 'catalog-sync-batch-runs',
-        data: run,
-        overrideAccess: true,
-        req,
-      })) as unknown as Record<string, unknown>,
-    ),
+    withTransientMongoRetries({
+      createRequest,
+      initialRequest: await createRequest(),
+      operation: async (operationReq) =>
+        normalizeRun(
+          (await operationReq.payload.create({
+            collection: 'catalog-sync-batch-runs',
+            data: run,
+            overrideAccess: true,
+            req: operationReq,
+          })) as unknown as Record<string, unknown>,
+        ),
+      sleep,
+    }),
   findResumableRun: async (mode) => {
-    const result = await req.payload.find({
-      collection: 'catalog-sync-batch-runs',
-      depth: 0,
-      limit: 1,
-      overrideAccess: true,
-      req,
-      sort: '-createdAt',
-      where: {
-        and: [
-          { mode: { equals: mode } },
-          {
-            or: [
-              { status: { equals: 'running' } },
+    const result = await withTransientMongoRetries({
+      createRequest,
+      initialRequest: await createRequest(),
+      operation: (operationReq) =>
+        operationReq.payload.find({
+          collection: 'catalog-sync-batch-runs',
+          depth: 0,
+          limit: 1,
+          overrideAccess: true,
+          req: operationReq,
+          sort: '-createdAt',
+          where: {
+            and: [
+              { mode: { equals: mode } },
               {
-                and: [
-                  { status: { equals: 'completed' } },
-                  { completionReason: { equals: 'limit_reached' } },
+                or: [
+                  { status: { equals: 'running' } },
+                  {
+                    and: [
+                      { status: { equals: 'completed' } },
+                      { completionReason: { equals: 'limit_reached' } },
+                    ],
+                  },
                 ],
               },
             ],
           },
-        ],
-      },
+        }),
+      sleep,
     })
     return result.docs[0]
       ? normalizeRun(result.docs[0] as unknown as Record<string, unknown>)
       : null
   },
   updateRun: async (run) =>
-    normalizeRun(
-      (await req.payload.update({
-        collection: 'catalog-sync-batch-runs',
-        data: {
-          activeEventId: run.activeEventId,
-          activeCounted: run.activeCounted,
-          activeProductId: run.activeProductId,
-          completedAt: run.completedAt,
-          completionReason: run.completionReason,
-          failedCount: run.failedCount,
-          invalidCount: run.invalidCount,
-          limit: run.limit,
-          mode: run.mode,
-          nextIndex: run.nextIndex,
-          pollIntervalMs: run.pollIntervalMs,
-          results: run.results,
-          sentCount: run.sentCount,
-          skippedCurrentCount: run.skippedCurrentCount,
-          snapshot: run.snapshot,
-          startedAt: run.startedAt,
-          status: run.status,
-          succeededCount: run.succeededCount,
-          timeoutMs: run.timeoutMs,
-        },
-        id: run.id,
-        overrideAccess: true,
-        req,
-      })) as unknown as Record<string, unknown>,
-    ),
+    withTransientMongoRetries({
+      createRequest,
+      initialRequest: await createRequest(),
+      operation: async (operationReq) =>
+        normalizeRun(
+          (await operationReq.payload.update({
+            collection: 'catalog-sync-batch-runs',
+            data: {
+              activeEventId: run.activeEventId,
+              activeCounted: run.activeCounted,
+              activeProductId: run.activeProductId,
+              completedAt: run.completedAt,
+              completionReason: run.completionReason,
+              failedCount: run.failedCount,
+              invalidCount: run.invalidCount,
+              limit: run.limit,
+              mode: run.mode,
+              nextIndex: run.nextIndex,
+              pollIntervalMs: run.pollIntervalMs,
+              results: run.results,
+              sentCount: run.sentCount,
+              skippedCurrentCount: run.skippedCurrentCount,
+              snapshot: run.snapshot,
+              startedAt: run.startedAt,
+              status: run.status,
+              succeededCount: run.succeededCount,
+              timeoutMs: run.timeoutMs,
+            },
+            id: run.id,
+            overrideAccess: true,
+            req: operationReq,
+          })) as unknown as Record<string, unknown>,
+        ),
+      sleep,
+    }),
 })
 
 const initialCounters = (): BatchCounters => ({
@@ -391,6 +484,7 @@ const pollUntilTerminal = async ({
 }
 
 export const runCatalogSyncBatch = async ({
+  createRequest,
   env,
   limit = defaultLimit,
   mode = 'dry-run',
@@ -420,7 +514,9 @@ export const runCatalogSyncBatch = async ({
   }
 
   assertCatalogSyncSendingEnabled(env)
-  const store = persistence || createPayloadBatchPersistence(req)
+  const freshRequest = createRequest || (async () => req)
+  const store =
+    persistence || createPayloadBatchPersistence(req, { createRequest: freshRequest, sleep })
   let run = await store.findResumableRun(mode)
   const resumedRun = Boolean(run)
 
@@ -455,14 +551,19 @@ export const runCatalogSyncBatch = async ({
 
   const initialSentCount = run.sentCount
   const initialResultCount = run.results.length
+  let transientAttempt = 0
 
   while (run.nextIndex < run.snapshot.length) {
     if (!run.activeProductId && run.sentCount - initialSentCount >= limit) break
     const candidate = run.snapshot[run.nextIndex]
     let result: BatchResult
+    const operationReq = await freshRequest()
 
     try {
-      let product = await loadCatalogSyncProductForServer({ productId: candidate.productId, req })
+      let product = await loadCatalogSyncProductForServer({
+        productId: candidate.productId,
+        req: operationReq,
+      })
       const event = buildVersionedCatalogSyncEvent(product)
       const status = getCatalogSyncProductStatus(product)
       const isResumingActiveProduct = run.activeProductId === candidate.productId
@@ -494,7 +595,7 @@ export const runCatalogSyncBatch = async ({
           now,
           pollIntervalMs: run.pollIntervalMs,
           product,
-          req,
+          req: operationReq,
           sleep,
           timeoutMs: run.timeoutMs,
           transport,
@@ -522,7 +623,7 @@ export const runCatalogSyncBatch = async ({
           eventId: run.activeEventId || event.eventId,
           notify: false,
           product,
-          req,
+          req: operationReq,
         })
         const interruptedStatus = getCatalogSyncProductStatus(interrupted)
         run.failedCount += 1
@@ -548,14 +649,14 @@ export const runCatalogSyncBatch = async ({
           const sent = await sendCatalogSyncProductForUser({
             notifyOnFailure: false,
             product,
-            req,
+            req: operationReq,
             transport,
           })
           product = await pollUntilTerminal({
             now,
             pollIntervalMs: run.pollIntervalMs,
             product: sent.product,
-            req,
+            req: operationReq,
             sleep,
             timeoutMs: run.timeoutMs,
             transport,
@@ -578,6 +679,7 @@ export const runCatalogSyncBatch = async ({
             }
           }
         } catch (error) {
+          if (isTransientCatalogSyncMongoError(error)) throw error
           run.failedCount += 1
           result = {
             ...candidate,
@@ -588,10 +690,21 @@ export const runCatalogSyncBatch = async ({
         }
       }
     } catch (error) {
-      run.invalidCount += 1
-      result = { ...candidate, outcome: 'invalid', reason: asMessage(error) }
+      if (isTransientCatalogSyncMongoError(error)) {
+        if (transientAttempt < transientMongoRetryDelays.length) {
+          await sleep(transientMongoRetryDelays[transientAttempt])
+          transientAttempt += 1
+          continue
+        }
+        run.failedCount += 1
+        result = { ...candidate, outcome: 'failed', reason: asMessage(error) }
+      } else {
+        run.invalidCount += 1
+        result = { ...candidate, outcome: 'invalid', reason: asMessage(error) }
+      }
     }
 
+    transientAttempt = 0
     run.activeEventId = null
     run.activeProductId = null
     run.activeCounted = false
