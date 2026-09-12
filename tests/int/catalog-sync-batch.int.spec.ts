@@ -217,6 +217,61 @@ describe('controlled Catalog Sync batch', () => {
     expect(send).toHaveBeenCalledTimes(2)
   })
 
+  it('retries a transient MongoDB error with a fresh request and succeeds', async () => {
+    const testRequest = request([product('transient')])
+    const originalFindByID = testRequest.findByID.getMockImplementation()!
+    testRequest.findByID
+      .mockRejectedValueOnce(new Error('Transaction with { txnNumber: 7 } has been aborted.'))
+      .mockRejectedValueOnce(new Error('server monitor timeout'))
+      .mockImplementation(originalFindByID)
+    const createRequest = vi.fn(async () => testRequest.req)
+    const sleep = vi.fn()
+    const send = vi.fn(async (event) => ({ eventId: event.eventId, status: 'succeeded' }))
+
+    const report = await runCatalogSyncBatch({
+      createRequest,
+      env: enabled,
+      mode: 'send',
+      persistence: persistence(),
+      req: testRequest.req,
+      sleep,
+      transport: { getStatus: vi.fn(), send },
+    })
+
+    expect(report.counts).toMatchObject({ failed: 0, invalid: 0, sent: 1, succeeded: 1 })
+    expect(createRequest).toHaveBeenCalledTimes(3)
+    expect(sleep).toHaveBeenNthCalledWith(1, 2_000)
+    expect(sleep).toHaveBeenNthCalledWith(2, 5_000)
+  })
+
+  it('records an exhausted transient MongoDB error as failed and continues', async () => {
+    const testRequest = request([product('transient'), product('good')])
+    const originalFindByID = testRequest.findByID.getMockImplementation()!
+    testRequest.findByID.mockImplementation(async (args) => {
+      if (args.collection === 'products' && args.id === 'transient') {
+        throw new Error('Transaction with { txnNumber: 8 } has been aborted.')
+      }
+      return originalFindByID(args)
+    })
+    const results: any[] = []
+    const send = vi.fn(async (event) => ({ eventId: event.eventId, status: 'succeeded' }))
+
+    const report = await runCatalogSyncBatch({
+      createRequest: async () => testRequest.req,
+      env: enabled,
+      mode: 'send',
+      onResult: (result) => results.push(result),
+      persistence: persistence(),
+      req: testRequest.req,
+      sleep: vi.fn(),
+      transport: { getStatus: vi.fn(), send },
+    })
+
+    expect(report.counts).toMatchObject({ failed: 1, invalid: 0, sent: 1, succeeded: 1 })
+    expect(results[0]).toMatchObject({ outcome: 'failed', productId: 'transient' })
+    expect(results[1]).toMatchObject({ outcome: 'succeeded', productId: 'good' })
+  })
+
   it('resumes an existing checkpoint from its next product', async () => {
     const { req } = request([product('first'), product('second')])
     const store = persistence()
