@@ -44,6 +44,7 @@ export const updateCatalogSyncProductState = async ({
         ...(product.catalogSync || {}),
         ...patch,
       },
+      generateSlug: false,
     },
     id: product.id,
     overrideAccess: true,

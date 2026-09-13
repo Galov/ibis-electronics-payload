@@ -102,6 +102,7 @@ describe('direct manual Romanian catalog synchronization', () => {
       expect.objectContaining({
         collection: 'products',
         context: { skipProductReviewQueue: true },
+        data: expect.objectContaining({ generateSlug: false }),
         req,
       }),
     )
@@ -273,14 +274,15 @@ describe('direct manual Romanian catalog synchronization', () => {
 
     expect(updates).toContainEqual(
       expect.objectContaining({
-        data: {
+        data: expect.objectContaining({
           catalogSync: expect.objectContaining({
             contentStatus: 'error',
             lastError: 'fetch failed',
             lastErrorAt: expect.any(String),
             lastEventId: event.eventId,
           }),
-        },
+          generateSlug: false,
+        }),
       }),
     )
     expect(payload.sendEmail).toHaveBeenCalledWith(
