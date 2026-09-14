@@ -1,5 +1,5 @@
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
-import type { Access } from 'payload'
+import type { Access, Where } from 'payload'
 import { slugField } from 'payload'
 import { checkRole } from '@/access/utilities'
 import {
@@ -143,11 +143,14 @@ const adminOrCatalogPublished: Access = ({ req: { user } }) => {
     return true
   }
 
-  return {
-    published: {
-      equals: true,
-    },
+  const publicCatalogFilter: Where = {
+    and: [
+      { published: { equals: true } },
+      { stockQty: { greater_than: 0 } },
+    ],
   }
+
+  return publicCatalogFilter
 }
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
