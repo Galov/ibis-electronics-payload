@@ -103,5 +103,9 @@ export const getProductPrimaryImage = (product?: Partial<Product> | null) => {
 }
 
 export const isVisibleProduct = (product?: Partial<Product> | null) => {
-  return Boolean(product?.published && (product.stockQty ?? 0) > 0)
+  return Boolean(
+    product?.published &&
+      (product.stockQty ?? 0) > 0 &&
+      product.images?.some((image) => Boolean(resolveProductImageURL(image))),
+  )
 }
