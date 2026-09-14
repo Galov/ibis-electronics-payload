@@ -68,7 +68,11 @@ export const RecentlyViewedProducts: React.FC<Props> = ({ product }) => {
   const productsToRender = useMemo(
     () =>
       recentlyViewedProducts.filter(
-        (item) => item.published !== false && (item.stockQty ?? 0) > 0 && item.slug,
+        (item) =>
+          item.published !== false &&
+          (item.stockQty ?? 0) > 0 &&
+          item.images?.some((image) => Boolean(image.image || image.storageKey || image.legacyUrl)) &&
+          item.slug,
       ),
     [recentlyViewedProducts],
   )

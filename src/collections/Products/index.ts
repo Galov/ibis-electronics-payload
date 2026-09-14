@@ -1,6 +1,7 @@
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
-import type { Access, Where } from 'payload'
+import type { Access } from 'payload'
 import { slugField } from 'payload'
+import { publicProductWhere } from '@/access/publicProductWhere'
 import { checkRole } from '@/access/utilities'
 import {
   removeProductReviewQueueItemAfterDelete,
@@ -143,14 +144,7 @@ const adminOrCatalogPublished: Access = ({ req: { user } }) => {
     return true
   }
 
-  const publicCatalogFilter: Where = {
-    and: [
-      { published: { equals: true } },
-      { stockQty: { greater_than: 0 } },
-    ],
-  }
-
-  return publicCatalogFilter
+  return publicProductWhere
 }
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
