@@ -18,8 +18,6 @@ type FormData = {
   password: string
 }
 
-const GUEST_CART_KEY = 'cart-eur'
-
 export const LoginForm: React.FC = () => {
   const searchParams = useSearchParams()
   const allParams = searchParams.toString() ? `?${searchParams.toString()}` : ''
@@ -38,9 +36,8 @@ export const LoginForm: React.FC = () => {
   const onSubmit = useCallback(
     async (data: FormData) => {
       try {
-        const loggedInUser = await login(data)
+        await login(data)
         try {
-          await syncGuestCartAfterLogin(loggedInUser.id)
           await onLogin()
         } catch {
           setError(
@@ -114,73 +111,4 @@ export const LoginForm: React.FC = () => {
       </div>
     </form>
   )
-}
-
-const syncGuestCartAfterLogin = async (userID: number | string) => {
-  const guestCartID = window.localStorage.getItem(GUEST_CART_KEY)
-  const guestSecret = window.localStorage.getItem(`${GUEST_CART_KEY}_secret`)
-
-  if (!guestCartID || !guestSecret) {
-    return
-  }
-
-  const meResponse = await fetch('/api/users/me?depth=0&select[id]=true&select[cart]=true', {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    method: 'GET',
-  })
-
-  if (!meResponse.ok) {
-    throw new Error('Failed to fetch authenticated cart state.')
-  }
-
-  const meData = (await meResponse.json()) as {
-    user?: {
-      cart?: {
-        docs?: Array<string | { id: string }>
-      }
-    }
-  }
-
-  const userCartDoc = meData.user?.cart?.docs?.[0]
-  const userCartID =
-    typeof userCartDoc === 'object' && userCartDoc ? userCartDoc.id : (userCartDoc ?? null)
-
-  if (userCartID && userCartID !== guestCartID) {
-    const mergeResponse = await fetch(`/api/carts/${userCartID}/merge`, {
-      body: JSON.stringify({
-        sourceCartID: guestCartID,
-        sourceSecret: guestSecret,
-      }),
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
-
-    if (!mergeResponse.ok) {
-      throw new Error('Failed to merge guest cart.')
-    }
-  } else {
-    const transferResponse = await fetch(`/api/carts/${guestCartID}?secret=${guestSecret}`, {
-      body: JSON.stringify({
-        customer: userID,
-        secret: null,
-      }),
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'PATCH',
-    })
-
-    if (!transferResponse.ok) {
-      throw new Error('Failed to transfer guest cart.')
-    }
-  }
-
-  window.localStorage.removeItem(`${GUEST_CART_KEY}_secret`)
 }
