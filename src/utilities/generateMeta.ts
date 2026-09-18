@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getSocialImageURL } from './getSocialImageURL'
 
-type MetaImageLike =
+export type MetaImageLike =
   | {
       alt?: null | string
       url?: null | string
@@ -11,7 +11,7 @@ type MetaImageLike =
   | null
   | string
 
-type MetaLike = {
+export type MetaLike = {
   description?: null | string
   image?: MetaImageLike
   title?: null | string
@@ -45,8 +45,21 @@ const normalizePath = (value?: null | string | string[]) => {
 }
 
 const getMetaImage = (image?: MetaImageLike) => {
-  if (!image || typeof image === 'string') return buildAbsoluteUrl(typeof image === 'string' ? image : undefined)
+  if (!image || typeof image === 'string')
+    return buildAbsoluteUrl(typeof image === 'string' ? image : undefined)
   return buildAbsoluteUrl(image.url)
+}
+
+export const withFallbackMetaImage = (
+  meta?: MetaLike | null,
+  fallbackImage?: MetaImageLike,
+): MetaLike | undefined => {
+  if (!meta && !fallbackImage) return undefined
+
+  return {
+    ...(meta || {}),
+    image: meta?.image || fallbackImage,
+  }
 }
 
 export const generateMeta = async (args: {

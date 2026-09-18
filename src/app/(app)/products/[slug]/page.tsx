@@ -9,10 +9,14 @@ import { notFound, redirect } from 'next/navigation'
 import React, { Suspense } from 'react'
 import { Metadata } from 'next'
 import { getProductPrimaryImage, getProductSEODescription } from '@/utilities/product'
-import { generateMeta } from '@/utilities/generateMeta'
+import { generateMeta, type MetaLike, withFallbackMetaImage } from '@/utilities/generateMeta'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import { buildCategoryPath } from '@/utilities/category'
-import { buildBreadcrumbSchema, buildProductBreadcrumbItems, buildProductSchema } from '@/utilities/schema'
+import {
+  buildBreadcrumbSchema,
+  buildProductBreadcrumbItems,
+  buildProductSchema,
+} from '@/utilities/schema'
 import { decodeMangledLegacySlug } from '@/utilities/legacySlugs'
 
 export const dynamic = 'force-dynamic'
@@ -38,19 +42,19 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
   if (!product) return notFound()
 
   const primaryImage = getProductPrimaryImage(product)
+  const productMeta = (product as { meta?: MetaLike | null }).meta
   const metadata = await generateMeta({
     doc: {
       ...(product as object),
-      meta:
-        (product as { meta?: unknown }).meta ||
-        (primaryImage?.url
+      meta: withFallbackMetaImage(
+        productMeta,
+        primaryImage?.url
           ? {
-              image: {
-                alt: primaryImage.alt,
-                url: primaryImage.url,
-              },
+              alt: primaryImage.alt,
+              url: primaryImage.url,
             }
-          : undefined),
+          : undefined,
+      ),
     },
     fallbackDescription: getProductSEODescription(product),
     fallbackTitle: product.title,
@@ -85,7 +89,9 @@ export default async function ProductPage({ params }: Args) {
         Boolean(category && typeof category !== 'string' && category.slug && category.title),
     ) || null
   const parentCategory =
-    primaryCategory?.parent && typeof primaryCategory.parent !== 'string' ? primaryCategory.parent : null
+    primaryCategory?.parent && typeof primaryCategory.parent !== 'string'
+      ? primaryCategory.parent
+      : null
 
   const relatedProducts = await queryRelatedProducts({
     categoryIDs:
