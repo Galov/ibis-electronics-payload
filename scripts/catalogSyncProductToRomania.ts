@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { catalogSyncErrorDetails } from '@/services/catalogSync/diagnostics'
 
 import {
   assertCatalogSyncSendingEnabled,
@@ -8,6 +9,7 @@ import {
 } from '@/services/catalogSync'
 
 const usage = 'Usage: pnpm catalog-sync:product -- send <PayloadProductID> | status <eventId>'
+let stage = 'validate-command'
 
 const run = async () => {
   const [action, identifier, ...extra] = process.argv.slice(2)
@@ -16,6 +18,7 @@ const run = async () => {
   }
 
   if (action === 'status') {
+    stage = 'fetch-status'
     const response = await getCatalogSyncEventStatus(identifier)
     console.log(
       JSON.stringify({
@@ -27,15 +30,21 @@ const run = async () => {
     return
   }
 
+  stage = 'check-send-enabled'
   assertCatalogSyncSendingEnabled()
+  stage = 'load-config'
   const [{ default: configPromise }, { getPayload }] = await Promise.all([
     import('@payload-config'),
     import('payload'),
   ])
+  stage = 'initialize-payload'
   const payload = await getPayload({ config: configPromise })
   const { event, response } = await sendCatalogSyncProduct({
     payload,
     productId: identifier,
+    onStage: (value) => {
+      stage = value
+    },
   })
   console.log(
     JSON.stringify({
@@ -54,6 +63,8 @@ run()
       console.error(
         JSON.stringify({
           code: error.code,
+          stage,
+          details: catalogSyncErrorDetails(error),
           message: error.message,
           ...(error.status ? { status: error.status } : {}),
         }),
@@ -62,6 +73,8 @@ run()
       console.error(
         JSON.stringify({
           code: 'CATALOG_SYNC_UNEXPECTED_ERROR',
+          stage,
+          details: catalogSyncErrorDetails(error),
           message: 'Catalog sync command failed unexpectedly.',
         }),
       )

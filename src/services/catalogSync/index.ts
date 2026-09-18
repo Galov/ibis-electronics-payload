@@ -40,10 +40,13 @@ export type * from './types'
 export const loadCatalogSyncEvent = async ({
   payload,
   productId,
+  onStage,
 }: {
   payload: Payload
   productId: string
+  onStage?: (stage: string) => void
 }) => {
+  onStage?.('load-product')
   const product = await payload.findByID({
     collection: 'products',
     depth: 2,
@@ -51,7 +54,9 @@ export const loadCatalogSyncEvent = async ({
     overrideAccess: true,
   })
 
+  onStage?.('resolve-categories')
   const resolvedProduct = await resolveCatalogSyncProductCategories({ payload, product })
+  onStage?.('build-event')
   return buildCatalogSyncEvent(resolvedProduct)
 }
 
@@ -61,14 +66,17 @@ export const sendCatalogSyncProduct = async ({
   payload,
   productId,
   timeoutMs,
+  onStage,
 }: {
   env?: CatalogSyncEnvironment
   fetchImpl?: typeof fetch
   payload: Payload
   productId: string
   timeoutMs?: number
+  onStage?: (stage: string) => void
 }) => {
-  const event = await loadCatalogSyncEvent({ payload, productId })
+  const event = await loadCatalogSyncEvent({ payload, productId, onStage })
+  onStage?.('send-event')
   const response = await sendCatalogSyncEvent(event, { env, fetchImpl, timeoutMs })
   return { event, response }
 }
