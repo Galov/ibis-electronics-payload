@@ -1,4 +1,4 @@
-import type { Payload, PayloadHandler } from 'payload'
+import type { Payload, PayloadHandler, PayloadRequest } from 'payload'
 import { uploadProductImagesToR2 } from '@/utilities/uploadProductImagesToR2'
 
 type NikSyncEvent =
@@ -121,7 +121,9 @@ const getInteger = (value: unknown) => {
 
 const getStockStatus = (stockQty: number) => (stockQty > 0 ? 'instock' : 'outofstock')
 
-const parseRequest = (body: NikSyncRequestBody): { event: NikSyncEvent; items: NikSyncItem[] } | null => {
+const parseRequest = (
+  body: NikSyncRequestBody,
+): { event: NikSyncEvent; items: NikSyncItem[] } | null => {
   if (Array.isArray(body)) {
     return {
       event: 'product.price_stock_updated',
@@ -249,7 +251,9 @@ const resolveCategoryIds = async ({
   }
 
   const ids = categories
-    .map((category) => getInteger((category as NikCategoryPayload | null | undefined)?.sourceTermId))
+    .map((category) =>
+      getInteger((category as NikCategoryPayload | null | undefined)?.sourceTermId),
+    )
     .filter((value): value is number => value !== null)
 
   if (!ids.length) {
@@ -296,6 +300,7 @@ const normalizeImages = (images: unknown) => {
 }
 
 const updatePriceAndStock = async ({
+  req,
   images,
   published,
   payload,
@@ -304,6 +309,7 @@ const updatePriceAndStock = async ({
   stockQty,
   markupPercent,
 }: {
+  req: PayloadRequest
   images?: NormalizedImage[]
   published?: boolean | null
   payload: Payload
@@ -318,6 +324,7 @@ const updatePriceAndStock = async ({
     collection: 'products',
     id: productId,
     data: {
+      generateSlug: false,
       price,
       sourcePrice,
       ...(stockQty !== null
@@ -330,6 +337,7 @@ const updatePriceAndStock = async ({
       ...(typeof published === 'boolean' ? { published } : {}),
     },
     overrideAccess: true,
+    req,
   })
 
   return price
@@ -339,10 +347,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
   const configuredSecret = process.env.NIK_SYNC_WEBHOOK_SECRET
 
   if (!configuredSecret) {
-    return Response.json(
-      { message: 'NIK_SYNC_WEBHOOK_SECRET is not configured.' },
-      { status: 500 },
-    )
+    return Response.json({ message: 'NIK_SYNC_WEBHOOK_SECRET is not configured.' }, { status: 500 })
   }
 
   const providedSecret = req.headers.get('x-webhook-secret')
@@ -352,10 +357,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
   }
 
   if (process.env.NIK_SYNC_FORCE_DISABLED === 'true') {
-    return Response.json(
-      { message: 'Nik sync is disabled by environment.' },
-      { status: 503 },
-    )
+    return Response.json({ message: 'Nik sync is disabled by environment.' }, { status: 503 })
   }
 
   const pricingSettings = await req.payload.findGlobal({
@@ -365,10 +367,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
   })
 
   if (pricingSettings?.nikSyncEnabled !== true) {
-    return Response.json(
-      { message: 'Nik sync is disabled.' },
-      { status: 503 },
-    )
+    return Response.json({ message: 'Nik sync is disabled.' }, { status: 503 })
   }
 
   if (typeof req.json !== 'function') {
@@ -388,8 +387,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
   if (!parsedRequest) {
     return Response.json(
       {
-        message:
-          'Body must be either an array of items or an object with event and items.',
+        message: 'Body must be either an array of items or an object with event and items.',
       },
       { status: 400 },
     )
@@ -457,8 +455,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
           sku: sku ?? null,
           sourceId,
           status: 'invalid',
-          message:
-            'product.created requires sku, data.title, data.sourcePrice and data.stockQty.',
+          message: 'product.created requires sku, data.title, data.sourcePrice and data.stockQty.',
         })
         continue
       }
@@ -570,6 +567,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
         : undefined
 
       const price = await updatePriceAndStock({
+        req,
         images,
         published,
         payload: req.payload,
@@ -595,9 +593,11 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
         collection: 'products',
         id: product.id,
         data: {
+          generateSlug: false,
           published: false,
         },
         overrideAccess: true,
+        req,
       })
 
       result.deactivated += 1
@@ -614,6 +614,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
         collection: 'products',
         id: product.id,
         overrideAccess: true,
+        req,
       })
 
       result.deleted += 1
