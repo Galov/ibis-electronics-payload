@@ -5,6 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "romania:updates": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/romaniaUpdates.ts",
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
     "build:check": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" NEXT_DIST_DIR=.next-check next build",
     "catalog-sync:product": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/catalogSyncProductToRomania.ts",

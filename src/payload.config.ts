@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url'
 
 import { Brands } from '@/collections/Brands'
 import { CatalogSyncBatchRuns } from '@/collections/CatalogSyncBatchRuns'
+import { RomaniaUpdateStreams } from '@/collections/RomaniaUpdateStreams'
 import { Categories } from '@/collections/Categories'
 import { ContactInquiries } from '@/collections/ContactInquiries'
 import { Media } from '@/collections/Media'
@@ -84,6 +85,7 @@ export default buildConfig({
     Media,
     ProductReviewItems,
     CatalogSyncBatchRuns,
+    RomaniaUpdateStreams,
   ],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',

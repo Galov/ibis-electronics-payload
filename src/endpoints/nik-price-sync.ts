@@ -1,5 +1,6 @@
 import type { Payload, PayloadHandler, PayloadRequest } from 'payload'
 import { uploadProductImagesToR2 } from '@/utilities/uploadProductImagesToR2'
+import { applyNikUpdateAndForward } from '@/services/romaniaUpdates'
 
 type NikSyncEvent =
   | 'product.created'
@@ -320,24 +321,30 @@ const updatePriceAndStock = async ({
 }) => {
   const price = roundPrice(sourcePrice * (1 + markupPercent / 100))
 
-  await payload.update({
-    collection: 'products',
-    id: productId,
-    data: {
-      generateSlug: false,
-      price,
-      sourcePrice,
-      ...(stockQty !== null
-        ? {
-            stockQty,
-            stockStatus: getStockStatus(stockQty),
-          }
-        : {}),
-      ...(images ? { images } : {}),
-      ...(typeof published === 'boolean' ? { published } : {}),
-    },
-    overrideAccess: true,
+  await applyNikUpdateAndForward({
     req,
+    productId,
+    stockProvided: stockQty !== null,
+    update: (request) =>
+      payload.update({
+        collection: 'products',
+        id: productId,
+        data: {
+          generateSlug: false,
+          price,
+          sourcePrice,
+          ...(stockQty !== null
+            ? {
+                stockQty,
+                stockStatus: getStockStatus(stockQty),
+              }
+            : {}),
+          ...(images ? { images } : {}),
+          ...(typeof published === 'boolean' ? { published } : {}),
+        },
+        overrideAccess: true,
+        req: request,
+      }),
   })
 
   return price

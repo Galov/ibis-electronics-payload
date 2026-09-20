@@ -83,6 +83,7 @@ export interface Config {
     media: Media;
     'product-review-items': ProductReviewItem;
     'catalog-sync-batch-runs': CatalogSyncBatchRun;
+    'romania-update-streams': RomaniaUpdateStream;
     addresses: Address;
     products: Product;
     carts: Cart;
@@ -112,6 +113,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     'product-review-items': ProductReviewItemsSelect<false> | ProductReviewItemsSelect<true>;
     'catalog-sync-batch-runs': CatalogSyncBatchRunsSelect<false> | CatalogSyncBatchRunsSelect<true>;
+    'romania-update-streams': RomaniaUpdateStreamsSelect<false> | RomaniaUpdateStreamsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     carts: CartsSelect<false> | CartsSelect<true>;
@@ -1173,6 +1175,34 @@ export interface CatalogSyncBatchRun {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "romania-update-streams".
+ */
+export interface RomaniaUpdateStream {
+  id: string;
+  key: string;
+  sourceProductId: string;
+  kind: 'price' | 'stock';
+  revision: number;
+  eventId: string;
+  event:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  status: 'pending' | 'accepted' | 'succeeded' | 'superseded' | 'failed';
+  lastAttemptedAt?: string | null;
+  lastConfirmedAt?: string | null;
+  lastErrorCode?: string | null;
+  lastErrorAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1238,6 +1268,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'catalog-sync-batch-runs';
         value: string | CatalogSyncBatchRun;
+      } | null)
+    | ({
+        relationTo: 'romania-update-streams';
+        value: string | RomaniaUpdateStream;
       } | null)
     | ({
         relationTo: 'addresses';
@@ -1706,6 +1740,25 @@ export interface CatalogSyncBatchRunsSelect<T extends boolean = true> {
   activeCounted?: T;
   startedAt?: T;
   completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "romania-update-streams_select".
+ */
+export interface RomaniaUpdateStreamsSelect<T extends boolean = true> {
+  key?: T;
+  sourceProductId?: T;
+  kind?: T;
+  revision?: T;
+  eventId?: T;
+  event?: T;
+  status?: T;
+  lastAttemptedAt?: T;
+  lastConfirmedAt?: T;
+  lastErrorCode?: T;
+  lastErrorAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
