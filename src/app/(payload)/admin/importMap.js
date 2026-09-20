@@ -32,6 +32,7 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { ProductReviewActionsCell as ProductReviewActionsCell_686a5c3a19fd12d9e6a7c02297b27b61 } from '@/components/admin/ProductReviewActionsCell'
 import { UploadToRomaniaButton as UploadToRomaniaButton_ecbc2102f2b9c6c59d3061bcecc3c414 } from '@/components/admin/UploadToRomaniaButton'
 import { MoneyCell as MoneyCell_4a3beab9aeb64215aca62667b2e66a58 } from '@/components/admin/MoneyCell'
+import { NikOrderActions as NikOrderActions_c9c0bb9513f35a34bc3f4fe99e748a3f } from '@/components/admin/NikOrderActions'
 import { OrderItemsReadOnlyField as OrderItemsReadOnlyField_a5fb466e8411c12c06676e5255209cbf } from '@/components/admin/OrderItemsReadOnlyField'
 import { OrderShippingNameField as OrderShippingNameField_1940c6d036f51b489de6860064ba9ee8 } from '@/components/admin/OrderShippingNameField'
 import { BoxNowShipmentField as BoxNowShipmentField_9be7f7e1840ffbedb101b27f6ceab015 } from '@/components/admin/BoxNowShipmentField'
@@ -78,6 +79,7 @@ export const importMap = {
   "@/components/admin/ProductReviewActionsCell#ProductReviewActionsCell": ProductReviewActionsCell_686a5c3a19fd12d9e6a7c02297b27b61,
   "@/components/admin/UploadToRomaniaButton#UploadToRomaniaButton": UploadToRomaniaButton_ecbc2102f2b9c6c59d3061bcecc3c414,
   "@/components/admin/MoneyCell#MoneyCell": MoneyCell_4a3beab9aeb64215aca62667b2e66a58,
+  "@/components/admin/NikOrderActions#NikOrderActions": NikOrderActions_c9c0bb9513f35a34bc3f4fe99e748a3f,
   "@/components/admin/OrderItemsReadOnlyField#OrderItemsReadOnlyField": OrderItemsReadOnlyField_a5fb466e8411c12c06676e5255209cbf,
   "@/components/admin/OrderShippingNameField#OrderShippingNameField": OrderShippingNameField_1940c6d036f51b489de6860064ba9ee8,
   "@/components/admin/BoxNowShipmentField#BoxNowShipmentField": BoxNowShipmentField_9be7f7e1840ffbedb101b27f6ceab015,

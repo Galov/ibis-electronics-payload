@@ -237,6 +237,37 @@ export interface User {
  */
 export interface Order {
   id: string;
+  nikOrder?: {
+    status?: ('pending' | 'sending' | 'accepted' | 'manual_review' | 'retryable' | 'unknown') | null;
+    request?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    remoteOrderId?: string | null;
+    lastCode?: string | null;
+    details?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    lastAttemptAt?: string | null;
+    acceptedAt?: string | null;
+    microinvestStatus?: string | null;
+    stockSyncStatus?: string | null;
+    attemptId?: string | null;
+    retryBy?: string | null;
+    retryReason?: string | null;
+  };
+  checkoutTransactionId?: string | null;
   items?:
     | {
         product?: (string | null) | Product;
@@ -1881,6 +1912,23 @@ export interface CartsSelect<T extends boolean = true> {
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
+  nikOrder?:
+    | T
+    | {
+        status?: T;
+        request?: T;
+        remoteOrderId?: T;
+        lastCode?: T;
+        details?: T;
+        lastAttemptAt?: T;
+        acceptedAt?: T;
+        microinvestStatus?: T;
+        stockSyncStatus?: T;
+        attemptId?: T;
+        retryBy?: T;
+        retryReason?: T;
+      };
+  checkoutTransactionId?: T;
   items?:
     | T
     | {

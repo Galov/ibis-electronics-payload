@@ -12,12 +12,13 @@ import { isDocumentOwner } from '@/access/isDocumentOwner'
 import { ProductsCollection } from '@/collections/Products'
 import { manualAdapter } from '@/ecommerce/manualAdapter'
 import { revolutAdapter } from '@/ecommerce/revolutAdapter'
+import { nikOrderFields } from '@/services/nikOrders/fields'
 
 const hasR2Config = Boolean(
   process.env.R2_BUCKET &&
-    process.env.R2_ACCESS_KEY_ID &&
-    process.env.R2_SECRET_ACCESS_KEY &&
-    process.env.R2_ENDPOINT,
+  process.env.R2_ACCESS_KEY_ID &&
+  process.env.R2_SECRET_ACCESS_KEY &&
+  process.env.R2_ENDPOINT,
 )
 
 const moneyFieldNames = new Set(['amount', 'subtotal', 'price', 'productUnitPrice', 'shippingFee'])
@@ -760,6 +761,15 @@ export const plugins: Plugin[] = [
           group: 'Търговия',
         },
         fields: [
+          ...nikOrderFields,
+          {
+            name: 'checkoutTransactionId',
+            type: 'text',
+            unique: true,
+            index: true,
+            access: { create: () => false, update: () => false, read: adminOnlyFieldAccess },
+            admin: { hidden: true },
+          },
           ...arrangeOrderAdminTabs(
             applyReadOnlyOrderItemsField(
               addLineItemSnapshotFields(

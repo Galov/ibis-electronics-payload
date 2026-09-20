@@ -1,4 +1,6 @@
 import type { Payload, PayloadRequest } from 'payload'
+import { queueNikOrder } from '@/services/nikOrders'
+import { createCheckoutOrderOnce } from './createCheckoutOrderOnce'
 
 import type { Address, Cart, Product, Transaction, User } from '@/payload-types'
 import type { DeliveryMethod } from '@/utilities/delivery'
@@ -217,7 +219,9 @@ const sendOrderEmails = async ({
       )
     }
   } else {
-    payload.logger.warn('No order notification recipients configured; admin order email was skipped.')
+    payload.logger.warn(
+      'No order notification recipients configured; admin order email was skipped.',
+    )
   }
 
   const results = await Promise.allSettled(emailTasks)
@@ -291,7 +295,11 @@ export const createCheckoutTransactionData = ({
   }
 }
 
-const buildOrderResult = (orderID: string, accessToken: string, transactionID: string): OrderResult => ({
+const buildOrderResult = (
+  orderID: string,
+  accessToken: string,
+  transactionID: string,
+): OrderResult => ({
   accessToken,
   message: 'Поръчката беше изпратена успешно.',
   orderID,
@@ -326,6 +334,15 @@ export const finalizeCheckoutTransaction = async ({
         ? transaction.order.accessToken
         : ''
 
+    const existingOrder = await payload.findByID({
+      collection: ordersSlug,
+      id: existingOrderID,
+      depth: 0,
+      overrideAccess: true,
+      req,
+    })
+    if (existingOrder.nikOrder?.status) await queueNikOrder(req, existingOrder)
+
     return buildOrderResult(existingOrderID, existingAccessToken, transaction.id)
   }
 
@@ -347,37 +364,35 @@ export const finalizeCheckoutTransaction = async ({
     econtOfficeName: transaction.econtOfficeName || null,
   })
 
-  const order = await payload.create({
-    collection: ordersSlug,
-    data: {
-      amount: transaction.amount,
-      currency: transaction.currency,
-      customer:
-        transaction.customer && typeof transaction.customer === 'object'
-          ? transaction.customer.id
-          : transaction.customer || undefined,
-      ...(transaction.customerEmail ? { customerEmail: transaction.customerEmail } : {}),
-      boxNowLockerAddress: transaction.boxNowLockerAddress || undefined,
-      boxNowLockerId: transaction.boxNowLockerId || undefined,
-      boxNowLockerName: transaction.boxNowLockerName || undefined,
-      boxNowLockerPostalCode: transaction.boxNowLockerPostalCode || undefined,
-      customerNotes: transaction.customerNotes || undefined,
-      deliveryMethod: transaction.deliveryMethod || 'address',
-      econtOfficeAddress: transaction.econtOfficeAddress || undefined,
-      econtOfficeCode: transaction.econtOfficeCode || undefined,
-      econtOfficeId: transaction.econtOfficeId || undefined,
-      econtOfficeName: transaction.econtOfficeName || undefined,
-      items: transaction.items,
-      shippingAddress: transaction.shippingAddress || undefined,
-      shippingFee: typeof transaction.shippingFee === 'number' ? transaction.shippingFee : 0,
-      speedyOfficeAddress: transaction.speedyOfficeAddress || undefined,
-      speedyOfficeId: transaction.speedyOfficeId || undefined,
-      speedyOfficeName: transaction.speedyOfficeName || undefined,
-      status: 'processing',
-      transactions: [transaction.id],
-    },
-    overrideAccess: true,
-    req,
+  const order = await createCheckoutOrderOnce(req, transaction.id, {
+    ...(process.env.NIK_ORDERS_SEND_ENABLED === 'true'
+      ? { nikOrder: { status: 'pending' as const } }
+      : {}),
+    amount: transaction.amount,
+    currency: transaction.currency,
+    customer:
+      transaction.customer && typeof transaction.customer === 'object'
+        ? transaction.customer.id
+        : transaction.customer || undefined,
+    ...(transaction.customerEmail ? { customerEmail: transaction.customerEmail } : {}),
+    boxNowLockerAddress: transaction.boxNowLockerAddress || undefined,
+    boxNowLockerId: transaction.boxNowLockerId || undefined,
+    boxNowLockerName: transaction.boxNowLockerName || undefined,
+    boxNowLockerPostalCode: transaction.boxNowLockerPostalCode || undefined,
+    customerNotes: transaction.customerNotes || undefined,
+    deliveryMethod: transaction.deliveryMethod || 'address',
+    econtOfficeAddress: transaction.econtOfficeAddress || undefined,
+    econtOfficeCode: transaction.econtOfficeCode || undefined,
+    econtOfficeId: transaction.econtOfficeId || undefined,
+    econtOfficeName: transaction.econtOfficeName || undefined,
+    items: transaction.items,
+    shippingAddress: transaction.shippingAddress || undefined,
+    shippingFee: typeof transaction.shippingFee === 'number' ? transaction.shippingFee : 0,
+    speedyOfficeAddress: transaction.speedyOfficeAddress || undefined,
+    speedyOfficeId: transaction.speedyOfficeId || undefined,
+    speedyOfficeName: transaction.speedyOfficeName || undefined,
+    status: 'processing',
+    transactions: [transaction.id],
   })
 
   await payload.update({
@@ -392,7 +407,8 @@ export const finalizeCheckoutTransaction = async ({
   })
 
   if (clearCartOnSuccess && transaction.cart) {
-    const cartID = typeof transaction.cart === 'object' ? transaction.cart.id : String(transaction.cart)
+    const cartID =
+      typeof transaction.cart === 'object' ? transaction.cart.id : String(transaction.cart)
 
     await payload.update({
       collection: cartsSlug,
@@ -405,6 +421,8 @@ export const finalizeCheckoutTransaction = async ({
       req,
     })
   }
+
+  await queueNikOrder(req, order)
 
   const serverURL = getServerSideURL()
   const orderSettings = await payload.findGlobal({
@@ -445,5 +463,9 @@ export const finalizeCheckoutTransaction = async ({
     speedyOfficeName: transaction.speedyOfficeName || undefined,
   })
 
-  return buildOrderResult(order.id, typeof order.accessToken === 'string' ? order.accessToken : '', transaction.id)
+  return buildOrderResult(
+    order.id,
+    typeof order.accessToken === 'string' ? order.accessToken : '',
+    transaction.id,
+  )
 }

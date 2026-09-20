@@ -6,7 +6,7 @@ import React from 'react'
 
 import { HeaderThemeProvider } from './HeaderTheme'
 import { SonnerProvider } from '@/providers/Sonner'
-import { manualAdapterClient } from '@/ecommerce/manualAdapter'
+import { manualAdapterClient } from '@/ecommerce/manualAdapterClient'
 import { revolutAdapterClient } from '@/ecommerce/revolutAdapterClient'
 
 const ecommerceCurrenciesConfig = {
