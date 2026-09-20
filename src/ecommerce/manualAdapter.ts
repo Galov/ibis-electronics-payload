@@ -1,4 +1,4 @@
-import type { PaymentAdapter, PaymentAdapterClient } from '@payloadcms/plugin-ecommerce/types'
+import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 
 import {
   createCheckoutTransactionData,
@@ -81,11 +81,4 @@ export const manualAdapter = (): PaymentAdapter => ({
       transactionID: transaction.id,
     })
   },
-})
-
-export const manualAdapterClient = (): PaymentAdapterClient => ({
-  name: 'manual',
-  label: 'Изпрати поръчката',
-  confirmOrder: true,
-  initiatePayment: false,
 })

@@ -31,6 +31,7 @@ import {
   catalogSyncAdminStatusHandler,
 } from '@/endpoints/catalogSyncAdmin'
 import { ordersReportHandler } from '@/endpoints/orders-report'
+import { nikOrderRetry } from '@/endpoints/nik-order-retry'
 import {
   productVersionsAuditHandler,
   productVersionsRepairHandler,
@@ -118,6 +119,7 @@ export default buildConfig({
     },
   },
   endpoints: [
+    { path: '/nik-orders/:id/retry', method: 'post', handler: nikOrderRetry },
     {
       handler: recalculateRetailPricesHandler,
       method: 'post',
