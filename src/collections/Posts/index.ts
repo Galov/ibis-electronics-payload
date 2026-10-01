@@ -40,6 +40,18 @@ export const Posts: CollectionConfig = {
   },
   fields: [
     {
+      name: 'articleSyncActions',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: {
+            path: '@/components/admin/ArticleSyncActions',
+            exportName: 'ArticleSyncActions',
+          },
+        },
+      },
+    },
+    {
       type: 'tabs',
       tabs: [
         {

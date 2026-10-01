@@ -73,6 +73,7 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    'article-sync-outgoing': ArticleSyncOutgoing;
     brands: Brand;
     categories: Category;
     pages: Page;
@@ -103,6 +104,7 @@ export interface Config {
   };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    'article-sync-outgoing': ArticleSyncOutgoingSelect<false> | ArticleSyncOutgoingSelect<true>;
     brands: BrandsSelect<false> | BrandsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
@@ -680,6 +682,39 @@ export interface Address {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-sync-outgoing".
+ */
+export interface ArticleSyncOutgoing {
+  id: string;
+  sourceArticleId: string;
+  revision: number;
+  eventId: string;
+  payload:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  status: 'sending' | 'queued' | 'translating' | 'succeeded' | 'superseded' | 'failed' | 'unknown';
+  error?: string | null;
+  warnings?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  postId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Информационни страници като Услуги, Сервиз и За нас.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -801,6 +836,7 @@ export interface Post {
    * Незадължително. Изберете до 4 статии, които да се покажат под публикацията.
    */
   relatedPosts?: (string | Post)[] | null;
+  slug?: string | null;
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -809,7 +845,6 @@ export interface Post {
      */
     image?: (string | null) | Media;
   };
-  slug?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -1261,6 +1296,10 @@ export interface PayloadLockedDocument {
         value: string | User;
       } | null)
     | ({
+        relationTo: 'article-sync-outgoing';
+        value: string | ArticleSyncOutgoing;
+      } | null)
+    | ({
         relationTo: 'brands';
         value: string | Brand;
       } | null)
@@ -1392,6 +1431,22 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-sync-outgoing_select".
+ */
+export interface ArticleSyncOutgoingSelect<T extends boolean = true> {
+  sourceArticleId?: T;
+  revision?: T;
+  eventId?: T;
+  payload?: T;
+  status?: T;
+  error?: T;
+  warnings?: T;
+  postId?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1664,6 +1719,7 @@ export interface PostsSelect<T extends boolean = true> {
   categories?: T;
   content?: T;
   relatedPosts?: T;
+  slug?: T;
   meta?:
     | T
     | {
@@ -1671,7 +1727,6 @@ export interface PostsSelect<T extends boolean = true> {
         description?: T;
         image?: T;
       };
-  slug?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

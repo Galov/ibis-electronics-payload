@@ -8,6 +8,8 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Brands } from '@/collections/Brands'
+import { ArticleSyncOutgoing } from '@/collections/ArticleSyncOutgoing'
+import { refreshArticle, sendArticle } from '@/articleSync/endpoints'
 import { CatalogSyncBatchRuns } from '@/collections/CatalogSyncBatchRuns'
 import { RomaniaUpdateStreams } from '@/collections/RomaniaUpdateStreams'
 import { Categories } from '@/collections/Categories'
@@ -76,6 +78,7 @@ export default buildConfig({
   },
   collections: [
     Users,
+    ArticleSyncOutgoing,
     Brands,
     Categories,
     Pages,
@@ -119,6 +122,8 @@ export default buildConfig({
     },
   },
   endpoints: [
+    { path: '/article-sync/posts/:id/send', method: 'post', handler: sendArticle },
+    { path: '/article-sync/posts/:id/status', method: 'get', handler: refreshArticle },
     { path: '/nik-orders/:id/retry', method: 'post', handler: nikOrderRetry },
     {
       handler: recalculateRetailPricesHandler,
