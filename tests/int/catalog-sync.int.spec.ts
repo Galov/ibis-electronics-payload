@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import {
   assertCatalogSyncSendingEnabled,
@@ -47,6 +47,22 @@ const enabledEnvironment = () => ({
 
 const originalFetch = globalThis.fetch
 
+afterEach(() => vi.unstubAllEnvs())
+
+const configureSharedMedia = () => {
+  vi.stubEnv('R2_BUCKET', 'test-bucket')
+  vi.stubEnv('R2_ENDPOINT', 'https://storage.invalid')
+  vi.stubEnv('R2_ACCESS_KEY_ID', 'test-only')
+  vi.stubEnv('R2_SECRET_ACCESS_KEY', 'test-only')
+}
+const uploadedImage = () => ({
+  id: '6abe45f5d2f4bd50262af6bc',
+  filename: 'вентилатор 12 волта.png',
+  mimeType: 'image/png',
+  filesize: 1628444,
+  alt: 'Вентилатор',
+})
+
 beforeAll(() => {
   globalThis.fetch = vi.fn(() => {
     throw new Error('Real network access is forbidden in catalog sync tests.')
@@ -58,6 +74,84 @@ afterAll(() => {
 })
 
 describe('Romanian catalog sync contract', () => {
+  it('supports manual Media uploads with Cyrillic filenames without changing the source', () => {
+    configureSharedMedia()
+    const source = { ...pilotProduct, images: [{ image: uploadedImage() }] }
+    const before = structuredClone(source)
+    const event = buildCatalogSyncEvent(source)
+    expect(event.product.imageAlts).toEqual([
+      { alt: 'Вентилатор', sharedMediaKey: 'вентилатор 12 волта.png' },
+    ])
+    expect(source).toEqual(before)
+    expect(() => validateCatalogSyncEvent(event)).not.toThrow()
+    const explicit = buildCatalogSyncEvent({
+      ...source,
+      images: [{ image: uploadedImage(), storageKey: 'вентилатор 12 волта.png' }],
+    })
+    expect(explicit).toEqual(event)
+  })
+
+  it('keeps explicit storage keys and row alt text authoritative in mixed galleries', () => {
+    configureSharedMedia()
+    const event = buildCatalogSyncEvent({
+      ...pilotProduct,
+      images: [
+        { storageKey: 'products/nik.jpg', image: uploadedImage(), alt: 'НИК' },
+        { image: uploadedImage(), alt: 'Ръчно качена снимка' },
+      ],
+    })
+    expect(event.product.imageAlts).toEqual([
+      { sharedMediaKey: 'products/nik.jpg', alt: 'НИК' },
+      { sharedMediaKey: 'вентилатор 12 волта.png', alt: 'Ръчно качена снимка' },
+    ])
+  })
+
+  it.each(['R2_BUCKET', 'R2_ENDPOINT', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'])(
+    'rejects upload fallback without %s',
+    (key) => {
+      configureSharedMedia()
+      vi.stubEnv(key, '')
+      expect(() =>
+        buildCatalogSyncEvent({ ...pilotProduct, images: [{ image: uploadedImage() }] }),
+      ).toThrowError(expect.objectContaining({ code: 'CATALOG_SYNC_MISSING_STORAGE_KEY' }))
+    },
+  )
+
+  it.each([
+    { filename: '../photo.jpg' },
+    { filename: 'folder/photo.jpg' },
+    { filename: 'photo?x.jpg' },
+    { filename: 'photo#x.jpg' },
+    { filename: '%2e%2e.jpg' },
+    { filename: '' },
+    { filename: ' photo.jpg' },
+    { prefix: 'other-bucket' },
+    { mimeType: 'text/html' },
+    { filesize: 0 },
+    { filesize: Number.NaN },
+    { id: '' },
+  ])('rejects invalid media metadata %j', (patch) => {
+    configureSharedMedia()
+    expect(() =>
+      buildCatalogSyncEvent({
+        ...pilotProduct,
+        images: [{ image: { ...uploadedImage(), ...patch } }],
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'CATALOG_SYNC_MISSING_STORAGE_KEY' }))
+  })
+
+  it('does not use unresolved relations or legacy URLs as keys', () => {
+    configureSharedMedia()
+    for (const image of [
+      'media-id',
+      null,
+      { id: 'media-id', url: 'https://untrusted.example/photo.jpg' },
+    ]) {
+      expect(() => buildCatalogSyncEvent({ ...pilotProduct, images: [{ image }] })).toThrowError(
+        expect.objectContaining({ code: 'CATALOG_SYNC_MISSING_STORAGE_KEY' }),
+      )
+    }
+  })
   it('transforms the selected Payload product into contract 1.2/1.1', () => {
     const event = buildCatalogSyncEvent(pilotProduct)
 
