@@ -70,7 +70,18 @@ export type CatalogSyncSourceProduct = {
     | null
     | {
         alt?: null | string
-        image?: null | number | string | { alt?: null | string; id?: number | string }
+        image?:
+          | null
+          | number
+          | string
+          | {
+              alt?: null | string
+              id?: number | string
+              filename?: null | string
+              prefix?: null | string
+              mimeType?: null | string
+              filesize?: null | number
+            }
         storageKey?: null | string
       }[]
   manufacturerCode?: null | string

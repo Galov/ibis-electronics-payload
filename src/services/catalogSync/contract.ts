@@ -151,15 +151,47 @@ const normalizeCategories = (
     }
   })
 
+// The BG S3 adapter stores Media uploads at the bucket root. Imported NIK
+// images already carry storageKey; manual uploads instead carry a Media relation.
+// Never derive a storage key from a URL or from an unpopulated relationship ID.
+const uploadedMediaKey = (
+  media: NonNullable<CatalogSyncSourceProduct['images']>[number]['image'],
+) => {
+  if (!media || typeof media !== 'object') return null
+  if (
+    !process.env.R2_BUCKET ||
+    !process.env.R2_ENDPOINT ||
+    !process.env.R2_ACCESS_KEY_ID ||
+    !process.env.R2_SECRET_ACCESS_KEY
+  )
+    return null
+  const filename = media.filename
+  if (
+    !media.id ||
+    typeof filename !== 'string' ||
+    !filename ||
+    filename !== filename.trim() ||
+    /[\\/\x00-\x1f\x7f?#%]/.test(filename) ||
+    filename.includes('..') ||
+    media.prefix ||
+    !media.mimeType?.startsWith('image/') ||
+    typeof media.filesize !== 'number' ||
+    !Number.isFinite(media.filesize) ||
+    media.filesize <= 0
+  )
+    return null
+  return filename
+}
+
 const normalizeImages = (
   images: CatalogSyncSourceProduct['images'],
 ): CatalogSyncProduct['imageAlts'] =>
   (images || []).map((image, index) => {
-    const sharedMediaKey = normalizeOptionalText(image.storageKey)
+    const sharedMediaKey = normalizeOptionalText(image.storageKey) || uploadedMediaKey(image.image)
     if (!sharedMediaKey) {
       throw new CatalogSyncError(
         'CATALOG_SYNC_MISSING_STORAGE_KEY',
-        `Product image at index ${index} has no storageKey.`,
+        `Снимка ${index + 1} няма storageKey или валиден файл от медийната библиотека в общото R2 хранилище.`,
       )
     }
     const mediaAlt =
