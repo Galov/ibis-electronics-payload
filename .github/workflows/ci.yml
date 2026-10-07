@@ -36,6 +36,8 @@ jobs:
           cache: npm
       # Match the existing production Dockerfile while the legacy lock is incomplete.
       - run: npm install
+      # React Testing Library's existing tests also require its DOM peer.
+      - run: npm install --no-save @testing-library/dom@10.4.1
       - run: npx tsc --noEmit
       - run: npm run test:int
       - run: npm run build
