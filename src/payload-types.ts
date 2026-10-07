@@ -85,12 +85,14 @@ export interface Config {
     'product-review-items': ProductReviewItem;
     'catalog-sync-batch-runs': CatalogSyncBatchRun;
     'romania-update-streams': RomaniaUpdateStream;
+    'merchant-sync-entries': MerchantSyncEntry;
     addresses: Address;
     products: Product;
     carts: Cart;
     orders: Order;
     transactions: Transaction;
     'payload-kv': PayloadKv;
+    'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -116,12 +118,14 @@ export interface Config {
     'product-review-items': ProductReviewItemsSelect<false> | ProductReviewItemsSelect<true>;
     'catalog-sync-batch-runs': CatalogSyncBatchRunsSelect<false> | CatalogSyncBatchRunsSelect<true>;
     'romania-update-streams': RomaniaUpdateStreamsSelect<false> | RomaniaUpdateStreamsSelect<true>;
+    'merchant-sync-entries': MerchantSyncEntriesSelect<false> | MerchantSyncEntriesSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     carts: CartsSelect<false> | CartsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -139,6 +143,7 @@ export interface Config {
     shopPage: ShopPage;
     'pricing-settings': PricingSetting;
     'order-settings': OrderSetting;
+    'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
@@ -149,6 +154,7 @@ export interface Config {
     shopPage: ShopPageSelect<false> | ShopPageSelect<true>;
     'pricing-settings': PricingSettingsSelect<false> | PricingSettingsSelect<true>;
     'order-settings': OrderSettingsSelect<false> | OrderSettingsSelect<true>;
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -156,7 +162,14 @@ export interface Config {
   };
   user: User;
   jobs: {
-    tasks: unknown;
+    tasks: {
+      syncMerchantProduct: TaskSyncMerchantProduct;
+      reconcileMerchantProducts: TaskReconcileMerchantProducts;
+      inline: {
+        input: unknown;
+        output: unknown;
+      };
+    };
     workflows: unknown;
   };
   /**
@@ -1269,6 +1282,31 @@ export interface RomaniaUpdateStream {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "merchant-sync-entries".
+ */
+export interface MerchantSyncEntry {
+  id: string;
+  productId: string;
+  status: 'sent' | 'removed' | 'skipped' | 'failed';
+  inputHash?: string | null;
+  lastSentAt?: string | null;
+  lastCheckedAt?: string | null;
+  reason?: string | null;
+  error?: string | null;
+  googleStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1283,6 +1321,111 @@ export interface PayloadKv {
     | number
     | boolean
     | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: string;
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  taskStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  completedAt?: string | null;
+  totalTried?: number | null;
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null;
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string;
+        completedAt: string;
+        taskSlug: 'inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts';
+        taskID: string;
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        state: 'failed' | 'succeeded';
+        error?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  taskSlug?: ('inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts') | null;
+  queue?: string | null;
+  waitUntil?: string | null;
+  processing?: boolean | null;
+  /**
+   * Used for concurrency control. Jobs with the same key are subject to exclusive/supersedes rules.
+   */
+  concurrencyKey?: string | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1342,6 +1485,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'romania-update-streams';
         value: string | RomaniaUpdateStream;
+      } | null)
+    | ({
+        relationTo: 'merchant-sync-entries';
+        value: string | MerchantSyncEntry;
       } | null)
     | ({
         relationTo: 'addresses';
@@ -1850,6 +1997,22 @@ export interface RomaniaUpdateStreamsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "merchant-sync-entries_select".
+ */
+export interface MerchantSyncEntriesSelect<T extends boolean = true> {
+  productId?: T;
+  status?: T;
+  inputHash?: T;
+  lastSentAt?: T;
+  lastCheckedAt?: T;
+  reason?: T;
+  error?: T;
+  googleStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "addresses_select".
  */
 export interface AddressesSelect<T extends boolean = true> {
@@ -2146,6 +2309,39 @@ export interface PayloadKvSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T;
+  taskStatus?: T;
+  completedAt?: T;
+  totalTried?: T;
+  hasError?: T;
+  error?: T;
+  log?:
+    | T
+    | {
+        executedAt?: T;
+        completedAt?: T;
+        taskSlug?: T;
+        taskID?: T;
+        input?: T;
+        output?: T;
+        state?: T;
+        error?: T;
+        id?: T;
+      };
+  taskSlug?: T;
+  queue?: T;
+  waitUntil?: T;
+  processing?: T;
+  concurrencyKey?: T;
+  meta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
@@ -2432,6 +2628,24 @@ export interface OrderSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: string;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -2605,6 +2819,16 @@ export interface OrderSettingsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -2612,6 +2836,31 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSyncMerchantProduct".
+ */
+export interface TaskSyncMerchantProduct {
+  input: {
+    productId: string;
+  };
+  output: {
+    status: string;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskReconcileMerchantProducts".
+ */
+export interface TaskReconcileMerchantProducts {
+  input: {
+    cursor?: string | null;
+    phase?: ('products' | 'entries') | null;
+  };
+  output: {
+    queued: number;
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

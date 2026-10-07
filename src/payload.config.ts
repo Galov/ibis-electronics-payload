@@ -8,6 +8,10 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Brands } from '@/collections/Brands'
+import { MerchantSyncEntries } from '@/collections/MerchantSyncEntries'
+import { merchantProductTask, merchantReconcileTask } from '@/merchant/tasks'
+import { queueMerchantReconciliation } from '@/merchant/endpoint'
+import { checkRole } from '@/access/utilities'
 import { ArticleSyncOutgoing } from '@/collections/ArticleSyncOutgoing'
 import { refreshArticle, sendArticle } from '@/articleSync/endpoints'
 import { CatalogSyncBatchRuns } from '@/collections/CatalogSyncBatchRuns'
@@ -90,6 +94,7 @@ export default buildConfig({
     ProductReviewItems,
     CatalogSyncBatchRuns,
     RomaniaUpdateStreams,
+    MerchantSyncEntries,
   ],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
@@ -122,6 +127,11 @@ export default buildConfig({
     },
   },
   endpoints: [
+    {
+      path: '/integrations/merchant/reconcile',
+      method: 'post',
+      handler: queueMerchantReconciliation,
+    },
     { path: '/article-sync/posts/:id/send', method: 'post', handler: sendArticle },
     { path: '/article-sync/posts/:id/status', method: 'get', handler: refreshArticle },
     { path: '/nik-orders/:id/retry', method: 'post', handler: nikOrderRetry },
@@ -207,6 +217,17 @@ export default buildConfig({
     OrderSettings,
   ],
   plugins,
+  jobs: {
+    access: {
+      cancel: ({ req }) => checkRole(['admin'], req.user),
+      queue: ({ req }) => checkRole(['admin'], req.user),
+      run: ({ req }) => checkRole(['admin'], req.user),
+    },
+    autoRun: [{ cron: '*/10 * * * * *', limit: 10, queue: 'merchant' }],
+    enableConcurrencyControl: true,
+    deleteJobOnComplete: false,
+    tasks: [merchantProductTask, merchantReconcileTask],
+  },
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
