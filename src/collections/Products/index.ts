@@ -3,6 +3,7 @@ import type { Access } from 'payload'
 import { slugField } from 'payload'
 import { publicProductWhere } from '@/access/publicProductWhere'
 import { checkRole } from '@/access/utilities'
+import { queueMerchantProduct } from '@/merchant/tasks'
 import {
   removeProductReviewQueueItemAfterDelete,
   syncProductReviewQueueAfterChange,
@@ -158,10 +159,16 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     afterChange: [
       ...(defaultCollection.hooks?.afterChange || []),
       syncProductReviewQueueAfterChange,
+      async ({ doc, req }) => {
+        await queueMerchantProduct(doc.id, req)
+      },
     ],
     afterDelete: [
       ...(defaultCollection.hooks?.afterDelete || []),
       removeProductReviewQueueItemAfterDelete,
+      async ({ doc, req }) => {
+        await queueMerchantProduct(doc.id, req)
+      },
     ],
     afterRead: [...(defaultCollection.hooks?.afterRead || []), ensureCatalogCompatibilityFields],
     beforeChange: [

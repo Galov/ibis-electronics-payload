@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: TypeScript, tests and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      mongodb:
+        image: mongo:8.0
+        ports: ['27018:27017']
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: mongodb://127.0.0.1:27018/ibis-merchant-ci
+      PAYLOAD_SECRET: github-actions-integration-secret
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+      PAYLOAD_PUBLIC_SERVER_URL: http://localhost:3000
+      MERCHANT_SYNC_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      # Match the existing production Dockerfile while the legacy lock is incomplete.
+      - run: npm install
+      # React Testing Library's existing tests also require its DOM peer.
+      - run: npm install --no-save @testing-library/dom@10.4.1
+      - run: npx tsc --noEmit
+      - name: Merchant integration tests (required)
+        run: npm run test:int -- tests/int/merchant.int.spec.ts
+      - name: Legacy full-suite diagnostic
+        # Existing API smoke test imports legacy blocks excluded by tsconfig/Vite.
+        # Keep reporting this baseline issue without changing unrelated app code.
+        continue-on-error: true
+        run: npm run test:int
+      - run: npm run build
