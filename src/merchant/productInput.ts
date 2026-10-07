@@ -29,7 +29,9 @@ export type MerchantInput = {
 export function buildMerchantInput(
   product: Partial<Product>,
 ): { input: MerchantInput; reason?: never } | { reason: string; input?: never } {
-  if (!product.id || !product.published || product._status === 'draft')
+  // Legacy BG imports can retain _status=draft while being publicly published.
+  // Follow the storefront's published flag and isVisibleProduct predicate.
+  if (!product.id || !product.published)
     return { reason: 'Продуктът не е публикуван.' }
   if (!isVisibleProduct(product)) return { reason: 'Продуктът не е видим в магазина.' }
   if (!product.slug?.trim() || !product.title?.trim())

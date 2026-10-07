@@ -42,7 +42,6 @@ describe('Merchant product mapping', () => {
   })
   it.each([
     { published: false },
-    { _status: 'draft' },
     { stockQty: 0 },
     { price: NaN },
     { price: 0 },
@@ -51,6 +50,12 @@ describe('Merchant product mapping', () => {
     { images: [{ image: { url: 'http://insecure.example/a.jpg' } }] },
   ])('skips ineligible %j', (patch) => {
     expect(buildMerchantInput({ ...product, ...patch } as any).input).toBeUndefined()
+  })
+  it('matches public visibility for legacy published records carrying a draft flag', () => {
+    expect(buildMerchantInput({ ...product, _status: 'draft' } as any).input).toBeDefined()
+    expect(
+      buildMerchantInput({ ...product, published: false, _status: 'published' } as any).input,
+    ).toBeUndefined()
   })
   it('does not use SKU as MPN and does not change identity with SKU/slug changes', () => {
     const input = buildMerchantInput({
