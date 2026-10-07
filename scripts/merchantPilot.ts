@@ -11,7 +11,7 @@ if (send || statusOnly) {
   const source = await client.source()
   const primary = source?.primaryProductDataSource as { countries?: string[] } | undefined
   if (source?.input !== 'API' || !primary?.countries?.includes('BG'))
-    throw new Error('The selected BG data source is not an API source targeting Romania.')
+    throw new Error('The selected BG data source is not an API source targeting Bulgaria.')
 }
 const query = new URLSearchParams({
   depth: '1',
