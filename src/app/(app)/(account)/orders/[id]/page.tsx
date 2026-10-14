@@ -15,6 +15,8 @@ import { getPayload } from 'payload'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { getDeliveryPricingNote } from '@/utilities/delivery'
+import { OrderWithdrawal } from '@/components/OrderWithdrawal'
+import { createWithdrawalToken } from '@/orderWithdrawal/token'
 
 export const dynamic = 'force-dynamic'
 type OrderPaymentMethod = 'manual' | 'revolut' | null | undefined
@@ -46,6 +48,7 @@ export default async function Order({ params, searchParams }: PageProps) {
 
   const { id } = await params
   const { email = '', accessToken = '' } = await searchParams
+  if (!user && !accessToken) notFound()
 
   let order: Order | null = null
 
@@ -54,8 +57,7 @@ export default async function Order({ params, searchParams }: PageProps) {
       docs: [orderResult],
     } = await payload.find({
       collection: 'orders',
-      user,
-      overrideAccess: !Boolean(user),
+      ...(user ? { user, overrideAccess: false } : { overrideAccess: true }),
       depth: 2,
       where: {
         and: [
@@ -105,7 +107,6 @@ export default async function Order({ params, searchParams }: PageProps) {
         customerEmail: true,
         customer: true,
         deliveryMethod: true,
-        paymentMethod: true,
         shippingFee: true,
         speedyOfficeAddress: true,
         speedyOfficeId: true,
@@ -115,6 +116,7 @@ export default async function Order({ params, searchParams }: PageProps) {
         customerNotes: true,
         updatedAt: true,
         shippingAddress: true,
+        withdrawal: true,
       },
     })
 
@@ -144,6 +146,9 @@ export default async function Order({ params, searchParams }: PageProps) {
 
   const paymentMethodLabel = getPaymentMethodLabel((order as OrderWithPaymentMethod).paymentMethod)
   const deliveryPricingNote = getDeliveryPricingNote(order.deliveryMethod)
+  const withdrawalToken = !user && order.customerEmail
+    ? createWithdrawalToken(order.id, order.customerEmail, payload.secret)
+    : undefined
 
   return (
     <div>
@@ -207,6 +212,9 @@ export default async function Order({ params, searchParams }: PageProps) {
             </div>
           )}
         </div>
+
+        <OrderWithdrawal orderID={order.id} token={withdrawalToken} requestedAt={order.withdrawal?.requestedAt}
+          closed={order.status === 'cancelled' || order.status === 'refunded'} />
 
         <p className="rounded-[10px] border border-black/6 bg-white px-5 py-4 text-sm leading-6 text-primary/60">
           {deliveryPricingNote}

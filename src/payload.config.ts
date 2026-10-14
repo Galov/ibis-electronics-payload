@@ -38,6 +38,8 @@ import {
 } from '@/endpoints/catalogSyncAdmin'
 import { ordersReportHandler } from '@/endpoints/orders-report'
 import { nikOrderRetry } from '@/endpoints/nik-order-retry'
+import { requestWithdrawalLink, submitWithdrawal } from '@/orderWithdrawal/endpoints'
+import { withdrawalNotificationTask } from '@/orderWithdrawal/notifications'
 import {
   productVersionsAuditHandler,
   productVersionsRepairHandler,
@@ -127,6 +129,8 @@ export default buildConfig({
     },
   },
   endpoints: [
+    { path: '/order-withdrawal/link', method: 'post', handler: requestWithdrawalLink },
+    { path: '/order-withdrawal/submit', method: 'post', handler: submitWithdrawal },
     {
       path: '/integrations/merchant/reconcile',
       method: 'post',
@@ -223,10 +227,13 @@ export default buildConfig({
       queue: ({ req }) => checkRole(['admin'], req.user),
       run: ({ req }) => checkRole(['admin'], req.user),
     },
-    autoRun: [{ cron: '*/10 * * * * *', limit: 10, queue: 'merchant' }],
+    autoRun: process.env.IBIS_LOCAL_PREVIEW === 'true' ? [] : [
+      { cron: '*/10 * * * * *', limit: 10, queue: 'merchant' },
+      { cron: '*/10 * * * * *', limit: 5, queue: 'order-withdrawal' },
+    ],
     enableConcurrencyControl: true,
     deleteJobOnComplete: false,
-    tasks: [merchantProductTask, merchantReconcileTask],
+    tasks: [merchantProductTask, merchantReconcileTask, withdrawalNotificationTask],
   },
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

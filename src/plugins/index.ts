@@ -13,6 +13,7 @@ import { ProductsCollection } from '@/collections/Products'
 import { manualAdapter } from '@/ecommerce/manualAdapter'
 import { revolutAdapter } from '@/ecommerce/revolutAdapter'
 import { nikOrderFields } from '@/services/nikOrders/fields'
+import { withdrawalFields } from '@/orderWithdrawal/fields'
 
 const hasR2Config = Boolean(
   process.env.R2_BUCKET &&
@@ -762,6 +763,7 @@ export const plugins: Plugin[] = [
         },
         fields: [
           ...nikOrderFields,
+          ...withdrawalFields,
           {
             name: 'checkoutTransactionId',
             type: 'text',

@@ -70,6 +70,11 @@ afterEach(() => {
 })
 
 describe('BG orders to NIK', () => {
+  it('does not dispatch an order after a withdrawal has been recorded', async () => {
+    order.withdrawal = { requestedAt: '2026-10-13T12:00:00Z', status: 'pending' }
+    await expect(sendNikOrder(payload, order.id)).rejects.toThrow('ORDER_WITHDRAWAL_REQUESTED')
+    expect(network).not.toHaveBeenCalled()
+  })
   it('sends only the stable ID, SKU and aggregated quantities, never customer data or prices', () => {
     expect(
       buildNikOrderRequest('abc', [

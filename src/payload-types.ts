@@ -165,6 +165,7 @@ export interface Config {
     tasks: {
       syncMerchantProduct: TaskSyncMerchantProduct;
       reconcileMerchantProducts: TaskReconcileMerchantProducts;
+      notifyOrderWithdrawal: TaskNotifyOrderWithdrawal;
       inline: {
         input: unknown;
         output: unknown;
@@ -282,6 +283,17 @@ export interface Order {
     retryBy?: string | null;
     retryReason?: string | null;
   };
+  withdrawal?: {
+    requestedAt?: string | null;
+    /**
+     * Наличностите не се променят. Връщането и възстановяването на суми се уреждат от Ибис Електроникс.
+     */
+    status?: ('cancelled' | 'pending' | 'processed') | null;
+    source?: ('account' | 'email') | null;
+    customerNotifiedAt?: string | null;
+    adminNotifiedAt?: string | null;
+  };
+  withdrawalLinkSentAt?: string | null;
   checkoutTransactionId?: string | null;
   items?:
     | {
@@ -1374,7 +1386,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts';
+        taskSlug: 'inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts' | 'notifyOrderWithdrawal';
         taskID: string;
         input?:
           | {
@@ -1407,7 +1419,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts') | null;
+  taskSlug?: ('inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts' | 'notifyOrderWithdrawal') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -2146,6 +2158,16 @@ export interface OrdersSelect<T extends boolean = true> {
         retryBy?: T;
         retryReason?: T;
       };
+  withdrawal?:
+    | T
+    | {
+        requestedAt?: T;
+        status?: T;
+        source?: T;
+        customerNotifiedAt?: T;
+        adminNotifiedAt?: T;
+      };
+  withdrawalLinkSentAt?: T;
   checkoutTransactionId?: T;
   items?:
     | T
@@ -2590,7 +2612,7 @@ export interface ShopPage {
 export interface PricingSetting {
   id: string;
   /**
-   * Включва или изключва автоматичната синхронизация на продукти от Ник Електрик към Ibis.
+   * Включва или изключва автоматичната синхронизация на продукти от Ник Електрик към Ибис Електроникс.
    */
   nikSyncEnabled?: boolean | null;
   /**
@@ -2860,6 +2882,18 @@ export interface TaskReconcileMerchantProducts {
   };
   output: {
     queued: number;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskNotifyOrderWithdrawal".
+ */
+export interface TaskNotifyOrderWithdrawal {
+  input: {
+    orderID: string;
+  };
+  output: {
+    sent: boolean;
   };
 }
 /**

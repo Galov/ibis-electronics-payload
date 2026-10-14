@@ -1,4 +1,6 @@
 import { RichText } from '@/components/RichText'
+import { ReturnCostNotice } from '@/components/ReturnCostNotice'
+import Link from 'next/link'
 import configPromise from '@payload-config'
 import { generateMeta } from '@/utilities/generateMeta'
 import { getPayload } from 'payload'
@@ -46,6 +48,11 @@ export default async function TermsPage() {
             enableGutter={false}
           />
         ) : null}
+        <section className="mt-8 space-y-3 leading-7 text-primary/70" id="return-costs">
+          <h2 className="type-section-title">Разходи за връщане при отказ</h2>
+          <ReturnCostNotice />
+          <p><Link className="underline underline-offset-4" href="/otkaz-porachka">Форма за отказ от поръчка</Link></p>
+        </section>
       </div>
     </div>
   )
