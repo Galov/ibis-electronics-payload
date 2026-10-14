@@ -26,6 +26,8 @@ type BoxNowShipmentOrder = Pick<
   | 'items'
   | 'shippingAddress'
   | 'transactions'
+  | 'status'
+  | 'withdrawal'
 > & {
   boxNowParcels?: BoxNowOrderParcelInput[] | null
 }
@@ -221,6 +223,10 @@ export const boxNowCreateShipmentHandler: PayloadHandler = async (req) => {
 
     if (order.deliveryMethod !== 'boxnow') {
       return jsonError('Поръчката не е с доставка до BoxNow автомат.', 400)
+    }
+
+    if (order.withdrawal?.requestedAt || order.status === 'cancelled' || order.status === 'refunded') {
+      return jsonError('Не може да се създаде пратка за отказана поръчка.', 409)
     }
 
     if (order.boxNowDeliveryRequestId) {

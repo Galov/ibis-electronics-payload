@@ -6,6 +6,7 @@ import { Price } from '@/components/Price'
 import { EditItemQuantityButton } from '@/components/Cart/EditItemQuantityButton'
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
+import { ReturnCostNotice } from '@/components/ReturnCostNotice'
 import { EcontOfficeSelector } from '@/components/checkout/EcontOfficeSelector'
 import { SpeedyOfficeSelector } from '@/components/checkout/SpeedyOfficeSelector'
 import { AddressForm } from '@/components/forms/AddressForm'
@@ -561,6 +562,13 @@ export const CheckoutPage: React.FC<{
           {revolutPayEnabled
             ? 'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн с карта или през Revolut Pay.'
             : 'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.'}
+        </div>
+
+        <div className="space-y-2 rounded-[10px] bg-muted/20 px-5 py-4 text-sm leading-6 text-primary/70">
+          <ReturnCostNotice />
+          <Link className="underline underline-offset-4" href="/terms#return-costs">
+            Подробности в условията за ползване
+          </Link>
         </div>
 
         <CheckoutForm

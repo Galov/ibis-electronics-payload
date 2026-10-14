@@ -78,6 +78,7 @@ export async function Footer() {
 
             <nav>
               <ul className="space-y-3">
+                <li><Link className="text-white/82 transition hover:text-white" href="/otkaz-porachka">Отказ от поръчка</Link></li>
                 {footer.navItems?.map((item) => (
                   <li key={item.id}>
                     <CMSLink

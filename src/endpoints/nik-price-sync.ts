@@ -447,7 +447,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
           sku: sku ?? null,
           sourceId,
           status: 'exists',
-          message: 'Product already exists in Ibis.',
+          message: 'Product already exists in Ibis Electronics.',
         })
         continue
       }
@@ -543,7 +543,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
         sku: sku ?? null,
         sourceId,
         status: 'not_found',
-        message: 'No matching product was found in Ibis.',
+        message: 'No matching product was found in Ibis Electronics.',
       })
       continue
     }

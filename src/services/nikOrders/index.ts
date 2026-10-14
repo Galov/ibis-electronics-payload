@@ -66,6 +66,7 @@ export async function sendNikOrder(
   if (!state?.request || !state.status || state.status === 'accepted') return
   if (order.status === 'cancelled' || order.status === 'refunded')
     throw new Error('ORDER_NOT_ELIGIBLE')
+  if (order.withdrawal?.requestedAt) throw new Error('ORDER_WITHDRAWAL_REQUESTED')
   const transactionID = order.transactions?.[0]
   if (!transactionID) throw new Error('TRANSACTION_MISSING')
   const transaction = await payload.findByID({
@@ -108,6 +109,8 @@ export async function sendNikOrder(
       and: [
         { id: { equals: id } },
         { 'nikOrder.status': { equals: state.status } },
+        { status: { not_in: ['cancelled', 'refunded'] } },
+        { 'withdrawal.requestedAt': { exists: false } },
         state.attemptId
           ? { 'nikOrder.attemptId': { equals: state.attemptId } }
           : { 'nikOrder.attemptId': { exists: false } },
