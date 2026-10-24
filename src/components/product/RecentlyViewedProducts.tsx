@@ -1,5 +1,7 @@
 'use client'
 
+import { Text } from '@/i18n/Text'
+
 import type { Product } from '@/payload-types'
 
 import { ProductGridItem } from '@/components/ProductGridItem'
@@ -71,7 +73,9 @@ export const RecentlyViewedProducts: React.FC<Props> = ({ product }) => {
         (item) =>
           item.published !== false &&
           (item.stockQty ?? 0) > 0 &&
-          item.images?.some((image) => Boolean(image.image || image.storageKey || image.legacyUrl)) &&
+          item.images?.some((image) =>
+            Boolean(image.image || image.storageKey || image.legacyUrl),
+          ) &&
           item.slug,
       ),
     [recentlyViewedProducts],
@@ -82,7 +86,9 @@ export const RecentlyViewedProducts: React.FC<Props> = ({ product }) => {
   return (
     <section className="mt-12 border-t pt-10">
       <div className="mb-6">
-        <h2 className="text-lg font-normal text-primary/85 lg:text-xl">Вие последно разгледахте</h2>
+        <h2 className="text-lg font-normal text-primary/85 lg:text-xl">
+          <Text id="recentlyViewed" />
+        </h2>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">

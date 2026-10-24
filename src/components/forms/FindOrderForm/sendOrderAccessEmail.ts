@@ -1,5 +1,6 @@
 'use server'
 
+import { isLocale, localizeHref, type Locale } from '@/i18n/config'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -7,6 +8,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 type SendOrderAccessEmailArgs = {
   email: string
   orderID: string
+  locale?: Locale
 }
 
 type SendOrderAccessEmailResult = {
@@ -17,7 +19,9 @@ type SendOrderAccessEmailResult = {
 export async function sendOrderAccessEmail({
   email,
   orderID,
+  locale: requestedLocale,
 }: SendOrderAccessEmailArgs): Promise<SendOrderAccessEmailResult> {
+  const locale = isLocale(requestedLocale) ? requestedLocale : 'bg'
   const payload = await getPayload({ config: configPromise })
 
   try {
@@ -37,22 +41,37 @@ export async function sendOrderAccessEmail({
     }
 
     const serverURL = getServerSideURL()
-    const orderURL = `${serverURL}/orders/${order.id}?email=${encodeURIComponent(email)}&accessToken=${order.accessToken}`
+    const orderURL = `${serverURL}${localizeHref(`/orders/${order.id}`, locale)}?email=${encodeURIComponent(email)}&accessToken=${order.accessToken}`
 
+    const title = locale === 'en' ? 'View your order' : 'Преглед на поръчката'
+    const instruction =
+      locale === 'en'
+        ? 'Use the link below to view your order details:'
+        : 'Натиснете линка по-долу, за да видите детайлите за поръчката си:'
+    const copy =
+      locale === 'en'
+        ? 'Or copy and paste this address into your browser:'
+        : 'Или копирайте и поставете този адрес в браузъра си:'
+    const notice =
+      locale === 'en'
+        ? 'This link provides access to your order details.'
+        : 'Този линк ще ви даде достъп до детайлите на поръчката.'
+    const safeURL = orderURL
+      .replaceAll('&', '&amp;')
+      .replaceAll('"', '&quot;')
+      .replaceAll('<', '&lt;')
     const emailBody = `
-        <h1>Преглед на поръчката</h1>
-        <p>Натиснете линка по-долу, за да видите детайлите за поръчката си:</p>
-        <p><a href="${orderURL}">Преглед на поръчка #${order.id}</a></p>
-        <p>Или копирайте и поставете този адрес в браузъра си:</p>
-        <p>${orderURL}</p>
-        <p>Този линк ще ви даде достъп до детайлите на поръчката.</p>
+        <h1>${title}</h1>
+        <p>${instruction}</p>
+        <p><a href="${safeURL}">${title} #${order.id}</a></p>
+        <p>${copy}</p>
+        <p>${safeURL}</p>
+        <p>${notice}</p>
       `
-
-    console.log('[sendOrderAccessEmail] Email body:', emailBody)
 
     await payload.sendEmail({
       to: email,
-      subject: `Достъп до поръчка #${order.id}`,
+      subject: `${locale === 'en' ? 'Order access' : 'Достъп до поръчка'} #${order.id}`,
       html: emailBody,
     })
 

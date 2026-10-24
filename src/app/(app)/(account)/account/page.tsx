@@ -1,8 +1,11 @@
+import { getPageLocale, type PageLocaleParams } from '@/i18n/pageLocale'
+import { localizeHref } from '@/i18n/config'
+import { CommerceText } from '@/i18n/CommerceText'
 import type { Metadata } from 'next'
 
 import { Button } from '@/components/ui/button'
 import { getNoIndexMetadata } from '@/utilities/getNoIndexMetadata'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import { headers as getHeaders } from 'next/headers.js'
 import configPromise from '@payload-config'
 import { AccountForm } from '@/components/forms/AccountForm'
@@ -11,7 +14,8 @@ import { OrderItem } from '@/components/OrderItem'
 import { getPayload } from 'payload'
 import { redirect } from 'next/navigation'
 
-export default async function AccountPage() {
+export default async function AccountPage({ params }: { params?: PageLocaleParams }) {
+  const locale = await getPageLocale(params)
   const headers = await getHeaders()
   const payload = await getPayload({ config: configPromise })
   const { user } = await payload.auth({ headers })
@@ -20,7 +24,10 @@ export default async function AccountPage() {
 
   if (!user) {
     redirect(
-      `/login?warning=${encodeURIComponent('Моля, влезте в профила си, за да достъпите настройките му.')}`,
+      localizeHref(
+        `/login?warning=${encodeURIComponent('Моля, влезте в профила си, за да достъпите настройките му.')}&redirect=${encodeURIComponent(localizeHref('/account', locale))}`,
+        locale,
+      ),
     )
   }
 
@@ -49,22 +56,31 @@ export default async function AccountPage() {
   return (
     <>
       <div className="bg-muted/20 px-5 py-6 md:px-7 md:py-8">
-        <h1 className="type-page-title mb-8 text-primary">Настройки на профила</h1>
+        <h1 className="type-page-title mb-8 text-primary">
+          <CommerceText source={'Настройки на профила'} />
+        </h1>
         <AccountForm />
       </div>
 
       <div className="bg-muted/20 px-5 py-6 md:px-7 md:py-8">
-        <h2 className="type-section-title mb-8 text-primary">Последни поръчки</h2>
+        <h2 className="type-section-title mb-8 text-primary">
+          <CommerceText source={'Последни поръчки'} />
+        </h2>
 
         <div className="mb-8 max-w-none text-primary/65">
           <p>
-            Това са последните поръчки, които сте направили. С добавянето на нови поръчки те ще
-            се появяват в този списък.
+            <CommerceText
+              source={
+                'Това са последните поръчки, които сте направили. С добавянето на нови поръчки те ще се появяват в този списък.'
+              }
+            />{' '}
           </p>
         </div>
 
         {(!orders || !Array.isArray(orders) || orders?.length === 0) && (
-          <p className="mb-8">Нямате поръчки.</p>
+          <p className="mb-8">
+            <CommerceText source={'Нямате поръчки.'} />
+          </p>
         )}
 
         {orders && orders.length > 0 && (
@@ -78,7 +94,9 @@ export default async function AccountPage() {
         )}
 
         <Button asChild variant="default">
-          <Link href="/orders">Виж всички поръчки</Link>
+          <Link href="/orders">
+            <CommerceText source={'Виж всички поръчки'} />
+          </Link>
         </Button>
       </div>
     </>

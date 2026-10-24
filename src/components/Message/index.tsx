@@ -1,3 +1,4 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import clsx from 'clsx'
 import React from 'react'
 
@@ -35,7 +36,11 @@ export const Message: React.FC<{
           className,
         )}
       >
-        {messageToRender}
+        {typeof messageToRender === 'string' ? (
+          <CommerceText source={messageToRender} error={Boolean(error)} />
+        ) : (
+          messageToRender
+        )}
       </div>
     )
   }

@@ -1,5 +1,7 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
 import { BoxNowOfficeSelector } from '@/components/checkout/BoxNowOfficeSelector'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Price } from '@/components/Price'
@@ -21,7 +23,7 @@ import { useAuth } from '@/providers/Auth'
 import { getProductPrimaryImage } from '@/utilities/product'
 import { useAddresses, useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import Image from 'next/image'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import React, { useEffect, useState } from 'react'
 
 import type { Address } from '@/payload-types'
@@ -30,10 +32,9 @@ import { getDeliveryPricingNote, getDeliveryShippingFee } from '@/utilities/deli
 export const CheckoutPage: React.FC<{
   freeShippingThreshold?: number
   revolutPayEnabled?: boolean
-}> = ({
-  freeShippingThreshold: _freeShippingThreshold,
-  revolutPayEnabled = false,
-}) => {
+}> = ({ freeShippingThreshold: _freeShippingThreshold, revolutPayEnabled = false }) => {
+  const ui = useCommerceTranslation()
+
   const { user } = useAuth()
   const { cart } = useCart()
   const { addresses } = useAddresses()
@@ -43,9 +44,9 @@ export const CheckoutPage: React.FC<{
   const [phone, setPhone] = useState('')
   const [customerNotes, setCustomerNotes] = useState('')
   const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
-  const [deliveryMethod, setDeliveryMethod] = useState<'address' | 'boxnow' | 'speedy-office' | 'econt-office'>(
-    'boxnow',
-  )
+  const [deliveryMethod, setDeliveryMethod] = useState<
+    'address' | 'boxnow' | 'speedy-office' | 'econt-office'
+  >('boxnow')
   const orderSubtotal = cart?.subtotal || 0
   const [boxNowLocker, setBoxNowLocker] = useState<{
     address: string
@@ -148,7 +149,9 @@ export const CheckoutPage: React.FC<{
     return (
       <div className="w-full items-center justify-center py-12">
         <div className="prose mb-8 max-w-none self-center text-center dark:prose-invert">
-          <p>Поръчката се изпраща...</p>
+          <p>
+            <CommerceText source={'Поръчката се изпраща...'} />
+          </p>
         </div>
         <LoadingSpinner />
       </div>
@@ -158,9 +161,11 @@ export const CheckoutPage: React.FC<{
   if (cartIsEmpty) {
     return (
       <div className="w-full py-12 text-primary/70">
-        <p className="mb-3 text-lg">Количката е празна.</p>
+        <p className="mb-3 text-lg">
+          <CommerceText source={'Количката е празна.'} />
+        </p>
         <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/magazin">
-          Продължи с пазаруването
+          <CommerceText source={'Продължи с пазаруването'} />{' '}
         </Link>
       </div>
     )
@@ -168,16 +173,16 @@ export const CheckoutPage: React.FC<{
 
   const canSubmitOrder = Boolean(
     firstName.trim() &&
-      lastName.trim() &&
-      phone.trim() &&
-      (deliveryMethod !== 'address' || hasCompleteAddress(billingAddress)) &&
-      ((deliveryMethod !== 'address') ||
-        billingAddressSameAsShipping ||
-        hasCompleteAddress(shippingAddress)) &&
-      ((deliveryMethod === 'boxnow' && boxNowLocker) ||
-        deliveryMethod === 'address' ||
-        (deliveryMethod === 'speedy-office' && speedyOffice) ||
-        (deliveryMethod === 'econt-office' && econtOffice)),
+    lastName.trim() &&
+    phone.trim() &&
+    (deliveryMethod !== 'address' || hasCompleteAddress(billingAddress)) &&
+    (deliveryMethod !== 'address' ||
+      billingAddressSameAsShipping ||
+      hasCompleteAddress(shippingAddress)) &&
+    ((deliveryMethod === 'boxnow' && boxNowLocker) ||
+      deliveryMethod === 'address' ||
+      (deliveryMethod === 'speedy-office' && speedyOffice) ||
+      (deliveryMethod === 'econt-office' && econtOffice)),
   )
 
   const deliveryPricingNote = getDeliveryPricingNote(deliveryMethod)
@@ -217,22 +222,33 @@ export const CheckoutPage: React.FC<{
   return (
     <div className="my-8 flex grow flex-col items-stretch justify-stretch gap-10 md:flex-row md:gap-6 lg:gap-8">
       <div className="flex basis-full flex-col justify-stretch gap-8 lg:basis-2/3">
-        <h2 className="type-section-title text-primary/85">Контакт</h2>
+        <h2 className="type-section-title text-primary/85">
+          <CommerceText source={'Контакт'} />
+        </h2>
 
         <div className="rounded-[10px] bg-muted/20 px-5 py-5 md:px-6">
           {!user && (
             <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
-              <p className="type-subsection-title text-primary/85">Поръчваш като гост</p>
+              <p className="type-subsection-title text-primary/85">
+                <CommerceText source={'Поръчваш като гост'} />
+              </p>
               <p className="type-body-small mt-2 text-primary/60">
-                Можеш да завършиш поръчката и без профил. Ако влезеш или създадеш акаунт, ще имаш
-                по-лесен достъп до адресите и историята на поръчките си.
+                <CommerceText
+                  source={
+                    'Можеш да завършиш поръчката и без профил. Ако влезеш или създадеш акаунт, ще имаш по-лесен достъп до адресите и историята на поръчките си.'
+                  }
+                />{' '}
               </p>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button asChild className="sm:min-w-32" variant="outline">
-                  <Link href="/login?redirect=/checkout">Вход</Link>
+                  <Link href="/login?redirect=/checkout">
+                    <CommerceText source={'Вход'} />
+                  </Link>
                 </Button>
                 <Button asChild className="sm:min-w-40" variant="ghost">
-                  <Link href="/create-account?redirect=/checkout">Създай профил</Link>
+                  <Link href="/create-account?redirect=/checkout">
+                    <CommerceText source={'Създай профил'} />
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -240,30 +256,45 @@ export const CheckoutPage: React.FC<{
 
           {user ? (
             <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
-              <p className="type-subsection-title text-primary/85">Продължаваш като {user.email}</p>
+              <p className="type-subsection-title text-primary/85">
+                <CommerceText source={'Продължаваш като'} /> {user.email}
+              </p>
               <p className="type-body-small mt-2 text-primary/60">
-                Попълни данните за контакт и избери начин на доставка, за да изпратим заявката за
-                поръчка.
+                <CommerceText
+                  source={
+                    'Попълни данните за контакт и избери начин на доставка, за да изпратим заявката за поръчка.'
+                  }
+                />{' '}
               </p>
               <div className="mt-4">
-                <Link className="text-sm text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/logout">
-                  Изход
+                <Link
+                  className="text-sm text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]"
+                  href="/logout"
+                >
+                  <CommerceText source={'Изход'} />{' '}
                 </Link>
               </div>
             </div>
           ) : (
             <div className="mb-6">
-              <p className="type-subsection-title text-primary/85">Данни за контакт</p>
+              <p className="type-subsection-title text-primary/85">
+                <CommerceText source={'Данни за контакт'} />
+              </p>
               <p className="type-body-small mt-2 text-primary/60">
-                Телефонът е задължителен, за да можем да се свържем с теб при нужда. Имейлът е
-                по желание.
+                <CommerceText
+                  source={
+                    'Телефонът е задължителен, за да можем да се свържем с теб при нужда. Имейлът е по желание.'
+                  }
+                />{' '}
               </p>
             </div>
           )}
 
           <div className="grid gap-5 md:grid-cols-2">
             <FormItem>
-              <Label htmlFor="firstName">Име</Label>
+              <Label htmlFor="firstName">
+                <CommerceText source={'Име'} />
+              </Label>
               <Input
                 autoComplete="given-name"
                 id="firstName"
@@ -274,7 +305,9 @@ export const CheckoutPage: React.FC<{
             </FormItem>
 
             <FormItem>
-              <Label htmlFor="lastName">Фамилия</Label>
+              <Label htmlFor="lastName">
+                <CommerceText source={'Фамилия'} />
+              </Label>
               <Input
                 autoComplete="family-name"
                 id="lastName"
@@ -285,7 +318,9 @@ export const CheckoutPage: React.FC<{
             </FormItem>
 
             <FormItem>
-              <Label htmlFor="email">Имейл</Label>
+              <Label htmlFor="email">
+                <CommerceText source={'Имейл'} />
+              </Label>
               <Input
                 autoComplete="email"
                 id="email"
@@ -296,7 +331,9 @@ export const CheckoutPage: React.FC<{
             </FormItem>
 
             <FormItem>
-              <Label htmlFor="phone">Телефон</Label>
+              <Label htmlFor="phone">
+                <CommerceText source={'Телефон'} />
+              </Label>
               <Input
                 autoComplete="tel"
                 id="phone"
@@ -311,7 +348,10 @@ export const CheckoutPage: React.FC<{
 
         <div className="flex items-center gap-4">
           <div className="w-full rounded-[10px] bg-muted/20 px-5 py-5">
-            <p className="mb-4 text-sm text-primary/65">Избери начин на доставка.</p>
+            <p className="mb-4 text-sm text-primary/65">
+              <CommerceText source={'Избери начин на доставка.'} />{' '}
+              <CommerceText source="Доставката в момента е достъпна само в България." />
+            </p>
 
             <div className="grid gap-3 sm:grid-cols-4">
               <button
@@ -326,8 +366,12 @@ export const CheckoutPage: React.FC<{
                 }}
                 type="button"
               >
-                <p className="type-subsection-title text-primary/85">Автомат на BoxNow</p>
-                <p className="mt-1 text-sm text-primary/60">Избери удобен автомат</p>
+                <p className="type-subsection-title text-primary/85">
+                  <CommerceText source={'Автомат на BoxNow'} />
+                </p>
+                <p className="mt-1 text-sm text-primary/60">
+                  <CommerceText source={'Избери удобен автомат'} />
+                </p>
               </button>
 
               <button
@@ -342,8 +386,12 @@ export const CheckoutPage: React.FC<{
                 }}
                 type="button"
               >
-                <p className="type-subsection-title text-primary/85">Адрес</p>
-                <p className="mt-1 text-sm text-primary/60">Използвай въведения адрес за доставка.</p>
+                <p className="type-subsection-title text-primary/85">
+                  <CommerceText source={'Адрес'} />
+                </p>
+                <p className="mt-1 text-sm text-primary/60">
+                  <CommerceText source={'Използвай въведения адрес за доставка.'} />
+                </p>
               </button>
 
               <button
@@ -358,8 +406,12 @@ export const CheckoutPage: React.FC<{
                 }}
                 type="button"
               >
-                <p className="type-subsection-title text-primary/85">Офис на Econt</p>
-                <p className="mt-1 text-sm text-primary/60">Избери удобен офис.</p>
+                <p className="type-subsection-title text-primary/85">
+                  <CommerceText source={'Офис на Econt'} />
+                </p>
+                <p className="mt-1 text-sm text-primary/60">
+                  <CommerceText source={'Избери удобен офис.'} />
+                </p>
               </button>
 
               <button
@@ -374,11 +426,17 @@ export const CheckoutPage: React.FC<{
                 }}
                 type="button"
               >
-                <p className="type-subsection-title text-primary/85">Офис на Speedy</p>
-                <p className="mt-1 text-sm text-primary/60">Избери удобен офис.</p>
+                <p className="type-subsection-title text-primary/85">
+                  <CommerceText source={'Офис на Speedy'} />
+                </p>
+                <p className="mt-1 text-sm text-primary/60">
+                  <CommerceText source={'Избери удобен офис.'} />
+                </p>
               </button>
             </div>
-            <p className="mt-4 text-sm text-primary/60">{deliveryPricingNote}</p>
+            <p className="mt-4 text-sm text-primary/60">
+              <CommerceText source={deliveryPricingNote} />
+            </p>
           </div>
         </div>
 
@@ -408,14 +466,14 @@ export const CheckoutPage: React.FC<{
                     }}
                     variant="outline"
                   >
-                    Премахни
+                    <CommerceText source={'Премахни'} />{' '}
                   </Button>
                 }
                 address={billingAddress}
               />
             ) : user ? (
               <CheckoutAddresses
-                description="Избери адреса, на който искаш да бъде доставена поръчката."
+                description={ui('Избери адреса, на който искаш да бъде доставена поръчката.')}
                 initialAddressData={{
                   firstName,
                   lastName,
@@ -439,7 +497,7 @@ export const CheckoutPage: React.FC<{
                   className="font-sans font-normal tracking-normal text-primary/65"
                   htmlFor="shippingTheSameAsBilling"
                 >
-                  Адресът за доставка е същият
+                  <CommerceText source={'Адресът за доставка е същият'} />{' '}
                 </Label>
               </div>
             ) : null}
@@ -459,14 +517,14 @@ export const CheckoutPage: React.FC<{
                   }}
                   variant="outline"
                 >
-                  Премахни
+                  <CommerceText source={'Премахни'} />{' '}
                 </Button>
               }
               address={shippingAddress}
             />
           ) : user ? (
             <CheckoutAddresses
-              description="Избери адреса, на който искаш да бъде доставена поръчката."
+              description={ui('Избери адреса, на който искаш да бъде доставена поръчката.')}
               initialAddressData={{
                 firstName,
                 lastName,
@@ -547,11 +605,13 @@ export const CheckoutPage: React.FC<{
 
         <div className="rounded-[10px] bg-muted/20 px-5 py-5">
           <FormItem>
-            <Label htmlFor="customerNotes">Бележки към поръчката</Label>
+            <Label htmlFor="customerNotes">
+              <CommerceText source={'Бележки към поръчката'} />
+            </Label>
             <Textarea
               id="customerNotes"
               onChange={(e) => setCustomerNotes(e.target.value)}
-              placeholder="Допълнителни инструкции за доставка или уточнения към поръчката."
+              placeholder={ui('Допълнителни инструкции за доставка или уточнения към поръчката.')}
               rows={6}
               value={customerNotes}
             />
@@ -560,14 +620,18 @@ export const CheckoutPage: React.FC<{
 
         <div className="bg-muted/20 px-5 py-4 text-sm text-primary/60">
           {revolutPayEnabled
-            ? 'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн с карта или през Revolut Pay.'
-            : 'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.'}
+            ? ui(
+                'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн с карта или през Revolut Pay.',
+              )
+            : ui(
+                'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.',
+              )}
         </div>
 
         <div className="space-y-2 rounded-[10px] bg-muted/20 px-5 py-4 text-sm leading-6 text-primary/70">
           <ReturnCostNotice />
           <Link className="underline underline-offset-4" href="/terms#return-costs">
-            Подробности в условията за ползване
+            <CommerceText source={'Подробности в условията за ползване'} />{' '}
           </Link>
         </div>
 
@@ -589,7 +653,9 @@ export const CheckoutPage: React.FC<{
       </div>
 
       <div className="flex basis-full flex-col gap-6 bg-muted/20 px-5 pb-6 pt-1 md:px-7 md:pb-8 md:pt-1 lg:basis-1/3">
-        <h2 className="type-section-title text-primary/85">Твоята количка</h2>
+        <h2 className="type-section-title text-primary/85">
+          <CommerceText source={'Твоята количка'} />
+        </h2>
 
         {cart?.items?.map((item, index) => {
           if (typeof item.product !== 'object' || !item.quantity) {
@@ -599,7 +665,10 @@ export const CheckoutPage: React.FC<{
           const image = getProductPrimaryImage(item.product)
 
           return (
-            <div className="flex items-start gap-3 border-b border-black/5 pb-4 last:border-b-0 last:pb-0" key={index}>
+            <div
+              className="flex items-start gap-3 border-b border-black/5 pb-4 last:border-b-0 last:pb-0"
+              key={index}
+            >
               <div className="flex h-16 w-16 items-stretch justify-stretch rounded-md border border-black/8 bg-white p-2">
                 <div className="relative h-full w-full">
                   {image?.url ? (
@@ -615,7 +684,9 @@ export const CheckoutPage: React.FC<{
               </div>
               <div className="flex grow items-center justify-between">
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium leading-5 text-primary/85">{item.product.title}</p>
+                  <p className="text-sm font-medium leading-5 text-primary/85">
+                    {item.product.title}
+                  </p>
                   <div className="flex h-8 w-fit flex-row items-center rounded-md border border-black/10 bg-white">
                     <EditItemQuantityButton item={item} type="minus" />
                     <p className="w-8 text-center text-sm text-primary/70">{item.quantity}</p>
@@ -624,7 +695,11 @@ export const CheckoutPage: React.FC<{
                 </div>
 
                 {typeof item.product.price === 'number' && (
-                  <Price amount={item.product.price} className="text-sm text-primary/75" currencyCode="EUR" />
+                  <Price
+                    amount={item.product.price}
+                    className="text-sm text-primary/75"
+                    currencyCode="EUR"
+                  />
                 )}
               </div>
             </div>
@@ -633,18 +708,30 @@ export const CheckoutPage: React.FC<{
 
         <div className="border-t border-black/5 pt-6">
           <div className="mb-3 flex items-start justify-between gap-4">
-            <span className="type-eyebrow text-primary/45">Доставка</span>
-            <p className="max-w-[16rem] text-right text-sm leading-6 text-primary/60">{deliveryPricingNote}</p>
+            <span className="type-eyebrow text-primary/45">
+              <CommerceText source={'Доставка'} />
+            </span>
+            <p className="max-w-[16rem] text-right text-sm leading-6 text-primary/60">
+              <CommerceText source={deliveryPricingNote} />
+            </p>
           </div>
           {shippingFee > 0 ? (
             <div className="mb-3 flex items-center justify-between gap-2">
-              <span className="type-eyebrow text-primary/45">Цена на доставка</span>
+              <span className="type-eyebrow text-primary/45">
+                <CommerceText source={'Цена на доставка'} />
+              </span>
               <Price amount={shippingFee} className="text-sm text-primary/70" currencyCode="EUR" />
             </div>
           ) : null}
           <div className="flex items-center justify-between gap-2">
-            <span className="type-eyebrow text-primary/45">Общо</span>
-            <Price amount={orderTotal} className="text-2xl font-medium text-primary/80" currencyCode="EUR" />
+            <span className="type-eyebrow text-primary/45">
+              <CommerceText source={'Общо'} />
+            </span>
+            <Price
+              amount={orderTotal}
+              className="text-2xl font-medium text-primary/80"
+              currencyCode="EUR"
+            />
           </div>
         </div>
       </div>

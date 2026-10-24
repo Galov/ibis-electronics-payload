@@ -1,5 +1,7 @@
 'use client'
 
+import { useCommerceTranslation } from '@/i18n/CommerceText'
+
 import React from 'react'
 import type { Address } from '@/payload-types'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
@@ -31,6 +33,8 @@ export const AddressItem: React.FC<Props> = ({
   beforeActions,
   afterActions,
 }) => {
+  const ui = useCommerceTranslation()
+
   if (!address) {
     return null
   }
@@ -46,8 +50,8 @@ export const AddressItem: React.FC<Props> = ({
           <p>{address.company && <span>{address.company} </span>}</p>
           <p>{address.phone && <span>{address.phone}</span>}</p>
           <p>
-          {address.addressLine1}
-          {address.addressLine2 && <>, {address.addressLine2}</>}
+            {address.addressLine1}
+            {address.addressLine2 && <>, {address.addressLine2}</>}
           </p>
           <p>
             {address.city}, {address.state} {address.postalCode}
@@ -67,8 +71,8 @@ export const AddressItem: React.FC<Props> = ({
                 <CreateAddressModal
                   addressID={address.id}
                   initialData={address}
-                  buttonText={'Редактирай'}
-                  modalTitle={'Редактиране на адрес'}
+                  buttonText={ui('Редактирай')}
+                  modalTitle={ui('Редактиране на адрес')}
                 />
               )}
               {afterActions}

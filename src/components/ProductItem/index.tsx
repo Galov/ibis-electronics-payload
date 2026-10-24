@@ -1,8 +1,9 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import { Price } from '@/components/Price'
 import { Product } from '@/payload-types'
 import { getProductPrimaryImage } from '@/utilities/product'
 import Image from 'next/image'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 
 type Props = {
   product: Product
@@ -14,11 +15,7 @@ type Props = {
   currencyCode?: string
 }
 
-export const ProductItem: React.FC<Props> = ({
-  product,
-  quantity,
-  currencyCode,
-}) => {
+export const ProductItem: React.FC<Props> = ({ product, quantity, currencyCode }) => {
   const { title } = product
   const image = getProductPrimaryImage(product)
   const itemPrice = product.price
@@ -46,7 +43,9 @@ export const ProductItem: React.FC<Props> = ({
 
         {itemPrice && quantity && (
           <div className="text-right">
-            <p className="text-base font-medium text-primary/75">Междинна сума</p>
+            <p className="text-base font-medium text-primary/75">
+              <CommerceText source={'Междинна сума'} />
+            </p>
             <Price
               className="text-sm text-primary/55"
               amount={itemPrice * quantity}

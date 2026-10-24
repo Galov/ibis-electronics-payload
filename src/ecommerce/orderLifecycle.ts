@@ -1,3 +1,4 @@
+import { assertDomesticDelivery } from './deliveryCountry'
 import type { Payload, PayloadRequest } from 'payload'
 import { queueNikOrder } from '@/services/nikOrders'
 import { createCheckoutOrderOnce } from './createCheckoutOrderOnce'
@@ -47,6 +48,7 @@ export type CheckoutBoxNowLocker = {
 }
 
 export type CheckoutPaymentData = {
+  locale?: 'bg' | 'en'
   billingAddress?: Partial<Address> | Record<string, unknown>
   boxNowLocker?: CheckoutBoxNowLocker
   customerEmail?: string
@@ -262,6 +264,7 @@ export const createCheckoutTransactionData = ({
   paymentMethod,
   user,
 }: CreateCheckoutTransactionArgs) => {
+  assertDomesticDelivery(checkoutData)
   const resolvedEmail = trimToUndefined(user?.email) || trimToUndefined(checkoutData.customerEmail)
   const deliveryMethod = checkoutData.deliveryMethod || 'address'
   const shippingFee = getDeliveryShippingFee(deliveryMethod)

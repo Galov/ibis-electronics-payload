@@ -1,3 +1,7 @@
+'use client'
+
+import { localizeHref } from '@/i18n/config'
+import { useLocale } from '@/i18n/provider'
 import {
   Pagination,
   PaginationContent,
@@ -59,7 +63,9 @@ const buildPaginationItems = (currentPage: number, totalPages: number) => {
     pages.add(totalPages - 3)
   }
 
-  const sortedPages = [...pages].filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b)
+  const sortedPages = [...pages]
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b)
   const items: Array<number | 'ellipsis'> = []
 
   sortedPages.forEach((page, index) => {
@@ -77,10 +83,12 @@ const buildPaginationItems = (currentPage: number, totalPages: number) => {
 
 export const CatalogPagination: React.FC<Props> = ({
   currentPage,
-  pathname,
+  pathname: originalPathname,
   searchParams,
   totalPages,
 }) => {
+  const locale = useLocale()
+  const pathname = localizeHref(originalPathname, locale)
   if (totalPages <= 1) return null
 
   const items = buildPaginationItems(currentPage, totalPages)

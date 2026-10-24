@@ -1,3 +1,5 @@
+import { CommerceText } from '@/i18n/CommerceText'
+import { ResetPasswordForm } from '@/components/forms/ForgotPasswordForm/ResetPasswordForm'
 import type { Metadata } from 'next'
 
 import { RenderParams } from '@/components/RenderParams'
@@ -10,20 +12,28 @@ type ForgotPasswordPageProps = {
 }
 
 export default async function ForgotPasswordPage({ searchParams }: ForgotPasswordPageProps) {
-  await searchParams
+  const { token } = await searchParams
 
   return (
     <div className="container">
       <div className="mx-auto my-12 max-w-xl bg-muted/20 px-5 py-6 md:px-7 md:py-8">
         <RenderParams />
         <div className="mb-8">
-          <h1 className="type-page-title mb-4 text-primary">Забравена парола</h1>
+          <h1 className="type-page-title mb-4 text-primary">
+            <CommerceText source={'Забравена парола'} />
+          </h1>
           <p className="text-sm leading-7 text-primary/65">
-            Въведете имейла си и ще получите линк за създаване на нова парола.
+            <CommerceText
+              source={'Въведете имейла си и ще получите линк за създаване на нова парола.'}
+            />{' '}
           </p>
         </div>
 
-        <ForgotPasswordForm />
+        {typeof token === 'string' && token ? (
+          <ResetPasswordForm token={token} />
+        ) : (
+          <ForgotPasswordForm />
+        )}
       </div>
     </div>
   )

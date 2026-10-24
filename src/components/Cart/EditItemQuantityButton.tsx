@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslate } from '@/i18n/provider'
+
 import { CartItem } from '@/components/Cart'
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import clsx from 'clsx'
@@ -7,13 +9,13 @@ import { MinusIcon, PlusIcon } from 'lucide-react'
 import React, { useMemo } from 'react'
 
 export function EditItemQuantityButton({ type, item }: { item: CartItem; type: 'minus' | 'plus' }) {
+  const t = useTranslate()
   const { decrementItem, incrementItem, isLoading } = useCart()
 
   const disabled = useMemo(() => {
     if (!item.id) return true
 
-    const target =
-      item.product && typeof item.product === 'object' ? item.product : null
+    const target = item.product && typeof item.product === 'object' ? item.product : null
 
     if (
       target &&
@@ -33,7 +35,7 @@ export function EditItemQuantityButton({ type, item }: { item: CartItem; type: '
     <form>
       <button
         disabled={disabled || isLoading}
-        aria-label={type === 'plus' ? 'Increase item quantity' : 'Reduce item quantity'}
+        aria-label={t(type === 'plus' ? 'increaseQuantity' : 'decreaseQuantity')}
         className={clsx(
           'flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center px-2 transition-all duration-200 ease-out hover:cursor-pointer hover:bg-[rgb(1,55,186)]/6',
           {

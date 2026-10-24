@@ -1,5 +1,7 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import React, { useEffect, useState } from 'react'
 
@@ -35,9 +37,7 @@ type Props = {
 
 const FieldLabel: React.FC<{
   label: string
-}> = ({ label }) => (
-  <p className="type-eyebrow text-primary/45">{label}</p>
-)
+}> = ({ label }) => <p className="type-eyebrow text-primary/45">{label}</p>
 
 export const SpeedyOfficeSelector: React.FC<Props> = ({
   disabled = false,
@@ -46,6 +46,8 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
   selectedSite,
   selectedState,
 }) => {
+  const ui = useCommerceTranslation()
+
   const [states, setStates] = useState<SpeedyState[]>([])
   const [sites, setSites] = useState<SpeedySite[]>([])
   const [offices, setOffices] = useState<SpeedyOffice[]>([])
@@ -54,17 +56,18 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
   const [activeState, setActiveState] = useState<SpeedyState | null>(selectedState || null)
   const [activeSite, setActiveSite] = useState<SpeedySite | null>(selectedSite || null)
   const [activeOffice, setActiveOffice] = useState<SpeedyOffice | null>(selectedOffice || null)
-  const statePlaceholder = isLoading && states.length === 0 ? 'Зареждане на области...' : 'Избери област'
+  const statePlaceholder =
+    isLoading && states.length === 0 ? ui('Зареждане на области...') : ui('Избери област')
   const sitePlaceholder = !activeState
-    ? 'Първо избери област'
+    ? ui('Първо избери област')
     : isLoading && sites.length === 0
-      ? 'Зареждане на населени места...'
-      : 'Избери населено място'
+      ? ui('Зареждане на населени места...')
+      : ui('Избери населено място')
   const officePlaceholder = !activeSite
-    ? 'Първо избери населено място'
+    ? ui('Първо избери населено място')
     : isLoading && offices.length === 0
-      ? 'Зареждане на офиси...'
-      : 'Избери офис'
+      ? ui('Зареждане на офиси...')
+      : ui('Избери офис')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -84,7 +87,7 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
         }
 
         if (!response.ok) {
-          throw new Error(data.message || 'Възникна проблем при зареждането на областите.')
+          throw new Error(data.message || ui('Възникна проблем при зареждането на областите.'))
         }
 
         setStates(Array.isArray(data.states) ? data.states : [])
@@ -94,7 +97,7 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
         setError(
           error instanceof Error
             ? error.message
-            : 'Възникна проблем при зареждането на областите.',
+            : ui('Възникна проблем при зареждането на областите.'),
         )
       } finally {
         setIsLoading(false)
@@ -106,7 +109,7 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
     return () => {
       controller.abort()
     }
-  }, [])
+  }, [ui])
 
   useEffect(() => {
     if (!activeState) {
@@ -138,7 +141,7 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
         }
 
         if (!response.ok) {
-          throw new Error(data.message || 'Възникна проблем при зареждането на градовете.')
+          throw new Error(data.message || ui('Възникна проблем при зареждането на градовете.'))
         }
 
         setSites(Array.isArray(data.sites) ? data.sites : [])
@@ -146,7 +149,9 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
         if ((error as Error).name === 'AbortError') return
 
         setError(
-          error instanceof Error ? error.message : 'Възникна проблем при зареждането на градовете.',
+          error instanceof Error
+            ? error.message
+            : ui('Възникна проблем при зареждането на градовете.'),
         )
       } finally {
         setIsLoading(false)
@@ -162,7 +167,7 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
     return () => {
       controller.abort()
     }
-  }, [activeState])
+  }, [activeState, ui])
 
   useEffect(() => {
     if (!activeSite) {
@@ -192,7 +197,7 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
         }
 
         if (!response.ok) {
-          throw new Error(data.message || 'Възникна проблем при зареждането на офисите.')
+          throw new Error(data.message || ui('Възникна проблем при зареждането на офисите.'))
         }
 
         setOffices(Array.isArray(data.offices) ? data.offices : [])
@@ -200,7 +205,9 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
         if ((error as Error).name === 'AbortError') return
 
         setError(
-          error instanceof Error ? error.message : 'Възникна проблем при зареждането на офисите.',
+          error instanceof Error
+            ? error.message
+            : ui('Възникна проблем при зареждането на офисите.'),
         )
       } finally {
         setIsLoading(false)
@@ -214,20 +221,22 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
     return () => {
       controller.abort()
     }
-  }, [activeSite])
+  }, [activeSite, ui])
 
   return (
     <div className="rounded-[10px] bg-muted/20 px-5 py-5">
       <div className="mb-4">
-        <p className="text-sm text-primary/65">Избери област, населено място и офис на Speedy.</p>
+        <p className="text-sm text-primary/65">
+          <CommerceText source={'Избери област, населено място и офис на Speedy.'} />
+        </p>
       </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <FieldLabel label="Област" />
+          <FieldLabel label={ui('Област')} />
           <SearchableSelect
             disabled={disabled || isLoading || states.length === 0}
-            emptyText="Няма намерени области"
+            emptyText={ui('Няма намерени области')}
             onValueChange={(stateId) => {
               const nextState = states.find((state) => state.id === stateId) || null
               setActiveState(nextState)
@@ -237,16 +246,16 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
               value: state.id,
             }))}
             placeholder={statePlaceholder}
-            searchPlaceholder="Търси област..."
+            searchPlaceholder={ui('Търси област...')}
             value={activeState?.id}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <FieldLabel label="Населено място" />
+          <FieldLabel label={ui('Населено място')} />
           <SearchableSelect
             disabled={disabled || isLoading || !activeState || sites.length === 0}
-            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени населени места'}
+            emptyText={isLoading ? ui('Зареждане...') : ui('Няма намерени населени места')}
             onValueChange={(siteId) => {
               const nextSite = sites.find((site) => site.id === siteId) || null
               setActiveSite(nextSite)
@@ -257,16 +266,16 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
               value: site.id,
             }))}
             placeholder={sitePlaceholder}
-            searchPlaceholder="Търси населено място..."
+            searchPlaceholder={ui('Търси населено място...')}
             value={activeSite?.id}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <FieldLabel label="Офис" />
+          <FieldLabel label={ui('Офис')} />
           <SearchableSelect
             disabled={disabled || isLoading || !activeSite || offices.length === 0}
-            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени офиси'}
+            emptyText={isLoading ? ui('Зареждане...') : ui('Няма намерени офиси')}
             onValueChange={(officeId) => {
               const nextOffice = offices.find((office) => office.id === officeId) || null
               setActiveOffice(nextOffice)
@@ -286,21 +295,33 @@ export const SpeedyOfficeSelector: React.FC<Props> = ({
               value: office.id,
             }))}
             placeholder={officePlaceholder}
-            searchPlaceholder="Търси офис..."
+            searchPlaceholder={ui('Търси офис...')}
             value={activeOffice?.id}
           />
         </div>
 
-        {isLoading ? <p className="text-sm text-primary/55">Зареждане на наличните опции...</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {isLoading ? (
+          <p className="text-sm text-primary/55">
+            <CommerceText source={'Зареждане на наличните опции...'} />
+          </p>
+        ) : null}
+        {error ? (
+          <p className="text-sm text-destructive">
+            <CommerceText source={error} error />
+          </p>
+        ) : null}
         {!isLoading && !error && activeSite && offices.length === 0 ? (
-          <p className="text-sm text-primary/55">Няма намерени офиси за избрания град.</p>
+          <p className="text-sm text-primary/55">
+            <CommerceText source={'Няма намерени офиси за избрания град.'} />
+          </p>
         ) : null}
       </div>
 
       {activeOffice ? (
         <div className="mt-4 rounded-[10px] border border-[rgb(1,55,186)]/18 bg-white px-4 py-3">
-          <p className="type-eyebrow text-primary/45">Избран офис</p>
+          <p className="type-eyebrow text-primary/45">
+            <CommerceText source={'Избран офис'} />
+          </p>
           <p className="type-subsection-title mt-2 text-primary/85">{activeOffice.name}</p>
           <p className="mt-1 text-sm text-primary/65">
             {activeState?.name}

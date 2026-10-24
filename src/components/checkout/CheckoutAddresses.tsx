@@ -1,5 +1,7 @@
 'use client'
 
+import { CommerceText } from '@/i18n/CommerceText'
+
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { AddressForm } from '@/components/forms/AddressForm'
 import { Button } from '@/components/ui/button'
@@ -31,8 +33,12 @@ export const CheckoutAddresses: React.FC<Props> = ({
     return (
       <div className="flex flex-col gap-4 rounded-[10px] bg-muted/20 px-5 py-5">
         <div>
-          {heading ? <h3 className="type-subsection-title mb-2 text-primary/80">{heading}</h3> : null}
-          <p className="type-body-small text-primary/60">Няма намерени запазени адреси. Добавете нов адрес.</p>
+          {heading ? (
+            <h3 className="type-subsection-title mb-2 text-primary/80">{heading}</h3>
+          ) : null}
+          <p className="type-body-small text-primary/60">
+            <CommerceText source={'Няма намерени запазени адреси. Добавете нов адрес.'} />
+          </p>
         </div>
 
         <div className="rounded-[10px] bg-muted/20 px-5 py-5">
@@ -52,7 +58,9 @@ export const CheckoutAddresses: React.FC<Props> = ({
     <div className="flex flex-col gap-8">
       <div>
         {heading ? <h3 className="type-subsection-title mb-2 text-primary/80">{heading}</h3> : null}
-        <p className="type-body-small text-primary/60">{description}</p>
+        <p className="type-body-small text-primary/60">
+          <CommerceText source={description} />
+        </p>
       </div>
       <ul className="flex flex-col gap-4">
         {addresses.map((address) => (
@@ -65,7 +73,7 @@ export const CheckoutAddresses: React.FC<Props> = ({
                     setAddress(address)
                   }}
                 >
-                  Избери
+                  <CommerceText source={'Избери'} />{' '}
                 </Button>
               }
               address={address}
@@ -78,9 +86,13 @@ export const CheckoutAddresses: React.FC<Props> = ({
         <div className="rounded-[10px] bg-muted/20 px-5 py-5">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <p className="type-subsection-title text-primary/85">Нов адрес</p>
+              <p className="type-subsection-title text-primary/85">
+                <CommerceText source={'Нов адрес'} />
+              </p>
               <p className="type-body-small mt-1 text-primary/60">
-                Добавете нов адрес и той ще бъде запазен към профила ви.
+                <CommerceText
+                  source={'Добавете нов адрес и той ще бъде запазен към профила ви.'}
+                />{' '}
               </p>
             </div>
             <Button
@@ -90,7 +102,7 @@ export const CheckoutAddresses: React.FC<Props> = ({
               }}
               variant="ghost"
             >
-              Отказ
+              <CommerceText source={'Отказ'} />{' '}
             </Button>
           </div>
 
@@ -111,7 +123,7 @@ export const CheckoutAddresses: React.FC<Props> = ({
             }}
             variant="outline"
           >
-            Добави нов адрес
+            <CommerceText source={'Добави нов адрес'} />{' '}
           </Button>
         </div>
       )}

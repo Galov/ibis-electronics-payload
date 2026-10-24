@@ -1,5 +1,9 @@
+import { Text } from '@/i18n/Text'
 import { CatalogPagination } from '@/components/catalog/CatalogPagination'
-import { MobileCatalogControls, MobileCatalogStickyFooter } from '@/components/catalog/MobileCatalogControls'
+import {
+  MobileCatalogControls,
+  MobileCatalogStickyFooter,
+} from '@/components/catalog/MobileCatalogControls'
 import { Grid } from '@/components/Grid'
 import { Categories } from '@/components/layout/search/Categories'
 import { SortToolbar } from '@/components/layout/search/SortToolbar'
@@ -119,7 +123,6 @@ async function MagazinPageContent({ searchParams }: Props) {
 
   const visibleResults = products.docs.length
   const totalResults = products.totalDocs
-  const resultsText = totalResults === 1 ? 'резултат' : 'резултата'
   const hasActiveFilters = Boolean(searchValue || category || brand)
   const availableBrands = Array.from(
     new Map(
@@ -152,9 +155,14 @@ async function MagazinPageContent({ searchParams }: Props) {
         {searchValue ? (
           <div className="pt-5">
             <p className="text-sm leading-7 text-[rgb(1,55,186)]">
-              {visibleResults === 0
-                ? 'Няма продукти, които съвпадат с избраните критерии.'
-                : `Показваме ${visibleResults} от ${totalResults} ${resultsText} за избраните критерии.`}
+              {visibleResults === 0 ? (
+                <Text id="noMatches" />
+              ) : (
+                <Text
+                  id={totalResults === 1 ? 'resultsOne' : 'resultsMany'}
+                  values={{ visible: visibleResults, total: totalResults }}
+                />
+              )}
             </p>
           </div>
         ) : null}
@@ -162,7 +170,7 @@ async function MagazinPageContent({ searchParams }: Props) {
         {!hasActiveFilters && products.docs?.length === 0 ? (
           <div className="pt-5">
             <p className="text-sm leading-7 text-primary/62">
-              Няма намерени продукти. Опитай с други филтри.
+              <Text id="noProducts" />
             </p>
           </div>
         ) : null}
@@ -170,7 +178,7 @@ async function MagazinPageContent({ searchParams }: Props) {
         {hasActiveFilters && products.docs?.length === 0 ? (
           <div className="pt-5">
             <p className="text-sm leading-7 text-primary/62">
-              Няма намерени продукти по избраната комбинация от филтри.
+              <Text id="noFilterMatches" />
             </p>
           </div>
         ) : null}

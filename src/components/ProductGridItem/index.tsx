@@ -1,9 +1,10 @@
+import { Text } from '@/i18n/Text'
 import type { Product } from '@/payload-types'
 
 import { GridAddToCartButton } from '@/components/Cart/GridAddToCartButton'
 import { Price } from '@/components/Price'
 import { getProductPrimaryImage } from '@/utilities/product'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import React from 'react'
 import clsx from 'clsx'
 import Image from 'next/image'
@@ -13,7 +14,7 @@ type Props = {
 }
 
 const hasCategoryTitle = (
-  category: Product['categories'] extends infer T ? T extends Array<infer U> ? U : never : never,
+  category: Product['categories'] extends infer T ? (T extends Array<infer U> ? U : never) : never,
 ): category is Extract<NonNullable<Product['categories']>[number], { title: string }> =>
   Boolean(category && typeof category !== 'string' && 'title' in category && category.title)
 
@@ -38,7 +39,9 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
           {image?.url ? (
             <Image
               alt={image.alt}
-              className={clsx('object-contain transition duration-300 ease-in-out group-hover:scale-[1.02]')}
+              className={clsx(
+                'object-contain transition duration-300 ease-in-out group-hover:scale-[1.02]',
+              )}
               fill
               sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 16rem, (min-width: 640px) 14rem, 100vw"
               src={image.url}
@@ -53,7 +56,11 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
 
           <div className="mt-1 min-h-[3.75rem] space-y-0 text-sm leading-5 text-primary/35">
             {primaryCategory ? <p>{primaryCategory}</p> : null}
-            {product.sku ? <p>Код: {product.sku}</p> : null}
+            {product.sku ? (
+              <p>
+                <Text id="code" />: {product.sku}
+              </p>
+            ) : null}
           </div>
         </div>
       </Link>

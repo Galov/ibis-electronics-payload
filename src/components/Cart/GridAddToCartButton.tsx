@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslate } from '@/i18n/provider'
+
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import clsx from 'clsx'
 import { ShoppingCart } from 'lucide-react'
@@ -21,6 +23,7 @@ export const GridAddToCartButton: React.FC<Props> = ({
   published,
   stockQty,
 }) => {
+  const t = useTranslate()
   const { addItem, cart, isLoading } = useCart()
   const normalizedProductID = String(productID)
 
@@ -50,12 +53,12 @@ export const GridAddToCartButton: React.FC<Props> = ({
       product: normalizedProductID,
     })
 
-    toast.success('Продуктът е добавен в количката.')
+    toast.success(t('addedToCart'))
   }
 
   return (
     <button
-      aria-label="Добави в количката"
+      aria-label={t('addToCart')}
       className={clsx(
         'inline-flex h-12 w-12 items-center justify-center transition duration-200 ease-out',
         {

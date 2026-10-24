@@ -1,12 +1,14 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
 import { FormError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { Message } from '@/components/Message'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import React, { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { submitContactInquiry } from './submitContactInquiry'
@@ -22,6 +24,8 @@ type FormData = {
 }
 
 export const ContactForm: React.FC = () => {
+  const ui = useCommerceTranslation()
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -42,27 +46,30 @@ export const ContactForm: React.FC = () => {
     },
   })
 
-  const onSubmit = useCallback(async (data: FormData) => {
-    const result = await submitContactInquiry(data)
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      const result = await submitContactInquiry(data)
 
-    if (result.success) {
-      setError('')
-      setSuccess('Запитването е изпратено успешно. Ще се свържем с вас възможно най-скоро.')
-      reset({
-        email: '',
-        website: '',
-        message: '',
-        name: '',
-        phone: '',
-        privacyAccepted: false,
-        submittedAt: Date.now(),
-      })
-      return
-    }
+      if (result.success) {
+        setError('')
+        setSuccess(ui('Запитването е изпратено успешно. Ще се свържем с вас възможно най-скоро.'))
+        reset({
+          email: '',
+          website: '',
+          message: '',
+          name: '',
+          phone: '',
+          privacyAccepted: false,
+          submittedAt: Date.now(),
+        })
+        return
+      }
 
-    setSuccess('')
-    setError(result.error || 'Възникна проблем при изпращането на запитването.')
-  }, [reset])
+      setSuccess('')
+      setError(result.error || ui('Възникна проблем при изпращането на запитването.'))
+    },
+    [reset, ui],
+  )
 
   return (
     <form className="max-w-2xl" onSubmit={handleSubmit(onSubmit)}>
@@ -71,11 +78,11 @@ export const ContactForm: React.FC = () => {
       <div className="mb-6 grid gap-6 md:grid-cols-2">
         <FormItem>
           <Label htmlFor="name" className="mb-2">
-            Име
+            <CommerceText source={'Име'} />{' '}
           </Label>
           <Input
             id="name"
-            {...register('name', { required: 'Моля, въведете име.' })}
+            {...register('name', { required: ui('Моля, въведете име.') })}
             type="text"
           />
           {errors.name && <FormError message={errors.name.message} />}
@@ -83,11 +90,11 @@ export const ContactForm: React.FC = () => {
 
         <FormItem>
           <Label htmlFor="email" className="mb-2">
-            Имейл
+            <CommerceText source={'Имейл'} />{' '}
           </Label>
           <Input
             id="email"
-            {...register('email', { required: 'Моля, въведете имейл.' })}
+            {...register('email', { required: ui('Моля, въведете имейл.') })}
             type="email"
           />
           {errors.email && <FormError message={errors.email.message} />}
@@ -106,19 +113,19 @@ export const ContactForm: React.FC = () => {
 
         <FormItem>
           <Label htmlFor="phone" className="mb-2">
-            Телефон
+            <CommerceText source={'Телефон'} />{' '}
           </Label>
           <Input id="phone" {...register('phone')} type="text" />
         </FormItem>
 
         <FormItem>
           <Label htmlFor="message" className="mb-2">
-            Съобщение
+            <CommerceText source={'Съобщение'} />{' '}
           </Label>
           <textarea
             id="message"
             className="min-h-40 w-full rounded-md border border-black/10 bg-white px-4 py-3 text-sm text-primary outline-none transition focus:border-[rgb(1,55,186)]/40"
-            {...register('message', { required: 'Моля, въведете съобщение.' })}
+            {...register('message', { required: ui('Моля, въведете съобщение.') })}
           />
           {errors.message && <FormError message={errors.message.message} />}
         </FormItem>
@@ -129,13 +136,15 @@ export const ContactForm: React.FC = () => {
               className="mt-1 h-4 w-4 shrink-0 accent-[rgb(1,55,186)]"
               type="checkbox"
               {...register('privacyAccepted', {
-                required: 'Трябва да потвърдите, че сте съгласни с политиката за поверителност.',
+                required: ui(
+                  'Трябва да потвърдите, че сте съгласни с политиката за поверителност.',
+                ),
               })}
             />
             <span>
-              Съгласен съм с{' '}
+              <CommerceText source={'Съгласен съм с'} />{' '}
               <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/privacy">
-                политиката за поверителност
+                <CommerceText source={'политиката за поверителност'} />{' '}
               </Link>
               .
             </span>
@@ -150,7 +159,7 @@ export const ContactForm: React.FC = () => {
         type="submit"
         variant="default"
       >
-        {isSubmitting ? 'Обработва се' : 'Изпрати'}
+        {isSubmitting ? ui('Обработва се') : ui('Изпрати')}
       </Button>
     </form>
   )

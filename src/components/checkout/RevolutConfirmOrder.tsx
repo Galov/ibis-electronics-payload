@@ -1,10 +1,14 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
+import { useLocalizedRouter } from '@/i18n/navigation'
+
 import { Message } from '@/components/Message'
 import { Button } from '@/components/ui/button'
 import { useCart, useEcommerce } from '@payloadcms/plugin-ecommerce/client/react'
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import Link from '@/i18n/Link'
+import { useSearchParams } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 
 const REVOLUT_PENDING_TRANSACTION_KEY = 'ibis-pending-revolut-transaction'
@@ -14,7 +18,9 @@ const REVOLUT_PENDING_CART_SECRET_KEY = 'ibis-pending-revolut-cart-secret'
 const REVOLUT_PENDING_CHECKOUT_DATA_KEY = 'ibis-pending-revolut-checkout-data'
 
 export const RevolutConfirmOrder: React.FC = () => {
-  const router = useRouter()
+  const ui = useCommerceTranslation()
+
+  const router = useLocalizedRouter()
   const searchParams = useSearchParams()
   const { clearCart } = useCart()
   const { clearSession } = useEcommerce()
@@ -58,17 +64,17 @@ export const RevolutConfirmOrder: React.FC = () => {
     }
 
     if (result === 'cancel') {
-      setError('Плащането с Revolut беше прекъснато.')
+      setError(ui('Плащането с Revolut беше прекъснато.'))
       return
     }
 
     if (result === 'failure') {
-      setError('Revolut върна неуспешен резултат за плащането.')
+      setError(ui('Revolut върна неуспешен резултат за плащането.'))
       return
     }
 
     if (revolutFailure) {
-      setError('Revolut върна неуспешен резултат за плащането.')
+      setError(ui('Revolut върна неуспешен резултат за плащането.'))
       return
     }
 
@@ -91,7 +97,9 @@ export const RevolutConfirmOrder: React.FC = () => {
     }
 
     if (!transactionID && !revolutPublicID) {
-      setError('Липсва локален запис за Revolut транзакцията. Върни се в checkout-а и опитай отново.')
+      setError(
+        ui('Липсва локален запис за Revolut транзакцията. Върни се в checkout-а и опитай отново.'),
+      )
       return
     }
 
@@ -135,7 +143,7 @@ export const RevolutConfirmOrder: React.FC = () => {
           !('orderID' in confirmResult) ||
           !confirmResult.orderID
         ) {
-          throw new Error('Липсва идентификатор на поръчката.')
+          throw new Error(ui('Липсва идентификатор на поръчката.'))
         }
 
         const queryParams = new URLSearchParams()
@@ -164,14 +172,15 @@ export const RevolutConfirmOrder: React.FC = () => {
         )
         router.refresh()
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Неуспешно потвърждаване на Revolut плащането.'
+        const msg =
+          err instanceof Error ? err.message : ui('Неуспешно потвърждаване на Revolut плащането.')
         console.error('[Revolut confirm error]', err)
         setError(msg)
       }
     }
 
     void finishRevolutOrder()
-  }, [clearCart, clearSession, router, searchParams])
+  }, [clearCart, clearSession, router, searchParams, ui])
 
   return (
     <div className="container flex min-h-[60vh] items-center justify-center py-12">
@@ -181,12 +190,16 @@ export const RevolutConfirmOrder: React.FC = () => {
             <Message error={error} />
             <div className="mt-6">
               <Button asChild variant="outline">
-                <Link href="/checkout">Обратно към checkout</Link>
+                <Link href="/checkout">
+                  <CommerceText source={'Обратно към checkout'} />
+                </Link>
               </Button>
             </div>
           </>
         ) : (
-          <p className="text-base text-primary/70">Потвърждаваме плащането с Revolut...</p>
+          <p className="text-base text-primary/70">
+            <CommerceText source={'Потвърждаваме плащането с Revolut...'} />
+          </p>
         )}
       </div>
     </div>

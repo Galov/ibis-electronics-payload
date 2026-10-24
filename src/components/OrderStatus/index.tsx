@@ -1,3 +1,4 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import { OrderStatus as StatusOptions } from '@/payload-types'
 import { cn } from '@/utilities/cn'
 
@@ -29,7 +30,7 @@ export const OrderStatus: React.FC<Props> = ({ status, className }) => {
         },
       )}
     >
-      {labelByStatus[status] || status}
+      <CommerceText source={labelByStatus[status] || status} />
     </div>
   )
 }

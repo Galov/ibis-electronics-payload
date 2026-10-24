@@ -1,10 +1,12 @@
+import { Text } from '@/i18n/Text'
+import { localizeHref, type Locale } from '@/i18n/config'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
 import { RelatedProducts } from '@/components/product/RelatedProducts'
 import { RecentlyViewedProducts } from '@/components/product/RecentlyViewedProducts'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import { notFound, redirect } from 'next/navigation'
 import React, { Suspense } from 'react'
 import { Metadata } from 'next'
@@ -32,6 +34,7 @@ const decodeRouteSlug = (slug: string) => {
 type Args = {
   params: Promise<{
     slug: string
+    locale?: Locale
   }>
 }
 
@@ -75,12 +78,12 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Args) {
-  const { slug } = await params
+  const { slug, locale = 'bg' } = await params
   const product = await queryProductBySlug({ slug })
 
   if (!product) return notFound()
   if (product.slug && product.slug !== decodeRouteSlug(slug)) {
-    redirect(`/products/${encodeURIComponent(product.slug)}`)
+    redirect(localizeHref(`/products/${encodeURIComponent(product.slug)}`, locale))
   }
 
   const primaryCategory =
@@ -141,7 +144,7 @@ export default async function ProductPage({ params }: Args) {
         <div className="mb-3">
           <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-primary/55">
             <Link className="transition hover:text-primary/80" href="/magazin">
-              Каталог
+              <Text id="catalog" />
             </Link>
             {parentCategory?.slug && parentCategory?.title ? (
               <>

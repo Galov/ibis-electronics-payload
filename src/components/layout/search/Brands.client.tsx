@@ -1,5 +1,7 @@
 'use client'
 
+import { Text } from '@/i18n/Text'
+
 import clsx from 'clsx'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import React, { useCallback, useMemo } from 'react'
@@ -39,7 +41,9 @@ export const BrandList: React.FC<Props> = ({ brands }) => {
 
   return (
     <div>
-      <h3 className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">Марки</h3>
+      <h3 className="mb-2 text-xs text-neutral-500 dark:text-neutral-400">
+        <Text id="brands" />
+      </h3>
       <ul className="space-y-1">
         {brands.map((brand) => {
           const isActive = activeBrandID === brand.id

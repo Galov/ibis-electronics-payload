@@ -1,3 +1,4 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import clsx from 'clsx'
 
 type Props = {
@@ -13,5 +14,9 @@ export const FormError: React.FC<Props> = ({ message, as, className }) => {
     return null
   }
 
-  return <Element className={clsx('text-error text-sm', className)}>{message}</Element>
+  return (
+    <Element className={clsx('text-error text-sm', className)}>
+      <CommerceText source={message} error />
+    </Element>
+  )
 }

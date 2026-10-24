@@ -1,8 +1,10 @@
 'use client'
 
+import { useLocalizedRouter } from '@/i18n/navigation'
+
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
 export const ConfirmOrder: React.FC = () => {
@@ -10,7 +12,7 @@ export const ConfirmOrder: React.FC = () => {
   const { cart } = useCart()
 
   const searchParams = useSearchParams()
-  const router = useRouter()
+  const router = useLocalizedRouter()
   // Ensure we only confirm the order once, even if the component re-renders
   const isConfirming = useRef(false)
 

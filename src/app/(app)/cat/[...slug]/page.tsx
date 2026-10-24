@@ -1,7 +1,8 @@
+import { Text } from '@/i18n/Text'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import { generateMeta } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import { getPayload } from 'payload'
 import { notFound } from 'next/navigation'
 import React from 'react'
@@ -69,7 +70,7 @@ export default async function CategoryPage({ params }: Args) {
       <div className="mb-5">
         <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-primary/55">
           <Link className="transition hover:text-primary/80" href="/magazin">
-            Каталог
+            <Text id="catalog" />
           </Link>
           {categoryTrail.map((item) => (
             <React.Fragment key={item.path}>
@@ -94,7 +95,7 @@ export default async function CategoryPage({ params }: Args) {
         </div>
       ) : (
         <div className="rounded-xl bg-muted/20 px-5 py-6 text-sm leading-7 text-primary/65 md:px-6 md:py-7">
-          В тази категория все още няма публикувани продукти.
+          <Text id="emptyCategory" />
         </div>
       )}
     </div>
@@ -107,7 +108,10 @@ const buildCategoryTrail = (category: CategoryPageData) => {
 
   while (current) {
     chain.unshift(current)
-    current = current.parent && typeof current.parent !== 'string' ? (current.parent as CategoryPageData) : null
+    current =
+      current.parent && typeof current.parent !== 'string'
+        ? (current.parent as CategoryPageData)
+        : null
   }
 
   return chain.map((item) => ({

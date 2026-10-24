@@ -1,3 +1,7 @@
+'use client'
+
+import { Text } from '@/i18n/Text'
+import { useTranslate } from '@/i18n/provider'
 import * as React from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react'
 
@@ -54,28 +58,34 @@ function PaginationLink({ className, isActive, size = 'icon', ...props }: Pagina
 }
 
 function PaginationPrevious({ className, ...props }: React.ComponentProps<typeof PaginationLink>) {
+  const t = useTranslate()
   return (
     <PaginationLink
-      aria-label="Към предишната страница"
+      aria-label={t('previousPage')}
       size="default"
       className={cn('gap-1 px-2.5 sm:pl-2.5', className)}
       {...props}
     >
       <ChevronLeftIcon />
-      <span className="hidden sm:block">Назад</span>
+      <span className="hidden sm:block">
+        <Text id="previous" />
+      </span>
     </PaginationLink>
   )
 }
 
 function PaginationNext({ className, ...props }: React.ComponentProps<typeof PaginationLink>) {
+  const t = useTranslate()
   return (
     <PaginationLink
-      aria-label="Към следващата страница"
+      aria-label={t('nextPage')}
       size="default"
       className={cn('gap-1 px-2.5 sm:pr-2.5', className)}
       {...props}
     >
-      <span className="hidden sm:block">Напред</span>
+      <span className="hidden sm:block">
+        <Text id="next" />
+      </span>
       <ChevronRightIcon />
     </PaginationLink>
   )
@@ -90,7 +100,9 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<'span'
       {...props}
     >
       <MoreHorizontalIcon className="size-4" />
-      <span className="sr-only">Още страници</span>
+      <span className="sr-only">
+        <Text id="morePages" />
+      </span>
     </span>
   )
 }

@@ -1,5 +1,7 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
 import { Button } from '@/components/ui/button'
 import React, { useEffect, useId, useMemo, useState } from 'react'
 
@@ -80,6 +82,8 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
   onSelect,
   selectedLocker,
 }) => {
+  const ui = useCommerceTranslation()
+
   const [activeLocker, setActiveLocker] = useState<BoxNowLocker | null>(selectedLocker || null)
   const [error, setError] = useState<string | null>(null)
   const [isWidgetReady, setIsWidgetReady] = useState(false)
@@ -100,7 +104,7 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
         const locker = normalizeSelectedLocker(selected)
 
         if (!locker) {
-          setError('BoxNow widget не върна валиден автомат. Опитай отново.')
+          setError(ui('BoxNow widget не върна валиден автомат. Опитай отново.'))
           return
         }
 
@@ -134,7 +138,9 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
     script.onerror = () => {
       if (!cancelled) {
         setError(
-          'BoxNow картата не можа да се зареди. Опитай да презаредиш страницата. Ако използваш Safari в private режим, отвори страницата в нормален прозорец или използвай друг браузър.',
+          ui(
+            'BoxNow картата не можа да се зареди. Опитай да презаредиш страницата. Ако използваш Safari в private режим, отвори страницата в нормален прозорец или използвай друг браузър.',
+          ),
         )
       }
     }
@@ -144,14 +150,20 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
     return () => {
       cancelled = true
     }
-  }, [buttonClassName, containerID, partnerId])
+  }, [buttonClassName, containerID, partnerId, ui])
 
   return (
     <div className="rounded-[10px] bg-muted/20 px-5 py-5">
       <div className="mb-4">
-        <p className="text-sm text-primary/65">Избери удобен автомат на BoxNow от карта.</p>
+        <p className="text-sm text-primary/65">
+          <CommerceText source={'Избери удобен автомат на BoxNow от карта.'} />
+        </p>
         <p className="mt-2 text-sm text-primary/65">
-          Ако поръчката не е платена онлайн, при получаване плащането е възможно само с карта.
+          <CommerceText
+            source={
+              'Ако поръчката не е платена онлайн, при получаване плащането е възможно само с карта.'
+            }
+          />{' '}
         </p>
       </div>
 
@@ -164,7 +176,7 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
           type="button"
           variant="outline"
         >
-          {activeLocker ? 'Смени автомат на карта' : 'Избери автомат на карта'}
+          {activeLocker ? ui('Смени автомат на карта') : ui('Избери автомат на карта')}
         </Button>
 
         {activeLocker ? (
@@ -174,13 +186,15 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
             onClick={() => setActiveLocker(null)}
             type="button"
           >
-            Изчисти избора
+            <CommerceText source={'Изчисти избора'} />{' '}
           </button>
         ) : null}
       </div>
 
       {!isWidgetReady && !error ? (
-        <p className="mt-3 text-sm text-primary/55">Зареждане на BoxNow карта...</p>
+        <p className="mt-3 text-sm text-primary/55">
+          <CommerceText source={'Зареждане на BoxNow карта...'} />
+        </p>
       ) : null}
 
       {activeLocker ? (
@@ -190,12 +204,18 @@ export const BoxNowOfficeSelector: React.FC<Props> = ({
             <p className="mt-2 text-sm text-primary/60">{activeLocker.address}</p>
           ) : null}
           {activeLocker.postalCode ? (
-            <p className="mt-2 text-xs text-primary/45">ПК: {activeLocker.postalCode}</p>
+            <p className="mt-2 text-xs text-primary/45">
+              <CommerceText source={'ПК:'} /> {activeLocker.postalCode}
+            </p>
           ) : null}
         </div>
       ) : null}
 
-      {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="mt-4 text-sm text-destructive">
+          <CommerceText source={error} error />
+        </p>
+      ) : null}
     </div>
   )
 }

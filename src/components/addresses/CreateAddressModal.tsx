@@ -1,4 +1,7 @@
 'use client'
+
+import { CommerceText } from '@/i18n/CommerceText'
+
 import { Button } from '@/components/ui/button'
 import React, { useState } from 'react'
 import {
@@ -52,12 +55,18 @@ export const CreateAddressModal: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild disabled={disabled}>
-        <Button variant={'outline'}>{buttonText}</Button>
+        <Button variant={'outline'}>
+          <CommerceText source={buttonText} />
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{modalTitle}</DialogTitle>
-          <DialogDescription>Този адрес ще бъде свързан с профила ви.</DialogDescription>
+          <DialogTitle>
+            <CommerceText source={modalTitle} />
+          </DialogTitle>
+          <DialogDescription>
+            <CommerceText source={'Този адрес ще бъде свързан с профила ви.'} />
+          </DialogDescription>
         </DialogHeader>
 
         <AddressForm

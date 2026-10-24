@@ -1,9 +1,13 @@
 'use client'
 
+import { useTranslate } from '@/i18n/provider'
+
 import { useMobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utilities/cn'
 import { createUrl } from '@/utilities/createUrl'
+import { localizeHref } from '@/i18n/config'
+import { useLocale } from '@/i18n/provider'
 import { X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
@@ -38,6 +42,9 @@ export const Search: React.FC<Props> = ({
 }) => {
   const mobileCatalogControls = useMobileCatalogControls()
   const router = useRouter()
+  const t = useTranslate()
+  const locale = useLocale()
+  const catalogPath = localizeHref('/magazin', locale)
   const searchParams = useSearchParams()
   const searchQuery = searchParams?.get('q') || ''
   const [selectedBrandTitle, setSelectedBrandTitle] = useState('')
@@ -114,11 +121,11 @@ export const Search: React.FC<Props> = ({
 
   const placeholder = useMemo(() => {
     if (selectedCategoryTitle) {
-      return `Търси в ${selectedCategoryTitle}`
+      return t('searchIn', { category: selectedCategoryTitle })
     }
 
-    return 'Търси по име, марка, категория, производител, номер във всички продукти'
-  }, [selectedCategoryTitle])
+    return t('searchPlaceholder')
+  }, [selectedCategoryTitle, t])
 
   useEffect(() => {
     setSearchInputValue(searchQuery)
@@ -156,9 +163,9 @@ export const Search: React.FC<Props> = ({
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       searchParams?.get('q') ||
-        searchParams?.get('brand') ||
-        searchParams?.get('category') ||
-        searchParams?.get('sort'),
+      searchParams?.get('brand') ||
+      searchParams?.get('category') ||
+      searchParams?.get('sort'),
     )
   }, [searchParams])
 
@@ -174,15 +181,15 @@ export const Search: React.FC<Props> = ({
     )
 
     if (selectedBrandTitle.trim()) {
-      filters.push({ key: 'brand', label: `Марка: ${selectedBrandTitle}` })
+      filters.push({ key: 'brand', label: `${t('brand')}: ${selectedBrandTitle}` })
     }
 
     if (selectedCategoryTitle?.trim()) {
-      filters.push({ key: 'category', label: `Категория: ${selectedCategoryTitle}` })
+      filters.push({ key: 'category', label: `${t('category')}: ${selectedCategoryTitle}` })
     }
 
     return filters
-  }, [searchParams, selectedBrandTitle, selectedCategoryTitle])
+  }, [searchParams, selectedBrandTitle, selectedCategoryTitle, t])
 
   const filteredBrands = useMemo(() => {
     const query = selectedBrandTitle.trim().toLowerCase()
@@ -292,7 +299,7 @@ export const Search: React.FC<Props> = ({
 
     newParams.delete('page')
 
-    router.push(createUrl('/magazin', newParams))
+    router.push(createUrl(catalogPath, newParams))
     mobileCatalogControls?.closeSheet()
   }
 
@@ -302,7 +309,7 @@ export const Search: React.FC<Props> = ({
     setIsBrandDropdownOpen(false)
     setSearchInputValue('')
     mobileCatalogControls?.resetControls()
-    router.push('/magazin')
+    router.push(catalogPath)
   }
 
   function onRemoveFilter(filterKey: ActiveFilter['key']) {
@@ -331,7 +338,7 @@ export const Search: React.FC<Props> = ({
 
     nextParams.delete('page')
 
-    router.push(createUrl('/magazin', nextParams))
+    router.push(createUrl(catalogPath, nextParams))
   }
 
   function onBrandFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -343,7 +350,7 @@ export const Search: React.FC<Props> = ({
       const nextParams = new URLSearchParams(searchParams.toString())
       nextParams.delete('brand')
       nextParams.delete('page')
-      router.push(createUrl('/magazin', nextParams))
+      router.push(createUrl(catalogPath, nextParams))
     }
   }
 
@@ -355,7 +362,7 @@ export const Search: React.FC<Props> = ({
     nextParams.set('brand', brand.slug)
     nextParams.delete('page')
 
-    router.push(createUrl('/magazin', nextParams))
+    router.push(createUrl(catalogPath, nextParams))
   }
 
   function onClearBrandFilter() {
@@ -366,16 +373,11 @@ export const Search: React.FC<Props> = ({
     nextParams.delete('brand')
     nextParams.delete('page')
 
-    router.push(createUrl('/magazin', nextParams))
+    router.push(createUrl(catalogPath, nextParams))
   }
 
   return (
-    <div
-      className={cn(
-        'px-0 py-0',
-        className,
-      )}
-    >
+    <div className={cn('px-0 py-0', className)}>
       <form
         className={cn(
           'grid w-full items-stretch gap-3 transition-[grid-template-columns] ease-in-out md:[grid-template-columns:minmax(0,1fr)_10.5rem_var(--reset-width)]',
@@ -390,6 +392,7 @@ export const Search: React.FC<Props> = ({
       >
         <div className="relative">
           <input
+            aria-label={t('search')}
             autoComplete="off"
             className="h-12 w-full rounded-md border bg-white px-5 text-[16px] text-black placeholder:text-neutral-500 md:text-sm dark:border-neutral-800 dark:bg-black dark:text-white dark:placeholder:text-neutral-400"
             defaultValue={searchQuery}
@@ -413,7 +416,7 @@ export const Search: React.FC<Props> = ({
           className="h-12 w-full rounded-md bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)]"
           type="submit"
         >
-          Търси
+          {t('search')}
         </Button>
         <div
           className={cn(
@@ -432,16 +435,19 @@ export const Search: React.FC<Props> = ({
             type="button"
             variant="outline"
           >
-            Изчисти филтрите
+            {t('clearFilters')}
           </Button>
         </div>
       </form>
 
       <div
-        className={cn('relative z-20 overflow-hidden transition-[max-height,margin-top] ease-in-out', {
-          'mt-4': showRefinementSection || shouldRenderRefinement,
-          'mt-0': !showRefinementSection && !shouldRenderRefinement,
-        })}
+        className={cn(
+          'relative z-20 overflow-hidden transition-[max-height,margin-top] ease-in-out',
+          {
+            'mt-4': showRefinementSection || shouldRenderRefinement,
+            'mt-0': !showRefinementSection && !shouldRenderRefinement,
+          },
+        )}
         style={{
           maxHeight: refinementMaxHeight,
           transitionDuration: showRefinementSection ? '500ms' : '900ms',
@@ -473,14 +479,14 @@ export const Search: React.FC<Props> = ({
                   name="brandQuery"
                   onChange={onBrandFilterChange}
                   onFocus={() => setIsBrandDropdownOpen(true)}
-                  placeholder="Филтрирай по марка..."
+                  placeholder={t('brandPlaceholder')}
                   type="text"
                   value={selectedBrandTitle}
                 />
 
                 {selectedBrandTitle ? (
                   <button
-                    aria-label="Изчисти филтъра по марка"
+                    aria-label={t('clearBrand')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40 transition hover:text-primary/75"
                     onClick={onClearBrandFilter}
                     type="button"

@@ -1,5 +1,7 @@
 'use client'
 
+import { Text } from '@/i18n/Text'
+
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -149,7 +151,7 @@ export function MobileCatalogControls({ children }: Props) {
               className="fixed right-4 bottom-5 z-40 inline-flex items-center gap-2 rounded-full bg-[rgb(1,55,186)] px-5 py-3 text-sm font-medium text-white shadow-[0_14px_38px_rgba(1,55,186,0.28)] transition hover:bg-[rgb(0,46,158)]"
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Намери продукти
+              <Text id="findProducts" />
             </button>
           </SheetTrigger>
 
@@ -160,10 +162,10 @@ export function MobileCatalogControls({ children }: Props) {
           >
             <SheetHeader className="px-0 pb-4 pt-3 text-left">
               <SheetTitle className="text-xl font-normal text-primary/85">
-                Филтриране и сортиране
+                <Text id="filterSort" />
               </SheetTitle>
               <SheetDescription className="text-sm text-primary/55">
-                Търси, избери категория и подреди каталога.
+                <Text id="filterHelp" />
               </SheetDescription>
             </SheetHeader>
 
@@ -191,11 +193,11 @@ export function MobileCatalogControls({ children }: Props) {
                       onClick={closeSheet}
                       type="button"
                     >
-                      Разгледай всички {categoryStep.title.toLocaleLowerCase('bg-BG')}
+                      <Text id="browseCategory" values={{ category: categoryStep.title }} />
                     </Button>
 
                     <p className="text-center text-xs font-medium tracking-[0.22em] text-primary/45">
-                      ИЛИ
+                      <Text id="or" />
                     </p>
 
                     <Button
@@ -203,7 +205,7 @@ export function MobileCatalogControls({ children }: Props) {
                       onClick={focusSearchInput}
                       type="button"
                     >
-                      Търси в {categoryStep.title}
+                      <Text id="searchIn" values={{ category: categoryStep.title }} />
                     </Button>
                   </div>
 
@@ -214,7 +216,7 @@ export function MobileCatalogControls({ children }: Props) {
                       type="button"
                       variant="outline"
                     >
-                      Назад към категориите
+                      <Text id="backCategories" />
                     </Button>
                   </div>
                 </div>

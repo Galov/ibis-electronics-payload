@@ -1,8 +1,10 @@
 'use client'
 
+import { Text } from '@/i18n/Text'
+
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utilities/cn'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import { useEffect, useState } from 'react'
 
 import {
@@ -57,7 +59,9 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
       return
     }
 
-    const storedChoice = window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY) as CookieConsentChoice | null
+    const storedChoice = window.localStorage.getItem(
+      COOKIE_CONSENT_STORAGE_KEY,
+    ) as CookieConsentChoice | null
 
     if (storedChoice === 'accepted') {
       setAnalyticsSelected(true)
@@ -71,7 +75,9 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
     }
 
     const handleOpen = () => {
-      const stored = window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY) as CookieConsentChoice | null
+      const stored = window.localStorage.getItem(
+        COOKIE_CONSENT_STORAGE_KEY,
+      ) as CookieConsentChoice | null
       setAnalyticsSelected(stored !== 'rejected')
       setIsVisible(true)
     }
@@ -99,12 +105,16 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
       <div className="container py-4 md:py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
           <div className="flex max-w-3xl flex-col justify-center">
-            <p className="type-subsection-title text-primary/90">Настройки за бисквитките</p>
+            <p className="type-subsection-title text-primary/90">
+              <Text id="cookieSettings" />
+            </p>
             <p className="mt-2 text-sm leading-6 text-primary/68">
-              Използваме необходими бисквитки за работата на сайта и по избор аналитични
-              бисквитки, за да разбираме как се използва сайтът. Повече информация има в{' '}
-              <Link className="text-[rgb(1,55,186)] underline-offset-4 hover:underline" href="/privacy">
-                Политиката за поверителност
+              <Text id="cookieDescription" />{' '}
+              <Link
+                className="text-[rgb(1,55,186)] underline-offset-4 hover:underline"
+                href="/privacy"
+              >
+                <Text id="privacyPolicy" />
               </Link>
               .
             </p>
@@ -121,10 +131,11 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
                 type="checkbox"
               />
               <span className="block">
-                <span className="block text-sm font-medium text-primary/86">Аналитични</span>
+                <span className="block text-sm font-medium text-primary/86">
+                  <Text id="analytics" />
+                </span>
                 <span className="mt-1 block text-sm leading-6 text-primary/60">
-                  Помагат ни да измерваме посещенията и поведението в сайта чрез Google
-                  Analytics.
+                  <Text id="analyticsHelp" />
                 </span>
               </span>
             </label>
@@ -138,7 +149,7 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
                 }}
                 type="button"
               >
-                Приемам
+                <Text id="accept" />
               </Button>
               <Button
                 className="border-black/12 bg-white text-primary/80 hover:bg-black/[0.02]"
@@ -149,19 +160,17 @@ export const CookieConsentBanner: React.FC<Props> = ({ analyticsEnabled = false 
                 type="button"
                 variant="outline"
               >
-                Отказвам
+                <Text id="reject" />
               </Button>
               <Button
-                className={cn(
-                  'border-black/12 bg-white text-primary/80 hover:bg-black/[0.02]',
-                )}
+                className={cn('border-black/12 bg-white text-primary/80 hover:bg-black/[0.02]')}
                 onClick={() => {
                   persistChoice(analyticsSelected ? 'accepted' : 'rejected')
                 }}
                 type="button"
                 variant="outline"
               >
-                Запази настройките
+                <Text id="saveSettings" />
               </Button>
             </div>
           </div>

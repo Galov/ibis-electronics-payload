@@ -1,5 +1,9 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
+import { useLocalizedRouter } from '@/i18n/navigation'
+
 import { FormError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { Button } from '@/components/ui/button'
@@ -7,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { User } from '@/payload-types'
 import { useAuth } from '@/providers/Auth'
-import { useRouter } from 'next/navigation'
 import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -20,6 +23,8 @@ type FormData = {
 }
 
 export const AccountForm: React.FC = () => {
+  const ui = useCommerceTranslation()
+
   const { setUser, user } = useAuth()
   const [changePassword, setChangePassword] = useState(false)
 
@@ -34,7 +39,7 @@ export const AccountForm: React.FC = () => {
   const password = useRef({})
   password.current = watch('password', '')
 
-  const router = useRouter()
+  const router = useLocalizedRouter()
 
   const onSubmit = useCallback(
     async (data: FormData) => {
@@ -52,7 +57,7 @@ export const AccountForm: React.FC = () => {
         if (response.ok) {
           const json = await response.json()
           setUser(json.doc)
-          toast.success('Профилът е обновен успешно.')
+          toast.success(ui('Профилът е обновен успешно.'))
           setChangePassword(false)
           reset({
             name: json.doc.name,
@@ -61,18 +66,18 @@ export const AccountForm: React.FC = () => {
             passwordConfirm: '',
           })
         } else {
-          toast.error('Възникна проблем при обновяването на профила.')
+          toast.error(ui('Възникна проблем при обновяването на профила.'))
         }
       }
     },
-    [user, setUser, reset],
+    [user, setUser, reset, ui],
   )
 
   useEffect(() => {
     if (user === null) {
       router.push(
         `/login?error=${encodeURIComponent(
-          'Трябва да сте влезли в профила си, за да видите тази страница.',
+          ui('Трябва да сте влезли в профила си, за да видите тази страница.'),
         )}&redirect=${encodeURIComponent('/account')}`,
       )
     }
@@ -86,7 +91,7 @@ export const AccountForm: React.FC = () => {
         passwordConfirm: '',
       })
     }
-  }, [user, router, reset, changePassword])
+  }, [user, router, reset, changePassword, ui])
 
   return (
     <form className="max-w-xl" onSubmit={handleSubmit(onSubmit)}>
@@ -94,27 +99,27 @@ export const AccountForm: React.FC = () => {
         <Fragment>
           <div className="mb-8 text-sm leading-7 text-primary/65">
             <p>
-              {'Промени данните на профила си по-долу или '}
+              {ui('Промени данните на профила си по-долу или ')}
               <Button
                 className="px-0 text-[rgb(1,55,186)] hover:cursor-pointer hover:text-[rgb(1,55,186)]"
                 onClick={() => setChangePassword(!changePassword)}
                 type="button"
                 variant="link"
               >
-                натисни тук
+                <CommerceText source={'натисни тук'} />{' '}
               </Button>
-              {' за смяна на паролата.'}
+              {ui(' за смяна на паролата.')}
             </p>
           </div>
 
           <div className="mb-8 flex flex-col gap-6">
             <FormItem>
               <Label htmlFor="email" className="mb-2">
-                Имейл адрес
+                <CommerceText source={'Имейл адрес'} />{' '}
               </Label>
               <Input
                 id="email"
-                {...register('email', { required: 'Моля, въведете имейл.' })}
+                {...register('email', { required: ui('Моля, въведете имейл.') })}
                 type="email"
               />
               {errors.email && <FormError message={errors.email.message} />}
@@ -122,11 +127,11 @@ export const AccountForm: React.FC = () => {
 
             <FormItem>
               <Label htmlFor="name" className="mb-2">
-                Име
+                <CommerceText source={'Име'} />{' '}
               </Label>
               <Input
                 id="name"
-                {...register('name', { required: 'Моля, въведете име.' })}
+                {...register('name', { required: ui('Моля, въведете име.') })}
                 type="text"
               />
               {errors.name && <FormError message={errors.name.message} />}
@@ -137,14 +142,14 @@ export const AccountForm: React.FC = () => {
         <Fragment>
           <div className="mb-8 text-sm leading-7 text-primary/65">
             <p>
-              {'Смени паролата си по-долу или '}
+              {ui('Смени паролата си по-долу или ')}
               <Button
                 className="px-0 text-[rgb(1,55,186)] hover:cursor-pointer hover:text-[rgb(1,55,186)]"
                 onClick={() => setChangePassword(!changePassword)}
                 type="button"
                 variant="link"
               >
-                откажи
+                <CommerceText source={'откажи'} />{' '}
               </Button>
               .
             </p>
@@ -153,11 +158,11 @@ export const AccountForm: React.FC = () => {
           <div className="mb-8 flex flex-col gap-6">
             <FormItem>
               <Label htmlFor="password" className="mb-2">
-                Нова парола
+                <CommerceText source={'Нова парола'} />{' '}
               </Label>
               <Input
                 id="password"
-                {...register('password', { required: 'Моля, въведете нова парола.' })}
+                {...register('password', { required: ui('Моля, въведете нова парола.') })}
                 type="password"
               />
               {errors.password && <FormError message={errors.password.message} />}
@@ -165,13 +170,13 @@ export const AccountForm: React.FC = () => {
 
             <FormItem>
               <Label htmlFor="passwordConfirm" className="mb-2">
-                Потвърди паролата
+                <CommerceText source={'Потвърди паролата'} />{' '}
               </Label>
               <Input
                 id="passwordConfirm"
                 {...register('passwordConfirm', {
-                  required: 'Моля, потвърдете новата парола.',
-                  validate: (value) => value === password.current || 'Паролите не съвпадат',
+                  required: ui('Моля, потвърдете новата парола.'),
+                  validate: (value) => value === password.current || ui('Паролите не съвпадат'),
                 })}
                 type="password"
               />
@@ -187,10 +192,10 @@ export const AccountForm: React.FC = () => {
         variant="default"
       >
         {isLoading || isSubmitting
-          ? 'Обработва се'
+          ? ui('Обработва се')
           : changePassword
-            ? 'Смени паролата'
-            : 'Обнови профила'}
+            ? ui('Смени паролата')
+            : ui('Обнови профила')}
       </Button>
     </form>
   )

@@ -1,4 +1,6 @@
 'use client'
+
+import { Text } from '@/i18n/Text'
 import type { Product, ShopPage } from '@/payload-types'
 
 import { AddToCart } from '@/components/Cart/AddToCart'
@@ -7,7 +9,7 @@ import { StockIndicator } from '@/components/product/StockIndicator'
 import { ShopBanner } from '@/components/shop/ShopBanner'
 import { buildCategoryPath } from '@/utilities/category'
 import { formatLegacyProductDescription } from '@/utilities/formatLegacyProductDescription'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import React, { Suspense } from 'react'
 
 type ProductCategoryLink = {
@@ -49,19 +51,25 @@ export function ProductDescription({
       <div className="grid gap-1.5 text-sm leading-6">
         {brand ? (
           <p>
-            <span className="text-muted-foreground/70">Марка:</span>{' '}
+            <span className="text-muted-foreground/70">
+              <Text id="brand" />:
+            </span>{' '}
             <span className="font-normal text-primary/80">{brand}</span>
           </p>
         ) : null}
         {product.sku ? (
           <p>
-            <span className="text-muted-foreground/70">Код:</span>{' '}
+            <span className="text-muted-foreground/70">
+              <Text id="code" />:
+            </span>{' '}
             <span className="font-normal text-primary/80">{product.sku}</span>
           </p>
         ) : null}
         {categories.length > 0 ? (
           <p>
-            <span className="text-muted-foreground/70">Категория:</span>{' '}
+            <span className="text-muted-foreground/70">
+              <Text id="category" />:
+            </span>{' '}
             <span className="font-normal text-primary/80">
               {categories.map((category, index) => (
                 <React.Fragment key={`${category.slug || category.title}-${index}`}>
@@ -83,13 +91,17 @@ export function ProductDescription({
         ) : null}
         {product.originalSku ? (
           <p>
-            <span className="text-muted-foreground/70">Оригинален код:</span>{' '}
+            <span className="text-muted-foreground/70">
+              <Text id="originalCode" />:
+            </span>{' '}
             <span className="font-normal text-primary/80">{product.originalSku}</span>
           </p>
         ) : null}
         {product.manufacturerCode ? (
           <p>
-            <span className="text-muted-foreground/70">Производител:</span>{' '}
+            <span className="text-muted-foreground/70">
+              <Text id="manufacturer" />:
+            </span>{' '}
             <span className="font-normal text-primary/80">{product.manufacturerCode}</span>
           </p>
         ) : null}

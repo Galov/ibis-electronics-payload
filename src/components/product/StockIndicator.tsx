@@ -1,4 +1,6 @@
 'use client'
+
+import { useTranslate } from '@/i18n/provider'
 import { Product } from '@/payload-types'
 
 type Props = {
@@ -6,13 +8,14 @@ type Props = {
 }
 
 export const StockIndicator: React.FC<Props> = ({ product }) => {
+  const t = useTranslate()
   const stockQuantity = product.inventory || 0
 
   return (
     <div className="text-sm font-normal text-muted-foreground">
-      {stockQuantity === 1 && <p>Остава само 1 в наличност</p>}
-      {stockQuantity < 10 && stockQuantity > 1 && <p>Остават само {stockQuantity} в наличност</p>}
-      {(stockQuantity === 0 || !stockQuantity) && <p>Изчерпана наличност</p>}
+      {stockQuantity === 1 && <p>{t('lastOne')}</p>}
+      {stockQuantity < 10 && stockQuantity > 1 && <p>{t('fewLeft', { count: stockQuantity })}</p>}
+      {(stockQuantity === 0 || !stockQuantity) && <p>{t('outOfStock')}</p>}
     </div>
   )
 }

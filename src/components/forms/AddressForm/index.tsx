@@ -1,4 +1,7 @@
 'use client'
+
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
 import React, { useCallback, useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
@@ -37,6 +40,8 @@ export const AddressForm: React.FC<Props> = ({
   submitLabel,
   skipSubmission,
 }) => {
+  const ui = useCommerceTranslation()
+
   const {
     control,
     register,
@@ -59,10 +64,10 @@ export const AddressForm: React.FC<Props> = ({
 
     const hasAddressInput = Boolean(
       watchedValues?.state?.trim() ||
-        watchedValues?.city?.trim() ||
-        watchedValues?.postalCode?.trim() ||
-        watchedValues?.addressLine1?.trim() ||
-        watchedValues?.addressLine2?.trim(),
+      watchedValues?.city?.trim() ||
+      watchedValues?.postalCode?.trim() ||
+      watchedValues?.addressLine1?.trim() ||
+      watchedValues?.addressLine2?.trim(),
     )
 
     if (!hasAddressInput) {
@@ -96,50 +101,64 @@ export const AddressForm: React.FC<Props> = ({
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="mb-8 flex flex-col gap-5">
         <FormItem>
-          <Label htmlFor="state">Област*</Label>
+          <Label htmlFor="state">
+            <CommerceText source={'Област*'} />
+          </Label>
           <Input
             id="state"
             autoComplete="address-level1"
-            {...register('state', { required: 'Областта е задължителна.' })}
+            {...register('state', { required: ui('Областта е задължителна.') })}
           />
           {errors.state && <FormError message={errors.state.message} />}
         </FormItem>
 
         <FormItem>
-          <Label htmlFor="city">Населено място*</Label>
+          <Label htmlFor="city">
+            <CommerceText source={'Населено място*'} />
+          </Label>
           <Input
             id="city"
             autoComplete="address-level2"
-            {...register('city', { required: 'Населеното място е задължително.' })}
+            {...register('city', { required: ui('Населеното място е задължително.') })}
           />
           {errors.city && <FormError message={errors.city.message} />}
         </FormItem>
 
         <FormItem>
-          <Label htmlFor="postalCode">Пощенски код</Label>
+          <Label htmlFor="postalCode">
+            <CommerceText source={'Пощенски код'} />
+          </Label>
           <Input id="postalCode" autoComplete="postal-code" {...register('postalCode')} />
           {errors.postalCode && <FormError message={errors.postalCode.message} />}
         </FormItem>
 
         <FormItem>
-          <Label htmlFor="addressLine1">Адрес, ред 1*</Label>
+          <Label htmlFor="addressLine1">
+            <CommerceText source={'Адрес, ред 1*'} />
+          </Label>
           <Input
             id="addressLine1"
             autoComplete="address-line1"
-            {...register('addressLine1', { required: 'Адресът е задължителен.' })}
+            {...register('addressLine1', { required: ui('Адресът е задължителен.') })}
           />
           {errors.addressLine1 && <FormError message={errors.addressLine1.message} />}
         </FormItem>
 
         <FormItem>
-          <Label htmlFor="addressLine2">Адрес, ред 2</Label>
+          <Label htmlFor="addressLine2">
+            <CommerceText source={'Адрес, ред 2'} />
+          </Label>
           <Input id="addressLine2" autoComplete="address-line2" {...register('addressLine2')} />
           {errors.addressLine2 && <FormError message={errors.addressLine2.message} />}
         </FormItem>
 
-        <input type="hidden" value="BG" {...register('country', {
-          required: 'Държавата е задължителна.',
-        })} />
+        <input
+          type="hidden"
+          value="BG"
+          {...register('country', {
+            required: ui('Държавата е задължителна.'),
+          })}
+        />
       </div>
 
       {!skipSubmission ? (
@@ -147,7 +166,7 @@ export const AddressForm: React.FC<Props> = ({
           className="rounded-md bg-[rgb(1,55,186)] px-6 text-sm font-normal text-white hover:bg-[rgb(1,55,186)]"
           type="submit"
         >
-          {submitLabel || 'Запази адреса'}
+          {submitLabel || ui('Запази адреса')}
         </Button>
       ) : null}
     </form>

@@ -1,9 +1,10 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import { OrderStatus } from '@/components/OrderStatus'
 import { Price } from '@/components/Price'
 import { Button } from '@/components/ui/button'
 import { Order } from '@/payload-types'
-import { formatDateTime } from '@/utilities/formatDateTime'
-import Link from 'next/link'
+import { LocaleDate } from '@/i18n/LocaleDate'
+import Link from '@/i18n/Link'
 
 type Props = {
   order: Order
@@ -20,7 +21,7 @@ export const OrderItem: React.FC<Props> = ({ order }) => {
         <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:gap-5">
           <p className="text-lg font-normal text-primary/80">
             <time dateTime={order.createdAt}>
-              {formatDateTime({ date: order.createdAt })}
+              <LocaleDate date={order.createdAt} />
             </time>
           </p>
 
@@ -29,7 +30,7 @@ export const OrderItem: React.FC<Props> = ({ order }) => {
 
         <p className="flex gap-2 text-xs text-primary/65">
           <span>
-            {order.items?.length} {itemsLabel}
+            {order.items?.length} <CommerceText source={itemsLabel} />
           </span>
           {order.amount && (
             <>
@@ -45,7 +46,9 @@ export const OrderItem: React.FC<Props> = ({ order }) => {
         asChild
         className="self-start rounded-md border-black/10 px-4 text-sm font-normal text-primary/70 hover:border-black/15 hover:bg-black/[0.02] hover:text-primary sm:self-auto"
       >
-        <Link href={`/orders/${order.id}`}>Преглед на поръчката</Link>
+        <Link href={`/orders/${order.id}`}>
+          <CommerceText source={'Преглед на поръчката'} />
+        </Link>
       </Button>
     </div>
   )

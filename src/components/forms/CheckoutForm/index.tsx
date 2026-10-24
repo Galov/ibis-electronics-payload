@@ -1,8 +1,12 @@
 'use client'
+import { useLocale } from '@/i18n/provider'
+
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
+import { useLocalizedRouter } from '@/i18n/navigation'
 
 import { Message } from '@/components/Message'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
 import React, { useCallback, FormEvent, useMemo, useRef } from 'react'
 import { useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
 import { Address } from '@/payload-types'
@@ -67,12 +71,15 @@ export const CheckoutForm: React.FC<Props> = ({
   setProcessingPayment,
   revolutPayEnabled = false,
 }) => {
+  const locale = useLocale()
+  const ui = useCommerceTranslation()
+
   const [error, setError] = React.useState<null | string>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const [paymentMethod, setPaymentMethod] = React.useState<'manual' | 'revolut'>(
     revolutPayEnabled ? 'revolut' : 'manual',
   )
-  const router = useRouter()
+  const router = useLocalizedRouter()
   const { cart, clearCart } = useCart()
   const { confirmOrder, initiatePayment } = usePayments()
   const pendingTransactionIDRef = useRef<string | null>(null)
@@ -82,6 +89,7 @@ export const CheckoutForm: React.FC<Props> = ({
 
   const checkoutAdditionalData = useMemo(
     () => ({
+      locale,
       billingAddress,
       customerEmail: effectiveCustomerEmail,
       customerNotes: customerNotes?.trim() || undefined,
@@ -93,6 +101,7 @@ export const CheckoutForm: React.FC<Props> = ({
       ...(shippingAddress ? { shippingAddress } : {}),
     }),
     [
+      locale,
       billingAddress,
       boxNowLocker,
       customerNotes,
@@ -113,7 +122,7 @@ export const CheckoutForm: React.FC<Props> = ({
         !('orderID' in confirmResult) ||
         !confirmResult.orderID
       ) {
-        throw new Error('Липсва идентификатор на поръчката.')
+        throw new Error(ui('Липсва идентификатор на поръчката.'))
       }
 
       const queryParams = new URLSearchParams()
@@ -138,7 +147,7 @@ export const CheckoutForm: React.FC<Props> = ({
         `/orders/${String(confirmResult.orderID)}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
       )
     },
-    [clearCart, router, trimmedCustomerEmail],
+    [clearCart, router, trimmedCustomerEmail, ui],
   )
 
   const handleManualSubmit = useCallback(
@@ -154,14 +163,14 @@ export const CheckoutForm: React.FC<Props> = ({
         await redirectToOrder(confirmResult)
         return
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Възникна неочакван проблем.'
-        setError(`Грешка при изпращането на поръчката: ${msg}`)
+        const msg = err instanceof Error ? ui(err.message) : ui('Възникна неочакван проблем.')
+        setError(ui(ui('Грешка при изпращането на поръчката: {0}'), { 0: msg }))
       }
 
       setIsLoading(false)
       setProcessingPayment(false)
     },
-    [checkoutAdditionalData, confirmOrder, redirectToOrder, setProcessingPayment],
+    [checkoutAdditionalData, confirmOrder, redirectToOrder, setProcessingPayment, ui],
   )
 
   const handleRevolutRedirect = useCallback(async () => {
@@ -172,7 +181,7 @@ export const CheckoutForm: React.FC<Props> = ({
     if (disabled) {
       setIsLoading(false)
       setProcessingPayment(false)
-      setError('Попълни необходимите данни за контакт и доставка преди плащане.')
+      setError(ui('Попълни необходимите данни за контакт и доставка преди плащане.'))
       return
     }
 
@@ -192,7 +201,7 @@ export const CheckoutForm: React.FC<Props> = ({
         !('transactionID' in result) ||
         typeof result.transactionID !== 'string'
       ) {
-        throw new Error('Revolut не върна валиден checkout URL.')
+        throw new Error(ui('Revolut не върна валиден checkout URL.'))
       }
 
       pendingTransactionIDRef.current = result.transactionID
@@ -204,16 +213,31 @@ export const CheckoutForm: React.FC<Props> = ({
       if (cart?.secret) {
         localStorage.setItem(REVOLUT_PENDING_CART_SECRET_KEY, String(cart.secret))
       }
-      localStorage.setItem(REVOLUT_PENDING_CHECKOUT_DATA_KEY, JSON.stringify(checkoutAdditionalData))
+      localStorage.setItem(
+        REVOLUT_PENDING_CHECKOUT_DATA_KEY,
+        JSON.stringify(checkoutAdditionalData),
+      )
 
       window.location.href = result.checkoutURL
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Възникна проблем при стартирането на Revolut плащането.'
+      const msg =
+        err instanceof Error
+          ? ui(err.message)
+          : ui('Възникна проблем при стартирането на Revolut плащането.')
       setError(msg)
       setIsLoading(false)
       setProcessingPayment(false)
     }
-  }, [cart?.id, cart?.secret, checkoutAdditionalData, disabled, initiatePayment, setProcessingPayment])
+  }, [
+    cart?.id,
+    cart?.secret,
+    checkoutAdditionalData,
+    disabled,
+    effectiveCustomerEmail,
+    initiatePayment,
+    setProcessingPayment,
+    ui,
+  ])
 
   return (
     <form onSubmit={handleManualSubmit}>
@@ -221,7 +245,9 @@ export const CheckoutForm: React.FC<Props> = ({
 
       {revolutPayEnabled ? (
         <div className="mt-8 rounded-[10px] border border-black/8 bg-white px-5 py-5">
-          <p className="type-subsection-title text-primary/85">Начин на плащане</p>
+          <p className="type-subsection-title text-primary/85">
+            <CommerceText source={'Начин на плащане'} />
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
               className={`rounded-[10px] border px-4 py-3 text-left transition ${
@@ -235,8 +261,12 @@ export const CheckoutForm: React.FC<Props> = ({
               }}
               type="button"
             >
-              <p className="type-subsection-title text-primary/85">Наложен платеж</p>
-              <p className="mt-1 text-sm text-primary/60">Поръчката се изпраща за ръчна обработка.</p>
+              <p className="type-subsection-title text-primary/85">
+                <CommerceText source={'Наложен платеж'} />
+              </p>
+              <p className="mt-1 text-sm text-primary/60">
+                <CommerceText source={'Поръчката се изпраща за ръчна обработка.'} />
+              </p>
             </button>
 
             <button
@@ -251,9 +281,13 @@ export const CheckoutForm: React.FC<Props> = ({
               }}
               type="button"
             >
-              <p className="type-subsection-title text-primary/85">Плащане онлайн</p>
+              <p className="type-subsection-title text-primary/85">
+                <CommerceText source={'Плащане онлайн'} />
+              </p>
               <p className="mt-1 text-sm text-primary/60">
-                Ще бъдеш пренасочен към защитена страница за онлайн плащане.
+                <CommerceText
+                  source={'Ще бъдеш пренасочен към защитена страница за онлайн плащане.'}
+                />{' '}
               </p>
             </button>
           </div>
@@ -268,12 +302,14 @@ export const CheckoutForm: React.FC<Props> = ({
             type="submit"
             variant="default"
           >
-            {isLoading ? 'Изпраща се...' : 'Изпрати поръчката'}
+            {isLoading ? ui('Изпраща се...') : ui('Изпрати поръчката')}
           </Button>
         ) : (
           <>
             <div className="text-sm text-primary/60">
-              След натискане ще бъдеш пренасочен към защитена платежна страница.
+              <CommerceText
+                source={'След натискане ще бъдеш пренасочен към защитена платежна страница.'}
+              />{' '}
             </div>
             <Button
               className="h-12 rounded-md bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)]"
@@ -285,7 +321,7 @@ export const CheckoutForm: React.FC<Props> = ({
               type="button"
               variant="default"
             >
-              {isLoading ? 'Пренасочване към плащане...' : 'Плати онлайн'}
+              {isLoading ? ui('Пренасочване към плащане...') : ui('Плати онлайн')}
             </Button>
           </>
         )}

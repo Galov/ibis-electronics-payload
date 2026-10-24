@@ -1,3 +1,4 @@
+import { localizeHref } from '@/i18n/config'
 import type { Order } from '@/payload-types'
 import type { PayloadHandler, PayloadRequest } from 'payload'
 import { createWithdrawalToken, verifyWithdrawalToken } from './token'
@@ -33,6 +34,7 @@ export const requestWithdrawalLink: PayloadHandler = async (req) => {
     return error(429, 'Твърде много заявки. Опитайте отново след няколко минути.')
   try {
     const body = await req.json?.()
+    const locale = body?.locale === 'en' ? 'en' : 'bg'
     const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
     const orderID = typeof body?.orderID === 'string' ? body.orderID.trim() : ''
     if (!idIsValid(orderID) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)
@@ -68,11 +70,14 @@ export const requestWithdrawalLink: PayloadHandler = async (req) => {
     })
     if (!claimed) return generic()
     const token = createWithdrawalToken(order.id, order.customerEmail, req.payload.secret)
-    const link = `${getServerSideURL()}/otkaz-porachka?token=${encodeURIComponent(token)}`
+    const link = `${getServerSideURL()}${localizeHref('/otkaz-porachka', locale)}?token=${encodeURIComponent(token)}`
     await req.payload.sendEmail({
       to: order.customerEmail,
-      subject: `Потвърдете отказа от поръчка #${order.id}`,
-      html: `<h1>Отказ от поръчка</h1><p>Поискахте линк за отказ от поръчка #${escapeHTML(order.id)}.</p><p><a href="${escapeHTML(link)}">Отворете страницата за потвърждение</a></p><p>Отказът се записва след потвърждение на страницата. Линкът е валиден 24 часа; валидността му не променя законовия срок за отказ. Ако не сте направили тази заявка, игнорирайте съобщението.</p>`,
+      subject: `${locale === 'en' ? 'Confirm withdrawal from order' : 'Потвърдете отказа от поръчка'} #${order.id}`,
+      html:
+        locale === 'en'
+          ? `<h1>Order withdrawal</h1><p>You requested a withdrawal link for order #${escapeHTML(order.id)}.</p><p><a href="${escapeHTML(link)}">Open the confirmation page</a></p><p>Your withdrawal is recorded after confirmation on the page. This link is valid for 24 hours; its validity does not change the statutory withdrawal period. If you did not make this request, ignore this message.</p>`
+          : `<h1>Отказ от поръчка</h1><p>Поискахте линк за отказ от поръчка #${escapeHTML(order.id)}.</p><p><a href="${escapeHTML(link)}">Отворете страницата за потвърждение</a></p><p>Отказът се записва след потвърждение на страницата. Линкът е валиден 24 часа; валидността му не променя законовия срок за отказ. Ако не сте направили тази заявка, игнорирайте съобщението.</p>`,
     })
     return generic()
   } catch {

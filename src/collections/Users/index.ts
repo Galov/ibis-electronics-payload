@@ -1,3 +1,5 @@
+import { buildPasswordResetEmail } from '@/i18n/authEmail'
+import { getServerSideURL } from '@/utilities/getURL'
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
@@ -29,6 +31,20 @@ export const Users: CollectionConfig = {
   },
   auth: {
     tokenExpiration: 1209600,
+    forgotPassword: {
+      generateEmailHTML: (args) =>
+        buildPasswordResetEmail(
+          args?.req?.query?.lang === 'en' ? 'en' : 'bg',
+          args?.token || '',
+          getServerSideURL(),
+        ).html,
+      generateEmailSubject: (args) =>
+        buildPasswordResetEmail(
+          args?.req?.query?.lang === 'en' ? 'en' : 'bg',
+          args?.token || '',
+          getServerSideURL(),
+        ).subject,
+    },
   },
   fields: [
     {

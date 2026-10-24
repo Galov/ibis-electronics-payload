@@ -1,3 +1,4 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import configPromise from '@payload-config'
 import { ContactLocations } from '@/components/contact/ContactLocations'
 import { ContactForm } from '@/components/forms/ContactForm'
@@ -63,7 +64,9 @@ export default async function KontaktiPage() {
         />
       ))}
       <div className="mb-10 max-w-3xl">
-        <h1 className="type-page-title text-primary">{contactPage.title || 'Контакти'}</h1>
+        <h1 className="type-page-title text-primary">
+          <CommerceText source={contactPage.title || 'Контакти'} />
+        </h1>
       </div>
 
       <div className="space-y-12">
@@ -71,10 +74,15 @@ export default async function KontaktiPage() {
 
         <section className="rounded-xl bg-muted/20 px-5 py-6 md:px-7 md:py-8">
           <div className="mb-8 max-w-2xl">
-            <h2 className="type-section-title text-primary">Изпрати запитване</h2>
+            <h2 className="type-section-title text-primary">
+              <CommerceText source={'Изпрати запитване'} />
+            </h2>
             <p className="mt-3 text-sm leading-7 text-primary/65">
-              Използвай формата по-долу, ако искаш да се свържем с теб за продукт, наличност или
-              общо запитване.
+              <CommerceText
+                source={
+                  'Използвай формата по-долу, ако искаш да се свържем с теб за продукт, наличност или общо запитване.'
+                }
+              />{' '}
             </p>
           </div>
 

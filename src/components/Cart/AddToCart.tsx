@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslate } from '@/i18n/provider'
+
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/payload-types'
 
@@ -12,6 +14,7 @@ type Props = {
 }
 
 export function AddToCart({ product }: Props) {
+  const t = useTranslate()
   const { addItem, cart, isLoading } = useCart()
   const normalizedProductID = String(product.id)
 
@@ -22,10 +25,10 @@ export function AddToCart({ product }: Props) {
       addItem({
         product: normalizedProductID,
       }).then(() => {
-        toast.success('Продуктът е добавен в количката.')
+        toast.success(t('addedToCart'))
       })
     },
-    [addItem, normalizedProductID],
+    [addItem, normalizedProductID, t],
   )
 
   const disabled = useMemo<boolean>(() => {
@@ -50,7 +53,7 @@ export function AddToCart({ product }: Props) {
 
   return (
     <Button
-      aria-label="Добави в количката"
+      aria-label={t('addToCart')}
       variant={'outline'}
       className={clsx('font-sans', {
         'h-12 rounded-md border-[rgb(1,55,186)] bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)] hover:text-white':
@@ -62,7 +65,7 @@ export function AddToCart({ product }: Props) {
       onClick={addToCart}
       type="submit"
     >
-      Добави в количката
+      {t('addToCart')}
     </Button>
   )
 }

@@ -1,5 +1,7 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import React, { useEffect, useState } from 'react'
 
@@ -46,6 +48,8 @@ export const EcontOfficeSelector: React.FC<Props> = ({
   selectedOffice,
   selectedRegion,
 }) => {
+  const ui = useCommerceTranslation()
+
   const [regions, setRegions] = useState<EcontRegion[]>([])
   const [cities, setCities] = useState<EcontCity[]>([])
   const [offices, setOffices] = useState<EcontOffice[]>([])
@@ -55,17 +59,17 @@ export const EcontOfficeSelector: React.FC<Props> = ({
   const [activeCity, setActiveCity] = useState<EcontCity | null>(selectedCity || null)
   const [activeOffice, setActiveOffice] = useState<EcontOffice | null>(selectedOffice || null)
   const regionPlaceholder =
-    isLoading && regions.length === 0 ? 'Зареждане на области...' : 'Избери област'
+    isLoading && regions.length === 0 ? ui('Зареждане на области...') : ui('Избери област')
   const cityPlaceholder = !activeRegion
-    ? 'Първо избери област'
+    ? ui('Първо избери област')
     : isLoading && cities.length === 0
-      ? 'Зареждане на населени места...'
-      : 'Избери населено място'
+      ? ui('Зареждане на населени места...')
+      : ui('Избери населено място')
   const officePlaceholder = !activeCity
-    ? 'Първо избери населено място'
+    ? ui('Първо избери населено място')
     : isLoading && offices.length === 0
-      ? 'Зареждане на офиси...'
-      : 'Избери офис'
+      ? ui('Зареждане на офиси...')
+      : ui('Избери офис')
 
   useEffect(() => {
     const controller = new AbortController()
@@ -85,7 +89,7 @@ export const EcontOfficeSelector: React.FC<Props> = ({
         }
 
         if (!response.ok) {
-          throw new Error(data.message || 'Възникна проблем при зареждането на областите.')
+          throw new Error(data.message || ui('Възникна проблем при зареждането на областите.'))
         }
 
         setRegions(Array.isArray(data.regions) ? data.regions : [])
@@ -93,7 +97,9 @@ export const EcontOfficeSelector: React.FC<Props> = ({
         if ((error as Error).name === 'AbortError') return
 
         setError(
-          error instanceof Error ? error.message : 'Възникна проблем при зареждането на областите.',
+          error instanceof Error
+            ? error.message
+            : ui('Възникна проблем при зареждането на областите.'),
         )
       } finally {
         setIsLoading(false)
@@ -103,7 +109,7 @@ export const EcontOfficeSelector: React.FC<Props> = ({
     void loadRegions()
 
     return () => controller.abort()
-  }, [])
+  }, [ui])
 
   useEffect(() => {
     if (!activeRegion) {
@@ -135,7 +141,9 @@ export const EcontOfficeSelector: React.FC<Props> = ({
         }
 
         if (!response.ok) {
-          throw new Error(data.message || 'Възникна проблем при зареждането на населените места.')
+          throw new Error(
+            data.message || ui('Възникна проблем при зареждането на населените места.'),
+          )
         }
 
         setCities(Array.isArray(data.cities) ? data.cities : [])
@@ -145,7 +153,7 @@ export const EcontOfficeSelector: React.FC<Props> = ({
         setError(
           error instanceof Error
             ? error.message
-            : 'Възникна проблем при зареждането на населените места.',
+            : ui('Възникна проблем при зареждането на населените места.'),
         )
       } finally {
         setIsLoading(false)
@@ -159,7 +167,7 @@ export const EcontOfficeSelector: React.FC<Props> = ({
     void loadCities()
 
     return () => controller.abort()
-  }, [activeRegion])
+  }, [activeRegion, ui])
 
   useEffect(() => {
     if (!activeCity) {
@@ -189,7 +197,7 @@ export const EcontOfficeSelector: React.FC<Props> = ({
         }
 
         if (!response.ok) {
-          throw new Error(data.message || 'Възникна проблем при зареждането на офисите.')
+          throw new Error(data.message || ui('Възникна проблем при зареждането на офисите.'))
         }
 
         setOffices(Array.isArray(data.offices) ? data.offices : [])
@@ -197,7 +205,9 @@ export const EcontOfficeSelector: React.FC<Props> = ({
         if ((error as Error).name === 'AbortError') return
 
         setError(
-          error instanceof Error ? error.message : 'Възникна проблем при зареждането на офисите.',
+          error instanceof Error
+            ? error.message
+            : ui('Възникна проблем при зареждането на офисите.'),
         )
       } finally {
         setIsLoading(false)
@@ -209,20 +219,22 @@ export const EcontOfficeSelector: React.FC<Props> = ({
     void loadOffices()
 
     return () => controller.abort()
-  }, [activeCity, activeRegion])
+  }, [activeCity, activeRegion, ui])
 
   return (
     <div className="rounded-[10px] bg-muted/20 px-5 py-5">
       <div className="mb-4">
-        <p className="text-sm text-primary/65">Избери област, населено място и офис на Econt.</p>
+        <p className="text-sm text-primary/65">
+          <CommerceText source={'Избери област, населено място и офис на Econt.'} />
+        </p>
       </div>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <FieldLabel label="Област" />
+          <FieldLabel label={ui('Област')} />
           <SearchableSelect
             disabled={disabled}
-            emptyText="Няма намерени области"
+            emptyText={ui('Няма намерени области')}
             onValueChange={(regionId) => {
               const nextRegion = regions.find((region) => region.id === regionId) || null
               setActiveRegion(nextRegion)
@@ -232,16 +244,16 @@ export const EcontOfficeSelector: React.FC<Props> = ({
               value: region.id,
             }))}
             placeholder={regionPlaceholder}
-            searchPlaceholder="Търси област..."
+            searchPlaceholder={ui('Търси област...')}
             value={activeRegion?.id}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <FieldLabel label="Населено място" />
+          <FieldLabel label={ui('Населено място')} />
           <SearchableSelect
             disabled={disabled || !activeRegion}
-            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени населени места'}
+            emptyText={isLoading ? ui('Зареждане...') : ui('Няма намерени населени места')}
             onValueChange={(cityId) => {
               const nextCity = cities.find((city) => city.id === cityId) || null
               setActiveCity(nextCity)
@@ -252,16 +264,16 @@ export const EcontOfficeSelector: React.FC<Props> = ({
               value: city.id,
             }))}
             placeholder={cityPlaceholder}
-            searchPlaceholder="Търси населено място..."
+            searchPlaceholder={ui('Търси населено място...')}
             value={activeCity?.id}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <FieldLabel label="Офис" />
+          <FieldLabel label={ui('Офис')} />
           <SearchableSelect
             disabled={disabled || !activeCity}
-            emptyText={isLoading ? 'Зареждане...' : 'Няма намерени офиси'}
+            emptyText={isLoading ? ui('Зареждане...') : ui('Няма намерени офиси')}
             onValueChange={(officeId) => {
               const nextOffice = offices.find((office) => office.id === officeId) || null
               setActiveOffice(nextOffice)
@@ -281,21 +293,33 @@ export const EcontOfficeSelector: React.FC<Props> = ({
               value: office.id,
             }))}
             placeholder={officePlaceholder}
-            searchPlaceholder="Търси офис..."
+            searchPlaceholder={ui('Търси офис...')}
             value={activeOffice?.id}
           />
         </div>
 
-        {isLoading ? <p className="text-sm text-primary/55">Зареждане на наличните опции...</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {isLoading ? (
+          <p className="text-sm text-primary/55">
+            <CommerceText source={'Зареждане на наличните опции...'} />
+          </p>
+        ) : null}
+        {error ? (
+          <p className="text-sm text-destructive">
+            <CommerceText source={error} error />
+          </p>
+        ) : null}
         {!isLoading && !error && activeCity && offices.length === 0 ? (
-          <p className="text-sm text-primary/55">Няма намерени офиси за избраното населено място.</p>
+          <p className="text-sm text-primary/55">
+            <CommerceText source={'Няма намерени офиси за избраното населено място.'} />
+          </p>
         ) : null}
       </div>
 
       {activeOffice ? (
         <div className="mt-4 rounded-[10px] border border-[rgb(1,55,186)]/18 bg-white px-4 py-3">
-          <p className="type-eyebrow text-primary/45">Избран офис</p>
+          <p className="type-eyebrow text-primary/45">
+            <CommerceText source={'Избран офис'} />
+          </p>
           <p className="type-subsection-title mt-2 text-primary/85">{activeOffice.name}</p>
           <p className="mt-1 text-sm text-primary/65">
             {activeRegion?.name}
@@ -303,7 +327,9 @@ export const EcontOfficeSelector: React.FC<Props> = ({
             {activeOffice.address ? `, ${activeOffice.address}` : ''}
           </p>
           {activeOffice.code ? (
-            <p className="mt-2 text-xs text-primary/45">Офис код: {activeOffice.code}</p>
+            <p className="mt-2 text-xs text-primary/45">
+              <CommerceText source={'Офис код:'} /> {activeOffice.code}
+            </p>
           ) : null}
         </div>
       ) : null}

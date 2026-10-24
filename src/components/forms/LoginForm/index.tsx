@@ -1,5 +1,11 @@
 'use client'
 
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
+
+import { safeReturnHref } from '@/i18n/config'
+import { useLocale } from '@/i18n/provider'
+import { useLocalizedRouter } from '@/i18n/navigation'
+
 import { FormError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { Message } from '@/components/Message'
@@ -8,8 +14,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/providers/Auth'
 import { useEcommerce } from '@payloadcms/plugin-ecommerce/client/react'
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import Link from '@/i18n/Link'
+import { useSearchParams } from 'next/navigation'
 import React, { useCallback, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -19,12 +25,15 @@ type FormData = {
 }
 
 export const LoginForm: React.FC = () => {
+  const locale = useLocale()
+  const ui = useCommerceTranslation()
+
   const searchParams = useSearchParams()
   const allParams = searchParams.toString() ? `?${searchParams.toString()}` : ''
   const redirect = useRef(searchParams.get('redirect'))
   const { login } = useAuth()
   const { onLogin } = useEcommerce()
-  const router = useRouter()
+  const router = useLocalizedRouter()
   const [error, setError] = React.useState<null | string>(null)
 
   const {
@@ -41,16 +50,18 @@ export const LoginForm: React.FC = () => {
           await onLogin()
         } catch {
           setError(
-            'Влязохте успешно, но количката не можа да се синхронизира. Обновете страницата и проверете количката си.',
+            ui(
+              'Влязохте успешно, но количката не можа да се синхронизира. Обновете страницата и проверете количката си.',
+            ),
           )
         }
-        if (redirect?.current) router.push(redirect.current)
+        if (redirect?.current) router.push(safeReturnHref(redirect.current, locale))
         else router.push('/magazin')
       } catch (_) {
-        setError('Въведените данни за вход са невалидни. Опитайте отново.')
+        setError(ui('Въведените данни за вход са невалидни. Опитайте отново.'))
       }
     },
-    [login, onLogin, router],
+    [login, onLogin, router, ui, locale],
   )
 
   return (
@@ -58,33 +69,37 @@ export const LoginForm: React.FC = () => {
       <Message error={error} />
       <div className="flex flex-col gap-6">
         <FormItem>
-          <Label htmlFor="email">Имейл</Label>
+          <Label htmlFor="email">
+            <CommerceText source={'Имейл'} />
+          </Label>
           <Input
             id="email"
             type="email"
-            {...register('email', { required: 'Имейлът е задължителен.' })}
+            {...register('email', { required: ui('Имейлът е задължителен.') })}
           />
           {errors.email && <FormError message={errors.email.message} />}
         </FormItem>
 
         <FormItem>
-          <Label htmlFor="password">Парола</Label>
+          <Label htmlFor="password">
+            <CommerceText source={'Парола'} />
+          </Label>
           <Input
             id="password"
             type="password"
-            {...register('password', { required: 'Моля, въведете парола.' })}
+            {...register('password', { required: ui('Моля, въведете парола.') })}
           />
           {errors.password && <FormError message={errors.password.message} />}
         </FormItem>
 
         <div className="mb-6 text-sm text-primary/65">
           <p>
-            Забравена парола?{' '}
+            <CommerceText source={'Забравена парола?'} />{' '}
             <Link
               className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]"
               href={`/forgot-password${allParams}`}
             >
-              Натисни тук, за да я смениш
+              <CommerceText source={'Натисни тук, за да я смениш'} />{' '}
             </Link>
           </p>
         </div>
@@ -97,7 +112,7 @@ export const LoginForm: React.FC = () => {
           variant="outline"
         >
           <Link href={`/create-account${allParams}`} className="grow">
-            Създай профил
+            <CommerceText source={'Създай профил'} />{' '}
           </Link>
         </Button>
         <Button
@@ -106,7 +121,7 @@ export const LoginForm: React.FC = () => {
           type="submit"
           variant="default"
         >
-          {isLoading ? 'Обработва се' : 'Продължи'}
+          {isLoading ? ui('Обработва се') : ui('Продължи')}
         </Button>
       </div>
     </form>

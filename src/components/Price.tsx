@@ -1,4 +1,5 @@
 'use client'
+import { useLocale } from '@/i18n/provider'
 import React from 'react'
 
 type BaseProps = {
@@ -31,9 +32,10 @@ export const Price = ({
   currencyCode = 'EUR',
   as = 'p',
 }: Props & React.ComponentProps<'p'>) => {
+  const locale = useLocale()
   const Element = as
   const formatCurrency = (value: number, code = currencyCode) =>
-    new Intl.NumberFormat('bg-BG', {
+    new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'bg-BG', {
       currency: code,
       maximumFractionDigits: 2,
       minimumFractionDigits: 2,

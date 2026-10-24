@@ -1,3 +1,4 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
@@ -15,12 +16,16 @@ export default async function Checkout() {
     overrideAccess: true,
   })
   const freeShippingThreshold =
-    typeof orderSettings.freeShippingThreshold === 'number' ? orderSettings.freeShippingThreshold : undefined
+    typeof orderSettings.freeShippingThreshold === 'number'
+      ? orderSettings.freeShippingThreshold
+      : undefined
   const revolutPayEnabled = Boolean(orderSettings.revolutPayEnabled && isRevolutConfigured())
 
   return (
     <div className="container min-h-[90vh] flex">
-      <h1 className="sr-only">Поръчка</h1>
+      <h1 className="sr-only">
+        <CommerceText source={'Поръчка'} />
+      </h1>
 
       <CheckoutPage
         freeShippingThreshold={freeShippingThreshold}

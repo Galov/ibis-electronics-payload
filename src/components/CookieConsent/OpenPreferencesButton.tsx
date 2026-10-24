@@ -1,5 +1,7 @@
 'use client'
 
+import { Text } from '@/i18n/Text'
+
 import { COOKIE_CONSENT_OPEN_EVENT } from './shared'
 
 type Props = {
@@ -15,7 +17,7 @@ export const OpenCookiePreferencesButton: React.FC<Props> = ({ className }) => {
       }}
       type="button"
     >
-      Настройки на бисквитките
+      <Text id="cookiePreferences" />
     </button>
   )
 }

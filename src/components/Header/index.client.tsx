@@ -2,6 +2,8 @@
 
 import './index.css'
 
+import { Suspense } from 'react'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Cart } from '@/components/Cart'
 import { SiteLogo } from '@/components/Logo/SiteLogo'
 import { useAuth } from '@/providers/Auth'
@@ -128,6 +130,9 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
       <div className="relative z-30 border-b border-white/12 bg-[rgb(1,55,186)]">
         <div className="container hidden h-11 items-center justify-end md:flex">
           <div className="flex items-center gap-2">
+            <Suspense fallback={null}>
+              <LanguageSwitcher />
+            </Suspense>
             {user ? (
               <div className="relative" ref={profileMenuRef}>
                 <button

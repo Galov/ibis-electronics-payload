@@ -1,8 +1,12 @@
 'use client'
+import { useLocale } from '@/i18n/provider'
+
+import { CommerceText } from '@/i18n/CommerceText'
 
 import { Button } from '@/components/ui/button'
 import clsx from 'clsx'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
+import { stripLocale } from '@/i18n/config'
 import { usePathname } from 'next/navigation'
 
 type Props = {
@@ -10,7 +14,7 @@ type Props = {
 }
 
 export const AccountNav: React.FC<Props> = ({ className }) => {
-  const pathname = usePathname()
+  const pathname = stripLocale(usePathname())
 
   return (
     <div className={clsx(className)}>
@@ -23,7 +27,7 @@ export const AccountNav: React.FC<Props> = ({ className }) => {
                 'text-primary': pathname === '/account',
               })}
             >
-              Настройки на профила
+              <CommerceText source={'Настройки на профила'} />{' '}
             </Link>
           </Button>
         </li>
@@ -36,7 +40,7 @@ export const AccountNav: React.FC<Props> = ({ className }) => {
                 'text-primary': pathname === '/account/addresses',
               })}
             >
-              Адреси
+              <CommerceText source={'Адреси'} />{' '}
             </Link>
           </Button>
         </li>
@@ -49,7 +53,9 @@ export const AccountNav: React.FC<Props> = ({ className }) => {
               'text-primary': pathname === '/orders' || pathname.includes('/orders'),
             })}
           >
-            <Link href="/orders">Поръчки</Link>
+            <Link href="/orders">
+              <CommerceText source={'Поръчки'} />
+            </Link>
           </Button>
         </li>
       </ul>
@@ -63,8 +69,17 @@ export const AccountNav: React.FC<Props> = ({ className }) => {
           'text-primary': pathname === '/logout',
         })}
       >
-        <Link href="/logout">Изход</Link>
+        <Link href="/logout">
+          <CommerceText source={'Изход'} />
+        </Link>
       </Button>
     </div>
   )
+}
+
+export function MobileAccountNav() {
+  const locale = useLocale()
+  return locale === 'en' ? (
+    <AccountNav className="container mt-8 flex flex-wrap gap-4 md:hidden" />
+  ) : null
 }

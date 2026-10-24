@@ -1,3 +1,4 @@
+import type { Locale } from '@/i18n/config'
 import type { Product } from '@/payload-types'
 
 import { formatLegacyProductDescription } from '@/utilities/formatLegacyProductDescription'
@@ -14,11 +15,13 @@ export const getProductImageAlt = ({
   mediaAlt,
   imageAlt,
   index = 0,
+  locale = 'bg',
   productTitle,
 }: {
   mediaAlt?: null | string
   imageAlt?: null | string
   index?: number
+  locale?: Locale
   productTitle?: null | string
 }) => {
   if (imageAlt?.trim()) {
@@ -31,7 +34,7 @@ export const getProductImageAlt = ({
 
   if (productTitle?.trim()) {
     return index > 0
-      ? `${productTitle.trim()} - изображение ${index + 1}`
+      ? `${productTitle.trim()} - ${locale === 'en' ? 'image' : 'изображение'} ${index + 1}`
       : productTitle.trim()
   }
 
@@ -93,8 +96,7 @@ export const getProductPrimaryImage = (product?: Partial<Product> | null) => {
 
   return {
     alt: getProductImageAlt({
-      mediaAlt:
-        image.image && typeof image.image !== 'string' ? (image.image.alt ?? null) : null,
+      mediaAlt: image.image && typeof image.image !== 'string' ? (image.image.alt ?? null) : null,
       imageAlt: image.alt,
       productTitle: product?.title,
     }),
@@ -105,7 +107,7 @@ export const getProductPrimaryImage = (product?: Partial<Product> | null) => {
 export const isVisibleProduct = (product?: Partial<Product> | null) => {
   return Boolean(
     product?.published &&
-      (product.stockQty ?? 0) > 0 &&
-      product.images?.some((image) => Boolean(resolveProductImageURL(image))),
+    (product.stockQty ?? 0) > 0 &&
+    product.images?.some((image) => Boolean(resolveProductImageURL(image))),
   )
 }

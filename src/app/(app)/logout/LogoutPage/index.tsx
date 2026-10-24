@@ -1,10 +1,14 @@
 'use client'
 
+import { CommerceText, useCommerceTranslation } from '@/i18n/CommerceText'
+
 import { useAuth } from '@/providers/Auth'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import React, { Fragment, useEffect, useState } from 'react'
 
 export const LogoutPage: React.FC = () => {
+  const ui = useCommerceTranslation()
+
   const { logout } = useAuth()
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
@@ -13,14 +17,14 @@ export const LogoutPage: React.FC = () => {
     const performLogout = async () => {
       try {
         await logout()
-        setSuccess('Излязохте успешно.')
+        setSuccess(ui('Излязохте успешно.'))
       } catch (_) {
-        setError('Вече сте излезли от профила си.')
+        setError(ui('Вече сте излезли от профила си.'))
       }
     }
 
     void performLogout()
-  }, [logout])
+  }, [logout, ui])
 
   return (
     <Fragment>
@@ -28,17 +32,17 @@ export const LogoutPage: React.FC = () => {
         <div>
           <h1 className="type-page-title mb-4 text-primary">{error || success}</h1>
           <p className="text-sm leading-7 text-primary/65">
-            Какво искате да направите сега?
+            <CommerceText source={'Какво искате да направите сега?'} />{' '}
             <Fragment>
               {' '}
               <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/magazin">
-                Натиснете тук
+                <CommerceText source={'Натиснете тук'} />{' '}
               </Link>
-              {` за да разгледате каталога.`}
+              {ui(' за да разгледате каталога.')}
             </Fragment>
-            {` За нов вход `}
+            {ui(' За нов вход ')}
             <Link className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]" href="/login">
-              натиснете тук
+              <CommerceText source={'натиснете тук'} />{' '}
             </Link>
             .
           </p>

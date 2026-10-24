@@ -1,5 +1,7 @@
 'use client'
 
+import { Text } from '@/i18n/Text'
+
 import { Price } from '@/components/Price'
 import {
   Sheet,
@@ -12,7 +14,7 @@ import {
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import { ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useMemo, useState } from 'react'
 
@@ -47,17 +49,21 @@ export function CartModal() {
 
       <SheetContent className="flex flex-col">
         <SheetHeader>
-          <SheetTitle className="text-xl font-normal text-primary/85">Моята количка</SheetTitle>
+          <SheetTitle className="text-xl font-normal text-primary/85">
+            <Text id="myCart" />
+          </SheetTitle>
 
           <SheetDescription className="text-primary/55">
-            Прегледай продуктите и общата сума на поръчката.
+            <Text id="cartHelp" />
           </SheetDescription>
         </SheetHeader>
 
         {!cart || cart?.items?.length === 0 ? (
           <div className="flex flex-col items-center gap-3 pt-8 text-center">
             <ShoppingCart className="h-16 text-primary/35" />
-            <p className="text-center text-2xl font-medium text-primary/75">Количката е празна.</p>
+            <p className="text-center text-2xl font-medium text-primary/75">
+              <Text id="emptyCart" />
+            </p>
           </div>
         ) : (
           <div className="flex grow px-2">
@@ -73,7 +79,10 @@ export function CartModal() {
                   const price = product.price
 
                   return (
-                    <li className="flex w-full flex-col border-b border-black/5 py-4 last:border-b-0" key={i}>
+                    <li
+                      className="flex w-full flex-col border-b border-black/5 py-4 last:border-b-0"
+                      key={i}
+                    >
                       <div className="relative flex w-full flex-row justify-between gap-3">
                         <div className="absolute left-12 top-0 z-40">
                           <DeleteItemButton item={item} />
@@ -95,7 +104,9 @@ export function CartModal() {
                           </div>
 
                           <div className="flex flex-1 flex-col text-base">
-                            <span className="text-sm leading-5 text-primary/80">{product?.title}</span>
+                            <span className="text-sm leading-5 text-primary/80">
+                              {product?.title}
+                            </span>
                           </div>
                         </Link>
                         <div className="flex h-16 flex-col justify-between">
@@ -109,7 +120,9 @@ export function CartModal() {
                           <div className="ml-auto flex h-8 flex-row items-center rounded-md border border-black/10 bg-white">
                             <EditItemQuantityButton item={item} type="minus" />
                             <p className="w-6 text-center">
-                              <span className="w-full text-sm text-primary/70">{item.quantity}</span>
+                              <span className="w-full text-sm text-primary/70">
+                                {item.quantity}
+                              </span>
                             </p>
                             <EditItemQuantityButton item={item} type="plus" />
                           </div>
@@ -124,7 +137,9 @@ export function CartModal() {
                 <div className="text-sm text-primary/55">
                   {typeof cart?.subtotal === 'number' && (
                     <div className="mb-4 flex items-center justify-between">
-                      <p>Общо</p>
+                      <p>
+                        <Text id="total" />
+                      </p>
                       <Price
                         amount={cart?.subtotal}
                         className="text-right text-base text-primary/80"
@@ -138,7 +153,7 @@ export function CartModal() {
                     className="h-12 w-full rounded-md bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)]"
                   >
                     <Link className="w-full" href="/checkout">
-                      Към поръчката
+                      <Text id="checkout" />
                     </Link>
                   </Button>
                 </div>

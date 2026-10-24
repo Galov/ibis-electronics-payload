@@ -1,4 +1,7 @@
 'use client'
+
+import { useTranslate } from '@/i18n/provider'
+import { Text } from '@/i18n/Text'
 import { useMobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -75,6 +78,7 @@ export const CategoryItem: React.FC<ItemProps> = ({
   level = 0,
   onToggleCategory,
 }) => {
+  const t = useTranslate()
   const mobileCatalogControls = useMobileCatalogControls()
   const router = useRouter()
   const pathname = usePathname()
@@ -109,15 +113,12 @@ export const CategoryItem: React.FC<ItemProps> = ({
 
   return (
     <li>
-      <div
-        className="flex items-center gap-2 py-1.5"
-        style={{ paddingLeft: `${level * 14}px` }}
-      >
+      <div className="flex items-center gap-2 py-1.5" style={{ paddingLeft: `${level * 14}px` }}>
         {category.children.length > 0 ? (
           <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
             <button
               type="button"
-              aria-label={isExpanded ? 'Свий категорията' : 'Разгърни категорията'}
+              aria-label={t(isExpanded ? 'collapseCategory' : 'expandCategory')}
               className="absolute -inset-1 flex items-center justify-center text-[rgb(1,55,186)] transition hover:text-[rgb(0,46,158)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(1,55,186)]/25 focus-visible:ring-offset-2"
               onClick={() => onToggleCategory(category.id)}
             >
@@ -251,7 +252,7 @@ export const CategoriesPanel: React.FC<PanelProps> = ({ categories }) => {
         <div className="flex items-center gap-3">
           <span className="h-px w-8 bg-[rgb(1,55,186)]/70" />
           <h3 className="text-sm font-medium tracking-[0.04em] text-[rgb(1,55,186)]">
-            Категории
+            <Text id="categories" />
           </h3>
         </div>
 

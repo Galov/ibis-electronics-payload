@@ -3,7 +3,7 @@ import type { Category, Page, Post, Product } from '@/payload-types'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { cn } from '@/utilities/cn'
 import { buildCategoryPath } from '@/utilities/category'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import React from 'react'
 
 type CMSLinkType = {
@@ -40,18 +40,18 @@ export const CMSLink: React.FC<CMSLinkType> = (props) => {
     type === 'internal'
       ? internalPath
       : type === 'reference' && typeof reference?.value === 'object' && reference.value
-      ? reference.relationTo === 'categories'
-        ? buildCategoryPath(reference.value as Category)
-        : reference.relationTo === 'posts'
-          ? reference.value.slug
-            ? `/blog/${reference.value.slug}`
-            : url
-        : reference.value.slug
-          ? `${reference?.relationTo !== 'pages' ? `/${reference?.relationTo}` : ''}/${
-              reference.value.slug
-            }`
-          : url
-      : url
+        ? reference.relationTo === 'categories'
+          ? buildCategoryPath(reference.value as Category)
+          : reference.relationTo === 'posts'
+            ? reference.value.slug
+              ? `/blog/${reference.value.slug}`
+              : url
+            : reference.value.slug
+              ? `${reference?.relationTo !== 'pages' ? `/${reference?.relationTo}` : ''}/${
+                  reference.value.slug
+                }`
+              : url
+        : url
 
   if (!href) return null
 

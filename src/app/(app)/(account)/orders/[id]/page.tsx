@@ -1,11 +1,12 @@
+import { CommerceText } from '@/i18n/CommerceText'
 import type { Order } from '@/payload-types'
 import type { Metadata } from 'next'
 
 import { Price } from '@/components/Price'
 import { Button } from '@/components/ui/button'
-import { formatDateTime } from '@/utilities/formatDateTime'
+import { LocaleDate } from '@/i18n/LocaleDate'
 import { getNoIndexMetadata } from '@/utilities/getNoIndexMetadata'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import { notFound } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
 import { ProductItem } from '@/components/ProductItem'
@@ -146,9 +147,10 @@ export default async function Order({ params, searchParams }: PageProps) {
 
   const paymentMethodLabel = getPaymentMethodLabel((order as OrderWithPaymentMethod).paymentMethod)
   const deliveryPricingNote = getDeliveryPricingNote(order.deliveryMethod)
-  const withdrawalToken = !user && order.customerEmail
-    ? createWithdrawalToken(order.id, order.customerEmail, payload.secret)
-    : undefined
+  const withdrawalToken =
+    !user && order.customerEmail
+      ? createWithdrawalToken(order.id, order.customerEmail, payload.secret)
+      : undefined
 
   return (
     <div>
@@ -162,7 +164,7 @@ export default async function Order({ params, searchParams }: PageProps) {
             >
               <Link href="/orders">
                 <ChevronLeftIcon />
-                Всички поръчки
+                <CommerceText source={'Всички поръчки'} />{' '}
               </Link>
             </Button>
           </div>
@@ -171,58 +173,84 @@ export default async function Order({ params, searchParams }: PageProps) {
         )}
 
         <h1 className="type-eyebrow bg-[rgb(1,55,186)]/10 px-2.5 py-1 text-[rgb(1,55,186)]">
-          <span className="">{`Поръчка #${order.id}`}</span>
+          <span className="">
+            <CommerceText source="Поръчка #{0}" values={{ 0: order.id }} />
+          </span>
         </h1>
       </div>
 
       <div className="flex flex-col gap-10 bg-muted/20 px-5 py-6 md:px-7 md:py-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:justify-between">
           <div>
-            <p className="type-eyebrow mb-1 text-primary/45">Дата</p>
+            <p className="type-eyebrow mb-1 text-primary/45">
+              <CommerceText source={'Дата'} />
+            </p>
             <p className="text-lg text-primary/80">
               <time dateTime={order.createdAt}>
-                {formatDateTime({ date: order.createdAt })}
+                <LocaleDate date={order.createdAt} />
               </time>
             </p>
           </div>
 
           <div>
-            <p className="type-eyebrow mb-1 text-primary/45">Общо</p>
-            {order.amount && <Price className="text-lg text-primary/80" amount={order.amount} currencyCode="EUR" />}
+            <p className="type-eyebrow mb-1 text-primary/45">
+              <CommerceText source={'Общо'} />
+            </p>
+            {order.amount && (
+              <Price className="text-lg text-primary/80" amount={order.amount} currencyCode="EUR" />
+            )}
           </div>
 
           {typeof order.shippingFee === 'number' && order.shippingFee > 0 ? (
             <div>
-              <p className="type-eyebrow mb-1 text-primary/45">Доставка</p>
-              <Price className="text-lg text-primary/80" amount={order.shippingFee} currencyCode="EUR" />
+              <p className="type-eyebrow mb-1 text-primary/45">
+                <CommerceText source={'Доставка'} />
+              </p>
+              <Price
+                className="text-lg text-primary/80"
+                amount={order.shippingFee}
+                currencyCode="EUR"
+              />
             </div>
           ) : null}
 
           {paymentMethodLabel ? (
             <div>
-              <p className="type-eyebrow mb-1 text-primary/45">Плащане</p>
-              <p className="text-lg text-primary/80">{paymentMethodLabel}</p>
+              <p className="type-eyebrow mb-1 text-primary/45">
+                <CommerceText source={'Плащане'} />
+              </p>
+              <p className="text-lg text-primary/80">
+                <CommerceText source={paymentMethodLabel || ''} />
+              </p>
             </div>
           ) : null}
 
           {order.status && (
             <div className="grow max-w-1/3">
-              <p className="type-eyebrow mb-1 text-primary/45">Статус</p>
+              <p className="type-eyebrow mb-1 text-primary/45">
+                <CommerceText source={'Статус'} />
+              </p>
               <OrderStatus className="text-sm" status={order.status} />
             </div>
           )}
         </div>
 
-        <OrderWithdrawal orderID={order.id} token={withdrawalToken} requestedAt={order.withdrawal?.requestedAt}
-          closed={order.status === 'cancelled' || order.status === 'refunded'} />
+        <OrderWithdrawal
+          orderID={order.id}
+          token={withdrawalToken}
+          requestedAt={order.withdrawal?.requestedAt}
+          closed={order.status === 'cancelled' || order.status === 'refunded'}
+        />
 
         <p className="rounded-[10px] border border-black/6 bg-white px-5 py-4 text-sm leading-6 text-primary/60">
-          {deliveryPricingNote}
+          <CommerceText source={deliveryPricingNote} />
         </p>
 
         {order.items && (
           <div>
-            <h2 className="type-eyebrow mb-4 text-primary/45">Артикули</h2>
+            <h2 className="type-eyebrow mb-4 text-primary/45">
+              <CommerceText source={'Артикули'} />
+            </h2>
             <ul className="flex flex-col gap-6">
               {order.items?.map((item, index) => {
                 if (typeof item.product === 'string') {
@@ -230,7 +258,11 @@ export default async function Order({ params, searchParams }: PageProps) {
                 }
 
                 if (!item.product || typeof item.product !== 'object') {
-                  return <div key={index}>Този артикул вече не е наличен.</div>
+                  return (
+                    <div key={index}>
+                      <CommerceText source={'Този артикул вече не е наличен.'} />
+                    </div>
+                  )
                 }
 
                 return (
@@ -243,9 +275,12 @@ export default async function Order({ params, searchParams }: PageProps) {
           </div>
         )}
 
-        {order.deliveryMethod === 'boxnow' && (order.boxNowLockerName || order.boxNowLockerAddress) ? (
+        {order.deliveryMethod === 'boxnow' &&
+        (order.boxNowLockerName || order.boxNowLockerAddress) ? (
           <div>
-            <h2 className="type-eyebrow mb-4 text-primary/45">Автомат на BoxNow</h2>
+            <h2 className="type-eyebrow mb-4 text-primary/45">
+              <CommerceText source={'Автомат на BoxNow'} />
+            </h2>
 
             <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
               {order.boxNowLockerName ? (
@@ -255,19 +290,24 @@ export default async function Order({ params, searchParams }: PageProps) {
                 <p className="type-body-small mt-2 text-primary/60">{order.boxNowLockerAddress}</p>
               ) : null}
               {order.boxNowLockerPostalCode ? (
-                <p className="type-eyebrow mt-2 text-primary/45">ПК: {order.boxNowLockerPostalCode}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">
+                  <CommerceText source={'ПК:'} /> {order.boxNowLockerPostalCode}
+                </p>
               ) : null}
               {order.boxNowLockerId ? (
-                <p className="type-eyebrow mt-2 text-primary/45">Locker ID: {order.boxNowLockerId}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">
+                  Locker ID: {order.boxNowLockerId}
+                </p>
               ) : null}
             </div>
           </div>
         ) : null}
 
-        {order.deliveryMethod === 'econt-office' && (order.econtOfficeName || order.econtOfficeAddress) ? (
+        {order.deliveryMethod === 'econt-office' &&
+        (order.econtOfficeName || order.econtOfficeAddress) ? (
           <div>
             <h2 className="type-eyebrow mb-4 text-primary/45">
-              Офис на Econt
+              <CommerceText source={'Офис на Econt'} />{' '}
             </h2>
 
             <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
@@ -278,19 +318,24 @@ export default async function Order({ params, searchParams }: PageProps) {
                 <p className="type-body-small mt-2 text-primary/60">{order.econtOfficeAddress}</p>
               ) : null}
               {order.econtOfficeCode ? (
-                <p className="type-eyebrow mt-2 text-primary/45">Офис код: {order.econtOfficeCode}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">
+                  <CommerceText source={'Офис код:'} /> {order.econtOfficeCode}
+                </p>
               ) : null}
               {order.econtOfficeId ? (
-                <p className="type-eyebrow mt-2 text-primary/45">Офис ID: {order.econtOfficeId}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">
+                  <CommerceText source={'Офис ID:'} /> {order.econtOfficeId}
+                </p>
               ) : null}
             </div>
           </div>
         ) : null}
 
-        {order.deliveryMethod === 'speedy-office' && (order.speedyOfficeName || order.speedyOfficeAddress) ? (
+        {order.deliveryMethod === 'speedy-office' &&
+        (order.speedyOfficeName || order.speedyOfficeAddress) ? (
           <div>
             <h2 className="type-eyebrow mb-4 text-primary/45">
-              Офис на Speedy
+              <CommerceText source={'Офис на Speedy'} />{' '}
             </h2>
 
             <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
@@ -301,7 +346,9 @@ export default async function Order({ params, searchParams }: PageProps) {
                 <p className="type-body-small mt-2 text-primary/60">{order.speedyOfficeAddress}</p>
               ) : null}
               {order.speedyOfficeId ? (
-                <p className="type-eyebrow mt-2 text-primary/45">Офис ID: {order.speedyOfficeId}</p>
+                <p className="type-eyebrow mt-2 text-primary/45">
+                  <CommerceText source={'Офис ID:'} /> {order.speedyOfficeId}
+                </p>
               ) : null}
             </div>
           </div>
@@ -309,7 +356,9 @@ export default async function Order({ params, searchParams }: PageProps) {
 
         {order.deliveryMethod === 'address' && order.shippingAddress && (
           <div>
-            <h2 className="type-eyebrow mb-4 text-primary/45">Адрес за доставка</h2>
+            <h2 className="type-eyebrow mb-4 text-primary/45">
+              <CommerceText source={'Адрес за доставка'} />
+            </h2>
 
             {/* @ts-expect-error - some kind of type hell */}
             <AddressItem address={order.shippingAddress} hideActions />
@@ -319,11 +368,13 @@ export default async function Order({ params, searchParams }: PageProps) {
         {order.customerNotes ? (
           <div>
             <h2 className="type-eyebrow mb-4 text-primary/45">
-              Бележки към поръчката
+              <CommerceText source={'Бележки към поръчката'} />{' '}
             </h2>
 
             <div className="rounded-[10px] border border-transparent bg-white px-5 py-5">
-              <p className="type-body-small whitespace-pre-line text-primary/70">{order.customerNotes}</p>
+              <p className="type-body-small whitespace-pre-line text-primary/70">
+                {order.customerNotes}
+              </p>
             </div>
           </div>
         ) : null}

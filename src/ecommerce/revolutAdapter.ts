@@ -3,7 +3,11 @@ import { addDataAndFileToRequest } from 'payload'
 import type { Field, PayloadRequest } from 'payload'
 import type { Cart } from '@/payload-types'
 
-import { finalizeCheckoutTransaction, createCheckoutTransactionData, type CheckoutPaymentData } from './orderLifecycle'
+import {
+  finalizeCheckoutTransaction,
+  createCheckoutTransactionData,
+  type CheckoutPaymentData,
+} from './orderLifecycle'
 import {
   createRevolutOrder,
   isRevolutSuccessState,
@@ -11,6 +15,7 @@ import {
   retrieveRevolutOrder,
   verifyRevolutWebhookSignature,
 } from './revolutApi'
+import { localizeHref } from '@/i18n/config'
 import { getServerSideURL } from '@/utilities/getURL'
 
 type RevolutWebhookPayload = {
@@ -48,7 +53,9 @@ type RevolutTransaction = {
 
 const transactionsSlug = 'transactions'
 
-const extractCheckoutData = (...candidates: Array<RevolutAdapterData | undefined>): CheckoutPaymentData => {
+const extractCheckoutData = (
+  ...candidates: Array<RevolutAdapterData | undefined>
+): CheckoutPaymentData => {
   for (const candidate of candidates) {
     if (!candidate || typeof candidate !== 'object') {
       continue
@@ -275,7 +282,9 @@ const resolveRevolutTransaction = async ({
         data: {
           amount: refreshedSnapshot.amount,
           billingAddress: refreshedSnapshot.billingAddress,
-          ...(refreshedSnapshot.customerEmail ? { customerEmail: refreshedSnapshot.customerEmail } : {}),
+          ...(refreshedSnapshot.customerEmail
+            ? { customerEmail: refreshedSnapshot.customerEmail }
+            : {}),
           boxNowLockerAddress: refreshedSnapshot.boxNowLockerAddress,
           boxNowLockerId: refreshedSnapshot.boxNowLockerId,
           boxNowLockerName: refreshedSnapshot.boxNowLockerName,
@@ -296,24 +305,24 @@ const resolveRevolutTransaction = async ({
         req,
       })
 
-        resolvedTransaction = {
-          ...resolvedTransaction,
-          ...refreshedSnapshot,
-        }
+      resolvedTransaction = {
+        ...resolvedTransaction,
+        ...refreshedSnapshot,
+      }
 
-        payload.logger.info({
-          msg: 'Revolut confirm refreshed checkout snapshot',
-          transactionID: resolvedTransaction.id,
-          customerEmail: refreshedSnapshot.customerEmail || null,
-          deliveryMethod: refreshedSnapshot.deliveryMethod || null,
-          boxNowLockerAddress: refreshedSnapshot.boxNowLockerAddress || null,
-          boxNowLockerName: refreshedSnapshot.boxNowLockerName || null,
-          shippingFee: refreshedSnapshot.shippingFee ?? null,
-          speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress || null,
-          speedyOfficeName: refreshedSnapshot.speedyOfficeName || null,
-          econtOfficeAddress: refreshedSnapshot.econtOfficeAddress || null,
-          econtOfficeName: refreshedSnapshot.econtOfficeName || null,
-        })
+      payload.logger.info({
+        msg: 'Revolut confirm refreshed checkout snapshot',
+        transactionID: resolvedTransaction.id,
+        customerEmail: refreshedSnapshot.customerEmail || null,
+        deliveryMethod: refreshedSnapshot.deliveryMethod || null,
+        boxNowLockerAddress: refreshedSnapshot.boxNowLockerAddress || null,
+        boxNowLockerName: refreshedSnapshot.boxNowLockerName || null,
+        shippingFee: refreshedSnapshot.shippingFee ?? null,
+        speedyOfficeAddress: refreshedSnapshot.speedyOfficeAddress || null,
+        speedyOfficeName: refreshedSnapshot.speedyOfficeName || null,
+        econtOfficeAddress: refreshedSnapshot.econtOfficeAddress || null,
+        econtOfficeName: refreshedSnapshot.econtOfficeName || null,
+      })
     }
   }
 
@@ -500,11 +509,13 @@ export const revolutAdapter = (): PaymentAdapter => ({
     try {
       const serverURL = getServerSideURL()
       const redirectURL = serverURL.startsWith('https://')
-        ? `${serverURL}/checkout/confirm-order?${new URLSearchParams({
-            provider: 'revolut',
-            transactionID: transaction.id,
-            ...(transaction.customerEmail ? { customerEmail: transaction.customerEmail } : {}),
-          }).toString()}`
+        ? `${serverURL}${localizeHref('/checkout/confirm-order', checkoutData.locale === 'en' ? 'en' : 'bg')}?${new URLSearchParams(
+            {
+              provider: 'revolut',
+              transactionID: transaction.id,
+              ...(transaction.customerEmail ? { customerEmail: transaction.customerEmail } : {}),
+            },
+          ).toString()}`
         : undefined
       const revolutOrder = await createRevolutOrder({
         amount: typeof transaction.amount === 'number' ? transaction.amount : 0,
@@ -609,13 +620,19 @@ export const revolutAdapter = (): PaymentAdapter => ({
         const signatureHeader = req.headers.get('Revolut-Signature')
 
         if (!req.text) {
-          return Response.json({ received: false, message: 'Raw body reader is unavailable.' }, { status: 400 })
+          return Response.json(
+            { received: false, message: 'Raw body reader is unavailable.' },
+            { status: 400 },
+          )
         }
 
         const rawBody = await req.text()
 
         if (!signingSecret || !timestamp || !signatureHeader) {
-          return Response.json({ received: false, message: 'Missing Revolut webhook configuration.' }, { status: 400 })
+          return Response.json(
+            { received: false, message: 'Missing Revolut webhook configuration.' },
+            { status: 400 },
+          )
         }
 
         const isValid = verifyRevolutWebhookSignature({
@@ -626,7 +643,10 @@ export const revolutAdapter = (): PaymentAdapter => ({
         })
 
         if (!isValid) {
-          return Response.json({ received: false, message: 'Invalid Revolut signature.' }, { status: 400 })
+          return Response.json(
+            { received: false, message: 'Invalid Revolut signature.' },
+            { status: 400 },
+          )
         }
 
         const webhookPayload = JSON.parse(rawBody) as RevolutWebhookPayload

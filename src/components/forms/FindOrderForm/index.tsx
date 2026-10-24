@@ -1,4 +1,7 @@
 'use client'
+import { useLocale } from '@/i18n/provider'
+
+import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
 
 import { FormError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
@@ -20,6 +23,9 @@ type Props = {
 }
 
 export const FindOrderForm: React.FC<Props> = ({ initialEmail }) => {
+  const locale = useLocale()
+  const ui = useCommerceTranslation()
+
   const { user } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -35,35 +41,43 @@ export const FindOrderForm: React.FC<Props> = ({ initialEmail }) => {
     },
   })
 
-  const onSubmit = useCallback(async (data: FormData) => {
-    setIsSubmitting(true)
-    setSubmitError(null)
+  const onSubmit = useCallback(
+    async (data: FormData) => {
+      setIsSubmitting(true)
+      setSubmitError(null)
 
-    try {
-      const result = await sendOrderAccessEmail({
-        email: data.email,
-        orderID: data.orderID,
-      })
+      try {
+        const result = await sendOrderAccessEmail({
+          locale,
+          email: data.email,
+          orderID: data.orderID,
+        })
 
-      if (result.success) {
-        setSuccess(true)
-      } else {
-        setSubmitError(result.error || 'Възникна проблем. Моля, опитайте отново.')
+        if (result.success) {
+          setSuccess(true)
+        } else {
+          setSubmitError(result.error || ui('Възникна проблем. Моля, опитайте отново.'))
+        }
+      } catch {
+        setSubmitError(ui('Възникна проблем. Моля, опитайте отново.'))
+      } finally {
+        setIsSubmitting(false)
       }
-    } catch {
-      setSubmitError('Възникна проблем. Моля, опитайте отново.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }, [])
+    },
+    [ui, locale],
+  )
 
   if (success) {
     return (
       <Fragment>
-        <h1 className="text-xl mb-4">Провери имейла си</h1>
+        <h1 className="text-xl mb-4">
+          <CommerceText source={'Провери имейла си'} />
+        </h1>
         <div className="prose dark:prose-invert">
           <p>
-            {`Ако съществува поръчка с този имейл и номер, изпратихме ви имейл с линк към детайлите й.`}
+            {ui(
+              'Ако съществува поръчка с този имейл и номер, изпратихме ви имейл с линк към детайлите й.',
+            )}
           </p>
         </div>
       </Fragment>
@@ -72,30 +86,32 @@ export const FindOrderForm: React.FC<Props> = ({ initialEmail }) => {
 
   return (
     <Fragment>
-      <h1 className="text-xl mb-4">Намери поръчката си</h1>
+      <h1 className="text-xl mb-4">
+        <CommerceText source={'Намери поръчката си'} />
+      </h1>
       <div className="prose dark:prose-invert mb-8">
-        <p>{`Въведете имейла и номера на поръчката. Ще ви изпратим линк за преглед.`}</p>
+        <p>{ui('Въведете имейла и номера на поръчката. Ще ви изпратим линк за преглед.')}</p>
       </div>
       <form className="max-w-lg flex flex-col gap-8" onSubmit={handleSubmit(onSubmit)}>
         <FormItem>
           <Label htmlFor="email" className="mb-2">
-            Имейл адрес
+            <CommerceText source={'Имейл адрес'} />{' '}
           </Label>
           <Input
             id="email"
-            {...register('email', { required: 'Имейлът е задължителен.' })}
+            {...register('email', { required: ui('Имейлът е задължителен.') })}
             type="email"
           />
           {errors.email && <FormError message={errors.email.message} />}
         </FormItem>
         <FormItem>
           <Label htmlFor="orderID" className="mb-2">
-            Номер на поръчка
+            <CommerceText source={'Номер на поръчка'} />{' '}
           </Label>
           <Input
             id="orderID"
             {...register('orderID', {
-              required: 'Номерът на поръчката е задължителен.',
+              required: ui('Номерът на поръчката е задължителен.'),
             })}
             type="text"
           />
@@ -103,7 +119,7 @@ export const FindOrderForm: React.FC<Props> = ({ initialEmail }) => {
         </FormItem>
         {submitError && <FormError message={submitError} />}
         <Button type="submit" className="self-start" variant="default" disabled={isSubmitting}>
-          {isSubmitting ? 'Изпраща се...' : 'Намери поръчка'}
+          {isSubmitting ? ui('Изпраща се...') : ui('Намери поръчка')}
         </Button>
       </form>
     </Fragment>

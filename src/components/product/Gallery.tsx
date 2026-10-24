@@ -1,5 +1,7 @@
 'use client'
 
+import { useLocale } from '@/i18n/provider'
+
 import type { Product } from '@/payload-types'
 
 import React from 'react'
@@ -14,6 +16,7 @@ type Props = {
 }
 
 export const Gallery: React.FC<Props> = ({ gallery, productTitle }) => {
+  const locale = useLocale()
   const [current, setCurrent] = React.useState(0)
   const [, setApi] = React.useState<CarouselApi>()
   const currentImage = gallery[current]
@@ -23,16 +26,17 @@ export const Gallery: React.FC<Props> = ({ gallery, productTitle }) => {
     <div>
       <div className="relative mb-8 aspect-square w-full overflow-hidden rounded-md border border-black/8 bg-white">
         {currentUrl ? (
-            <Image
-              alt={getProductImageAlt({
-                mediaAlt:
-                  currentImage?.image && typeof currentImage.image !== 'string'
-                    ? (currentImage.image.alt ?? null)
-                    : null,
-                imageAlt: currentImage?.alt,
-                index: current,
-                productTitle,
-              })}
+          <Image
+            alt={getProductImageAlt({
+              locale,
+              mediaAlt:
+                currentImage?.image && typeof currentImage.image !== 'string'
+                  ? (currentImage.image.alt ?? null)
+                  : null,
+              imageAlt: currentImage?.alt,
+              index: current,
+              productTitle,
+            })}
             className="object-contain"
             fill
             sizes="(min-width: 1024px) 40rem, 100vw"
@@ -63,8 +67,11 @@ export const Gallery: React.FC<Props> = ({ gallery, productTitle }) => {
                 >
                   <Image
                     alt={getProductImageAlt({
+                      locale,
                       mediaAlt:
-                        item.image && typeof item.image !== 'string' ? (item.image.alt ?? null) : null,
+                        item.image && typeof item.image !== 'string'
+                          ? (item.image.alt ?? null)
+                          : null,
                       imageAlt: item.alt,
                       index: i,
                       productTitle,
