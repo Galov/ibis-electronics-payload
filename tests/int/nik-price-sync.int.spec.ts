@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { slugField, type FieldHook, type PayloadRequest } from 'payload'
 
 vi.mock('@/utilities/uploadProductImagesToR2', () => ({
-  uploadProductImagesToR2: vi.fn(),
+  uploadProductImagesToR2: vi.fn(async () => []),
 }))
 
 import { nikPriceSyncHandler } from '@/endpoints/nik-price-sync'
@@ -56,6 +56,39 @@ const setup = (event: string, enabled = true) => {
 }
 
 describe('NIK product synchronization', () => {
+  it('creates a new product in BG even with an EN request locale', async () => {
+    const { req } = setup('product.created')
+    req.locale = 'en' as typeof req.locale
+    vi.mocked(req.payload.find).mockResolvedValue({ docs: [] } as never)
+    const create = vi.fn(async ({ data }) => ({ id: 'new', ...data }))
+    req.payload.create = create as typeof req.payload.create
+    req.json = async () => ({
+      event: 'product.created',
+      items: [
+        {
+          sku: 'NEW-SKU',
+          sourceId: 44,
+          data: { title: 'Нов продукт', description: 'Описание', sourcePrice: 10, stockQty: 2 },
+        },
+      ],
+    })
+    const response = await nikPriceSyncHandler(req)
+    expect(response.status).toBe(200)
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'products',
+        locale: 'bg',
+        fallbackLocale: false,
+        req,
+        data: expect.objectContaining({
+          title: 'Нов продукт',
+          description: 'Описание',
+          sku: 'NEW-SKU',
+        }),
+      }),
+    )
+  })
+
   it('updates stock to zero without regenerating a migrated product URL or changing editorial data', async () => {
     const { req, update, product } = setup('product.price_stock_updated')
     const response = await nikPriceSyncHandler(req)
@@ -64,6 +97,8 @@ describe('NIK product synchronization', () => {
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: product.id,
+        locale: 'bg',
+        fallbackLocale: false,
         req,
         data: {
           generateSlug: false,

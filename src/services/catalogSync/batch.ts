@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import type { PayloadRequest, Where } from 'payload'
 
 import { CatalogSyncError } from './errors'
@@ -214,6 +215,7 @@ export const loadCatalogSyncBatchCandidates = async ({
   while (true) {
     const result = await req.payload.find({
       collection: 'products',
+      ...catalogSourceLocale,
       depth: 0,
       limit: pageSize,
       overrideAccess: true,

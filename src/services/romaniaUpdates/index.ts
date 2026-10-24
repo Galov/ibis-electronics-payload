@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import type { Payload, PayloadRequest } from 'payload'
 import type { Product, RomaniaUpdateStream } from '@/payload-types'
 import { buildRomaniaUpdate, validateRomaniaUpdate, type UpdateKind } from './contract'
@@ -35,6 +36,7 @@ export async function deliverRomaniaUpdate({
       throw new Error('ROMANIA_UPDATES_INVALID_EVENT')
     const product = await payload.findByID({
       collection: 'products',
+      ...catalogSourceLocale,
       id: stream.sourceProductId,
       depth: 0,
       overrideAccess: true,
@@ -163,6 +165,7 @@ export async function applyNikUpdateAndForward({
     try {
       const previous = await req.payload.findByID({
         collection: 'products',
+        ...catalogSourceLocale,
         id: productId,
         depth: 0,
         overrideAccess: true,

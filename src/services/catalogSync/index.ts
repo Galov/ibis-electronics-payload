@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import type { Payload } from 'payload'
 
 import { resolveCatalogSyncProductCategories } from './categories'
@@ -49,6 +50,7 @@ export const loadCatalogSyncEvent = async ({
   onStage?.('load-product')
   const product = await payload.findByID({
     collection: 'products',
+    ...catalogSourceLocale,
     depth: 2,
     id: productId,
     overrideAccess: true,

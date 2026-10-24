@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '../../src/i18n/catalogSource'
 import 'dotenv/config'
 
 import { getPayload } from 'payload'
@@ -22,7 +23,10 @@ const batchSize = 200
 
 const shouldApply = process.argv.includes('--apply')
 
-const normalizeTitle = (value?: string | null) => String(value || '').trim().toLocaleLowerCase('bg-BG')
+const normalizeTitle = (value?: string | null) =>
+  String(value || '')
+    .trim()
+    .toLocaleLowerCase('bg-BG')
 
 const getParentID = (category: CategoryItem) => {
   if (!category.parent) return 'root'
@@ -55,6 +59,7 @@ const fetchAll = async <T extends { id: string }>({
   while (true) {
     const result = await payload.find({
       collection,
+      ...catalogSourceLocale,
       depth: 1,
       limit: batchSize,
       overrideAccess: true,
@@ -157,6 +162,7 @@ const main = async () => {
       await payload.update({
         id: product.id,
         collection: 'products',
+        ...catalogSourceLocale,
         data: {
           categories: [...nextCategoryIDs],
         },

@@ -1,3 +1,4 @@
+import { isEnglishTextOnlyProductChange } from '@/i18n/productChanges'
 import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
 
 import { checkRole } from '@/access/utilities'
@@ -11,9 +12,12 @@ export const syncProductReviewQueueAfterChange: CollectionAfterChangeHook = asyn
   context,
   doc,
   operation,
+  previousDoc,
   req,
 }) => {
   if (context.skipProductReviewQueue) return doc
+  if (isEnglishTextOnlyProductChange({ doc, previousDoc, operation, locale: req.locale }))
+    return doc
 
   if (operation === 'create') {
     await req.payload.create({

@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import type { Payload, PayloadHandler, PayloadRequest } from 'payload'
 import { uploadProductImagesToR2 } from '@/utilities/uploadProductImagesToR2'
 import { applyNikUpdateAndForward } from '@/services/romaniaUpdates'
@@ -165,6 +166,7 @@ const findProduct = async ({
   if (sourceId !== null) {
     const bySourceId = await payload.find({
       collection: 'products',
+      ...catalogSourceLocale,
       depth: 0,
       limit: 1,
       overrideAccess: true,
@@ -189,6 +191,7 @@ const findProduct = async ({
   if (sku) {
     const bySku = await payload.find({
       collection: 'products',
+      ...catalogSourceLocale,
       depth: 0,
       limit: 1,
       overrideAccess: true,
@@ -263,6 +266,7 @@ const resolveCategoryIds = async ({
 
   const result = await payload.find({
     collection: 'categories',
+    ...catalogSourceLocale,
     depth: 0,
     limit: ids.length,
     overrideAccess: true,
@@ -328,6 +332,7 @@ const updatePriceAndStock = async ({
     update: (request) =>
       payload.update({
         collection: 'products',
+        ...catalogSourceLocale,
         id: productId,
         data: {
           generateSlug: false,
@@ -485,6 +490,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
 
       await req.payload.create({
         collection: 'products',
+        ...catalogSourceLocale,
         data: {
           ...(sourceId !== null ? { sourceId } : {}),
           sku,
@@ -598,6 +604,7 @@ export const nikPriceSyncHandler: PayloadHandler = async (req) => {
     if (parsedRequest.event === 'product.deactivated') {
       await req.payload.update({
         collection: 'products',
+        ...catalogSourceLocale,
         id: product.id,
         data: {
           generateSlug: false,

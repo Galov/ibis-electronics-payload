@@ -72,6 +72,29 @@ const adminRequest = (product: CatalogSyncSourceProduct, records: CategoryRecord
 }
 
 describe('Catalog Sync 1.2 category hierarchy', () => {
+  it('reads BG product and category ancestors even when the admin request uses EN', async () => {
+    const { req } = adminRequest(sourceProduct(['leaf']), [
+      { id: 'root', title: 'Каталог', parent: null },
+      { id: 'leaf', title: 'Части', parent: 'root' },
+    ])
+    req.locale = 'en'
+    const loaded = await loadCatalogSyncProductForUser({ productId: 'product', req })
+    expect(loaded.categories?.[0]).toMatchObject({
+      title: 'Части',
+      ancestors: [{ title: 'Каталог' }],
+    })
+    expect(req.payload.findByID).toHaveBeenCalledTimes(3)
+    for (const [options] of req.payload.findByID.mock.calls) {
+      expect(options).toMatchObject({
+        locale: 'bg',
+        fallbackLocale: false,
+        overrideAccess: false,
+        req,
+        user: req.user,
+      })
+    }
+  })
+
   it('uses an empty ancestors list for a root category', async () => {
     const { categories } = await resolve(
       [{ id: 'root', parent: null, title: 'Категории' }],

@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '../../src/i18n/catalogSource'
 import { getPayload } from 'payload'
 
 import config from '../../src/payload.config'
@@ -36,6 +37,12 @@ export async function importIntoPayload({
   const payload = await getPayload({ config })
   const failedProducts: ProductImportFailure[] = []
 
+  if (replaceCatalog && payload.config.localization) {
+    throw new Error(
+      'Catalog replacement is disabled for localized data; use an incremental import.',
+    )
+  }
+
   if (replaceCatalog) {
     await deleteExistingCatalog(payload)
   }
@@ -50,7 +57,11 @@ export async function importIntoPayload({
     },
   })
 
-  const categoryIdBySourceTaxonomyId = await upsertCategories(payload, categories, existingCategories)
+  const categoryIdBySourceTaxonomyId = await upsertCategories(
+    payload,
+    categories,
+    existingCategories,
+  )
 
   const existingBrands = await fetchAll<ExistingBrand>({
     collection: 'brands',
@@ -90,7 +101,9 @@ export async function importIntoPayload({
   }
 }
 
-async function deleteExistingCatalog(payload: Awaited<ReturnType<typeof getPayload>>): Promise<void> {
+async function deleteExistingCatalog(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+): Promise<void> {
   console.log('Deleting existing catalog...')
   await deleteAll(payload, 'products')
   await deleteAll(payload, 'categories')
@@ -107,6 +120,7 @@ async function deleteAll(
   while (true) {
     const result = await payload.find({
       collection,
+      ...catalogSourceLocale,
       depth: 0,
       limit: 200,
       overrideAccess: true,
@@ -164,6 +178,7 @@ async function upsertCategories(
       await payload.update({
         id: existingCategory.id,
         collection: 'categories',
+        ...catalogSourceLocale,
         data,
         overrideAccess: true,
       })
@@ -176,6 +191,7 @@ async function upsertCategories(
 
     const created = await payload.create({
       collection: 'categories',
+      ...catalogSourceLocale,
       data,
       overrideAccess: true,
     })
@@ -206,6 +222,7 @@ async function upsertCategories(
     await payload.update({
       id: childId,
       collection: 'categories',
+      ...catalogSourceLocale,
       data: {
         parent: parentId,
       },
@@ -346,10 +363,11 @@ async function upsertProducts(
           await payload.update({
             id: existingProduct.id,
             collection: 'products',
+            ...catalogSourceLocale,
             context: {
               preserveMissingSourcePrice: true,
             },
-            data,
+            data: { ...data, slug: existingProduct.slug || product.slug, generateSlug: false },
             overrideAccess: true,
           })
           if (processed % 100 === 0) {
@@ -360,6 +378,7 @@ async function upsertProducts(
 
         const created = await payload.create({
           collection: 'products',
+          ...catalogSourceLocale,
           context: {
             preserveMissingSourcePrice: true,
           },
@@ -392,9 +411,7 @@ async function upsertProducts(
 
         failedProducts.push(failure)
 
-        console.error(
-          JSON.stringify(failure, null, 2),
-        )
+        console.error(JSON.stringify(failure, null, 2))
       }
     }
   }
@@ -423,6 +440,7 @@ async function fetchAll<T extends { id: string }>({
   while (hasNextPage) {
     const result = await payload.find({
       collection,
+      ...catalogSourceLocale,
       depth: 0,
       limit: 200,
       overrideAccess: true,

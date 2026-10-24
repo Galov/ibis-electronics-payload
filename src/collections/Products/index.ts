@@ -1,3 +1,4 @@
+import { isEnglishTextOnlyProductChange } from '@/i18n/productChanges'
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import type { Access } from 'payload'
 import { slugField } from 'payload'
@@ -159,7 +160,9 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     afterChange: [
       ...(defaultCollection.hooks?.afterChange || []),
       syncProductReviewQueueAfterChange,
-      async ({ doc, req }) => {
+      async ({ doc, previousDoc, operation, req }) => {
+        if (isEnglishTextOnlyProductChange({ doc, previousDoc, operation, locale: req.locale }))
+          return doc
         await queueMerchantProduct(doc.id, req)
       },
     ],

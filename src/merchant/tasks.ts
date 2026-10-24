@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import { createHash } from 'node:crypto'
 import type { PayloadRequest, TaskConfig } from 'payload'
 import { publicProductWhere } from '@/access/publicProductWhere'
@@ -53,6 +54,7 @@ export async function syncMerchantProduct(
     const product = (
       await req.payload.find({
         collection: 'products',
+        ...catalogSourceLocale,
         where: { id: { equals: productId } },
         limit: 1,
         depth: 1,
@@ -148,6 +150,7 @@ export const merchantReconcileTask: TaskConfig<{
     const collection = phase === 'products' ? 'products' : 'merchant-sync-entries'
     const result = await req.payload.find({
       collection,
+      ...(phase === 'products' ? catalogSourceLocale : {}),
       limit: 100,
       sort: 'id',
       depth: 0,

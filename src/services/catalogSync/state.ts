@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import type { PayloadRequest } from 'payload'
 
 export const catalogSyncContext = {
@@ -38,6 +39,7 @@ export const updateCatalogSyncProductState = async ({
 }) =>
   req.payload.update({
     collection: 'products',
+    ...catalogSourceLocale,
     context: catalogSyncContext,
     data: {
       catalogSync: {

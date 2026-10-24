@@ -114,3 +114,19 @@ Check the source fingerprint again before saving an async translation. Use a
 protected server-side API key and explicit administrative batch start. No paid API
 requests, migration, configuration activation or external sync is part of this
 preparation commit.
+
+## Integration preparation implemented
+
+The source-language options now explicitly select BG without fallback for NIK,
+WooCommerce, RO catalog loaders/category ancestry/batches/state writes, RO update
+reads, Merchant reads and the tracked catalog maintenance scripts. A small type
+bridge is isolated in `src/i18n/catalogSource.ts` until localized types are generated.
+Payload ignores these locale options while localization is disabled; no schema
+or database activation is included.
+
+EN text-only updates skip Merchant queueing and do not complete product review.
+Shared-field changes still follow the existing hooks. Woo incremental updates keep
+existing product slugs; destructive replacement is blocked for localized catalogs.
+The legacy version repair writer is blocked when localization is enabled, pending
+its separate adaptation to full locale documents. Offline planning remains available.
+No translation jobs or paid API requests have been introduced in this stage.

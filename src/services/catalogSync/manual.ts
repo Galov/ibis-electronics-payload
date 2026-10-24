@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import type { PayloadRequest } from 'payload'
 
 import {
@@ -74,6 +75,7 @@ export const loadCatalogSyncProductForServer = async ({
 }) => {
   const product = (await req.payload.findByID({
     collection: 'products',
+    ...catalogSourceLocale,
     depth: 2,
     id: productId,
     overrideAccess: true,
@@ -111,6 +113,7 @@ export const loadCatalogSyncProductForUser = async ({
 }) => {
   const product = (await req.payload.findByID({
     collection: 'products',
+    ...catalogSourceLocale,
     depth: 2,
     id: productId,
     overrideAccess: false,

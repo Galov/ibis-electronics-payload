@@ -280,6 +280,8 @@ describe('Romanian catalog sync contract', () => {
     expect(event.product.sourceProductId).toBe('6a918d8ba5b0f1e1420cb292')
     expect(findByID).toHaveBeenCalledWith({
       collection: 'products',
+      locale: 'bg',
+      fallbackLocale: false,
       depth: 2,
       id: '6a918d8ba5b0f1e1420cb292',
       overrideAccess: true,

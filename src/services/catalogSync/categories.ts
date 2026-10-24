@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '@/i18n/catalogSource'
 import type { Payload, PayloadRequest } from 'payload'
 
 import type { Category } from '@/payload-types'
@@ -147,6 +148,7 @@ export const resolveCatalogSyncProductCategoriesForUser = async ({
   withResolvedCategories(product, async (id) =>
     req.payload.findByID({
       collection: 'categories',
+      ...catalogSourceLocale,
       depth: 0,
       id,
       overrideAccess: false,
@@ -167,6 +169,7 @@ export const resolveCatalogSyncProductCategories = async ({
   withResolvedCategories(product, async (id) =>
     payload.findByID({
       collection: 'categories',
+      ...catalogSourceLocale,
       depth: 0,
       id,
       overrideAccess: true,

@@ -1,3 +1,4 @@
+import { catalogSourceLocale } from '../../src/i18n/catalogSource'
 import 'dotenv/config'
 
 import configPromise from '@payload-config'
@@ -27,6 +28,7 @@ const fetchAllProducts = async (
   while (true) {
     const result = await payload.find({
       collection: 'products',
+      ...catalogSourceLocale,
       depth: 0,
       limit: 500,
       overrideAccess: true,
@@ -138,6 +140,7 @@ const run = async () => {
     await payload.update({
       id: candidate.id,
       collection: 'products',
+      ...catalogSourceLocale,
       data: {
         slug: candidate.nextSlug,
       },
