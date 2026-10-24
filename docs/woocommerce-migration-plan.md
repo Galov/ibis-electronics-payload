@@ -1,5 +1,7 @@
 # WooCommerce Migration Plan
 
+> Historical migration reference. The WooCommerce importer and its npm command were removed on 2026-10-24. The separate slug-repair and category-merge tools remain. Existing catalog data is unchanged.
+
 ## Goal
 
 Migrate the legacy WooCommerce catalog from [`nikelect_woocdb2019.sql`](/Users/ivogalov/Downloads/Projects/NIK electric/NikElectricPayload/nikelect_woocdb2019.sql) into the current Payload app after the storefront cleanup.

@@ -14,7 +14,6 @@
     "dev:prod": "cross-env NODE_OPTIONS=--no-deprecation rm -rf .next && npm run build && npm run start",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
-    "import:woocommerce": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/woocommerce/import.ts",
     "repair:product-slugs": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/woocommerce/repairProductSlugs.ts",
     "images:migrate:r2": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/migrateProductImagesToR2.ts",
     "images:backfill-r2-cache": "cross-env NODE_OPTIONS=--no-deprecation node --import=tsx/esm scripts/backfillR2ImageCacheHeaders.ts",

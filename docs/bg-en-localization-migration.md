@@ -30,7 +30,7 @@ an unmigrated version would otherwise reintroduce the old shape.
 | Path / integration | Current behavior | Required before activation |
 | --- | --- | --- |
 | `src/endpoints/nik-price-sync.ts` | NIK finds by sourceId/SKU, creates products with BG title/optional description, updates shared price and stock. | Explicit `locale: 'bg'` on product/category reads and writes. BG imports must preserve EN. Keep event IDs and stock/price contracts unchanged. |
-| `scripts/woocommerce/payloadImport.ts` | Imports/upserts categories and products with scalar BG titles/descriptions. | Explicit BG locale on reads/writes. Rehearse repeat import after translation and verify EN survives. |
+| Removed WooCommerce importer | Historical catalog migration tool, removed on 2026-10-24 along with its npm command. | No longer part of the localization rollout. Existing imported data remains unchanged. |
 | `src/services/catalogSync/{index,manual,batch,categories}.ts` | Loads products, ancestors and category titles to build content events for ibis-electronics.ro. No explicit locale is set. | Explicit BG on all source lookups, including populated relations and category parents; preserve ACL and request transaction context. |
 | `src/services/catalogSync/fingerprints.ts` | Content hash excludes price/stock but includes normalized source text. | Calculate from explicit BG projection. EN-only edit must leave BG hash and RO content status unchanged. |
 | `src/services/romaniaUpdates/index.ts` | Separate price/stock journal; only products already sent through content workflow are eligible. Compares saved vs previous shared values. | Preserve existing revision, replay and superseding behavior. EN-only save must not emit price/stock events. |
@@ -93,7 +93,7 @@ coverage. Verify export counts against the clone, including version counts.
    durable per-document journaling and full preflight before writes. It must avoid
    Payload hooks, preserve BSON types and timestamps, detect concurrent edits and
    support restart/partial-run recovery. **No database executor is included yet.**
-5. On the clone, test NIK create/replay/price/stock, Woo repeat import, RO category
+5. On the clone, test NIK create/replay/price/stock, RO category
    paths/content hash, RO price/stock revisions and NIK order SKU contract. Test
    that EN-only text edits produce no commercial events or BG content changes.
    Then rehearse rollback, including refusal after translations/new writes.
@@ -131,4 +131,5 @@ At the user's request, the preparation changes to the legacy WooCommerce tools,
 tracked catalog maintenance scripts and version repair endpoint were reverted.
 Their previous behavior is unchanged. Their audit entries above are future review
 items, not implemented changes; these tools have not been run. The WooCommerce
-tools remain in the repository pending a separate decision about removal.
+importer and its npm command were subsequently removed at the user's request.
+The separate slug-repair and category-merge tools remain unchanged.
