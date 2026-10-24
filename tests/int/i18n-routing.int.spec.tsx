@@ -49,6 +49,14 @@ describe('storefront language routing', () => {
     expect(localizeHref('/products/model.v2', 'en')).toBe('/en/products/model.v2')
   })
 
+  it('keeps first-party English navigation local while leaving the Romanian shop external', () => {
+    expect(localizeHref('https://ibis-electronics.com/kategorii', 'en')).toBe('/en/kategorii')
+    expect(localizeHref('https://ibis-electronics.ro/', 'en')).toBe('https://ibis-electronics.ro/')
+    expect(localizeHref('https://ibis-electronics.com/api/products', 'en')).toBe(
+      'https://ibis-electronics.com/api/products',
+    )
+  })
+
   it('renders shared product links using the server-provided locale', () => {
     const html = renderToStaticMarkup(
       <LocaleProvider locale="en">

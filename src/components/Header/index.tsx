@@ -1,3 +1,5 @@
+import { hasEnglishRoute, type Locale } from '@/i18n/config'
+import { translateCommerce } from '@/i18n/commerce'
 import type { Category, Header as HeaderGlobal, Page, Post, Product } from '@/payload-types'
 
 import { buildCategoryPath } from '@/utilities/category'
@@ -42,7 +44,7 @@ const normalizeNavItems = (navItems: HeaderGlobal['navItems']): HeaderNavItem[] 
           ? resolveReferenceHref(item.link.reference)
           : item.link.type === 'internal'
             ? item.link.internalPath || null
-          : item.link.url || null
+            : item.link.url || null
 
       if (!href || !item.link.label) return null
 
@@ -57,8 +59,25 @@ const normalizeNavItems = (navItems: HeaderGlobal['navItems']): HeaderNavItem[] 
   return normalizedItems.length > 0 ? normalizedItems : fallbackNavItems
 }
 
-export async function Header() {
+export async function Header({ locale = 'bg' }: { locale?: Locale }) {
   const header = (await getCachedGlobal('header', 1)()) as HeaderGlobal
 
-  return <HeaderClient navItems={normalizeNavItems(header.navItems)} />
+  return (
+    <HeaderClient
+      navItems={normalizeNavItems(header.navItems)
+        .filter((item) => {
+          if (locale === 'bg') return true
+          const url = new URL(item.href, 'https://ibis-electronics.com')
+          const internal =
+            item.href.startsWith('/') ||
+            ['ibis-electronics.com', 'www.ibis-electronics.com'].includes(url.hostname)
+          // Only show English destinations that have an implemented route.
+          return !internal || hasEnglishRoute(url.pathname)
+        })
+        .map((item) => ({
+          ...item,
+          label: translateCommerce(locale, item.label),
+        }))}
+    />
+  )
 }

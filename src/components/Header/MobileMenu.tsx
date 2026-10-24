@@ -12,7 +12,9 @@ import {
 } from '@/components/ui/sheet'
 import { useAuth } from '@/providers/Auth'
 import { MenuIcon } from 'lucide-react'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
+import { CommerceText, useCommerceTranslation } from '@/i18n/CommerceText'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { usePathname, useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
@@ -21,6 +23,7 @@ interface Props {
 }
 
 export function MobileMenu({ menu }: Props) {
+  const ui = useCommerceTranslation()
   const { user } = useAuth()
 
   const pathname = usePathname()
@@ -43,20 +46,26 @@ export function MobileMenu({ menu }: Props) {
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
-      <SheetTrigger className="relative flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:bg-black dark:text-white">
+      <SheetTrigger
+        aria-label={ui('Меню')}
+        className="relative flex h-11 w-11 items-center justify-center rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:bg-black dark:text-white"
+      >
         <MenuIcon className="h-4" />
       </SheetTrigger>
 
       <SheetContent side="left" className="w-[86vw] max-w-[360px] px-5">
         <SheetHeader className="px-0 pt-4 pb-2">
-          <SheetTitle className="text-xl font-normal text-[rgb(1,55,186)]">Меню</SheetTitle>
+          <SheetTitle className="text-xl font-normal text-[rgb(1,55,186)]">
+            <CommerceText source="Меню" />
+          </SheetTitle>
 
           <SheetDescription />
+          <LanguageSwitcher />
         </SheetHeader>
 
-        <nav className="py-3" aria-label="Основна навигация">
+        <nav className="py-3" aria-label={ui('Основна навигация')}>
           <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-primary/45">
-            Навигация
+            <CommerceText source="Навигация" />
           </p>
           {menu?.length ? (
             <ul className="flex w-full flex-col divide-y divide-primary/8">
@@ -76,7 +85,7 @@ export function MobileMenu({ menu }: Props) {
         {user ? (
           <section className="mt-5 rounded-2xl border border-[rgb(1,55,186)]/10 bg-[rgb(250,251,253)] px-4 py-4">
             <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-primary/45">
-              Моят профил
+              <CommerceText source="Моят профил" />
             </p>
             <ul className="flex flex-col divide-y divide-primary/8">
               <li>
@@ -84,7 +93,7 @@ export function MobileMenu({ menu }: Props) {
                   className="block py-3 text-[16px] font-normal text-primary/75 transition hover:text-[rgb(1,55,186)]"
                   href="/orders"
                 >
-                  Поръчки
+                  <CommerceText source="Поръчки" />
                 </Link>
               </li>
               <li>
@@ -92,7 +101,7 @@ export function MobileMenu({ menu }: Props) {
                   className="block py-3 text-[16px] font-normal text-primary/75 transition hover:text-[rgb(1,55,186)]"
                   href="/account/addresses"
                 >
-                  Адреси
+                  <CommerceText source="Адреси" />
                 </Link>
               </li>
               <li>
@@ -100,12 +109,14 @@ export function MobileMenu({ menu }: Props) {
                   className="block py-3 text-[16px] font-normal text-primary/75 transition hover:text-[rgb(1,55,186)]"
                   href="/account"
                 >
-                  Настройки на профила
+                  <CommerceText source="Настройки на профила" />
                 </Link>
               </li>
               <li className="pt-4">
                 <Button asChild className="w-full font-normal" variant="outline">
-                  <Link href="/logout">Изход</Link>
+                  <Link href="/logout">
+                    <CommerceText source="Изход" />
+                  </Link>
                 </Button>
               </li>
             </ul>
@@ -113,17 +124,24 @@ export function MobileMenu({ menu }: Props) {
         ) : (
           <section className="mt-5 rounded-2xl border border-[rgb(1,55,186)]/10 bg-[rgb(250,251,253)] px-4 py-4">
             <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-primary/45">
-              Моят профил
+              <CommerceText source="Моят профил" />
             </p>
             <div className="flex flex-col gap-2">
               <Button asChild className="w-full font-normal" variant="outline">
-                <Link href="/login">Вход</Link>
+                <Link href="/login">
+                  <CommerceText source="Вход" />
+                </Link>
               </Button>
               <span className="text-center text-xs uppercase tracking-[0.14em] text-primary/38">
-                или
+                <CommerceText source="или" />
               </span>
-              <Button asChild className="w-full bg-[rgb(1,55,186)] font-normal hover:bg-[rgb(0,46,158)]">
-                <Link href="/create-account">Създай профил</Link>
+              <Button
+                asChild
+                className="w-full bg-[rgb(1,55,186)] font-normal hover:bg-[rgb(0,46,158)]"
+              >
+                <Link href="/create-account">
+                  <CommerceText source="Създай профил" />
+                </Link>
               </Button>
             </div>
           </section>

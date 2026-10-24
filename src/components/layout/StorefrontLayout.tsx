@@ -2,11 +2,9 @@
 import type { ReactNode } from 'react'
 import type { Locale } from '@/i18n/config'
 import { LocaleProvider } from '@/i18n/provider'
-import { EnglishShellHeader } from '@/components/LanguageSwitcher/EnglishShellHeader'
 import type { Metadata } from 'next'
 
 import { AdminBar } from '@/components/AdminBar'
-import { EnglishFooter } from '@/components/info/EnglishFooter'
 import { CookieConsentBanner } from '@/components/CookieConsent/Banner'
 import { COOKIE_CONSENT_STORAGE_KEY } from '@/components/CookieConsent/shared'
 import { Footer } from '@/components/Footer'
@@ -133,9 +131,9 @@ export default async function RootLayout({
               <AdminBar />
               <LivePreviewListener />
 
-              {locale === 'en' ? <EnglishShellHeader /> : <Header />}
+              <Header locale={locale} />
               <main className="flex-1">{children}</main>
-              {locale === 'bg' ? <Footer /> : <EnglishFooter analyticsEnabled={Boolean(gtmID)} />}
+              <Footer locale={locale} />
               <CookieConsentBanner analyticsEnabled={Boolean(gtmID)} />
             </div>
           </Providers>

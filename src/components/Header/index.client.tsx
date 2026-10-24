@@ -9,7 +9,9 @@ import { SiteLogo } from '@/components/Logo/SiteLogo'
 import { useAuth } from '@/providers/Auth'
 import clsx from 'clsx'
 import { ChevronDown } from 'lucide-react'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
+import { stripLocale } from '@/i18n/config'
+import { CommerceText } from '@/i18n/CommerceText'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
@@ -41,6 +43,7 @@ const profileItems = [
 ] as const
 
 const isNavItemActive = (href: string, pathname: string) => {
+  pathname = stripLocale(pathname)
   if (href === '/magazin') {
     return (
       pathname.startsWith('/magazin') ||
@@ -131,7 +134,9 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
         <div className="container hidden h-11 items-center justify-end md:flex">
           <div className="flex items-center gap-2">
             <Suspense fallback={null}>
-              <LanguageSwitcher />
+              <div className="text-white/82">
+                <LanguageSwitcher />
+              </div>
             </Suspense>
             {user ? (
               <div className="relative" ref={profileMenuRef}>
@@ -144,7 +149,9 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
                   onClick={() => setProfileOpen((current) => !current)}
                   type="button"
                 >
-                  <span>Моят профил</span>
+                  <span>
+                    <CommerceText source="Моят профил" />
+                  </span>
                   <ChevronDown
                     className={clsx('h-3.5 w-3.5 transition-transform duration-200', {
                       'rotate-180': profileOpen,
@@ -160,7 +167,7 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
                         className="block px-4 py-2.5 text-sm text-primary/72 transition hover:bg-black/[0.03] hover:text-primary"
                         href={item.href}
                       >
-                        {item.label}
+                        <CommerceText source={item.label} />
                       </Link>
                     ))}
                   </div>
@@ -172,14 +179,14 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
                   className="rounded-[2px] px-3 py-2 text-sm text-white/82 transition-colors hover:bg-white/8 hover:text-white"
                   href="/login"
                 >
-                  Вход
+                  <CommerceText source="Вход" />
                 </Link>
                 <span className="text-white/28">|</span>
                 <Link
                   className="rounded-[2px] px-3 py-2 text-sm text-white/82 transition-colors hover:bg-white/8 hover:text-white"
                   href="/create-account"
                 >
-                  Регистрация
+                  <CommerceText source="Регистрация" />
                 </Link>
               </div>
             )}
@@ -255,7 +262,7 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
                   itemRefs.current[item.href] = element
                 }}
               >
-                {item.label}
+                <CommerceText source={item.label} />
               </Link>
             ))}
           </div>

@@ -2,6 +2,7 @@ import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { LocaleProvider } from '@/i18n/provider'
+import { getCheckoutDestination } from '@/ecommerce/checkoutDestination'
 import { CheckoutPage } from '@/components/checkout/CheckoutPage'
 
 const mocks = vi.hoisted(() => ({
@@ -82,6 +83,10 @@ describe('English guest checkout', () => {
         <CheckoutPage />
       </LocaleProvider>,
     )
+    expect(screen.queryByRole('button', { name: 'Place order' })).toBeNull()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Choose a country' }), {
+      target: { value: 'BG' },
+    })
     expect(screen.getByText(/Delivery is currently available within Bulgaria only/)).toBeTruthy()
     expect(
       (screen.getByRole('button', { name: 'Place order' }) as HTMLButtonElement).disabled,
@@ -119,5 +124,43 @@ describe('English guest checkout', () => {
       ),
     )
     expect(mocks.clearCart).toHaveBeenCalledTimes(1)
+  })
+  it('routes Romania to the Romanian store without submitting the Bulgarian cart', () => {
+    render(
+      <LocaleProvider locale="en">
+        <CheckoutPage />
+      </LocaleProvider>,
+    )
+    fireEvent.change(screen.getByRole('combobox', { name: 'Choose a country' }), {
+      target: { value: 'RO' },
+    })
+    expect(
+      screen.getByRole('link', { name: 'Continue to our Romanian store' }).getAttribute('href'),
+    ).toBe('https://ibis-electronics.ro/')
+    expect(screen.queryByRole('button', { name: 'Place order' })).toBeNull()
+    expect(mocks.confirmOrder).not.toHaveBeenCalled()
+  })
+  it('offers Germany for testing with card-only payment and no unpriced submission', () => {
+    render(
+      <LocaleProvider locale="en">
+        <CheckoutPage />
+      </LocaleProvider>,
+    )
+    fireEvent.change(screen.getByRole('combobox', { name: 'Choose a country' }), {
+      target: { value: 'DE' },
+    })
+    expect(screen.getByText('Online card payment only')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Pay online' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+    expect(screen.queryByText('Cash on delivery')).toBeNull()
+    expect(getCheckoutDestination('DE')).toEqual({
+      kind: 'preview',
+      country: 'DE',
+      paymentMethods: ['revolut'],
+      canSubmit: false,
+    })
+    expect(getCheckoutDestination('US')).toEqual({ kind: 'unavailable' })
+    expect(mocks.confirmOrder).not.toHaveBeenCalled()
   })
 })

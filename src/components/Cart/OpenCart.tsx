@@ -1,6 +1,5 @@
 'use client'
 
-import { useLocale } from '@/i18n/provider'
 import clsx from 'clsx'
 import { Text } from '@/i18n/Text'
 import { Button } from '@/components/ui/button'
@@ -8,16 +7,13 @@ import { ShoppingCart } from 'lucide-react'
 import React from 'react'
 
 export function OpenCartButton({ quantity, ...rest }: { quantity?: number }) {
-  const locale = useLocale()
   return (
     <Button
       variant="link"
       size="clear"
       className={clsx(
         'group relative inline-flex h-11 w-11 items-center justify-center rounded-md border border-[rgb(1,55,186)]/12 bg-white font-sans text-sm font-medium no-underline text-[rgb(1,55,186)] transition-colors hover:bg-[rgb(1,55,186)]/6 hover:text-[rgb(1,55,186)] hover:no-underline md:h-auto md:w-auto md:gap-2 md:rounded-[2px] md:border-0 md:bg-transparent md:px-3 md:py-2',
-        locale === 'en'
-          ? 'md:text-primary md:hover:text-primary'
-          : 'md:text-white/82 md:hover:bg-white/8 md:hover:text-white',
+        'md:text-white/82 md:hover:bg-white/8 md:hover:text-white',
       )}
       {...rest}
     >

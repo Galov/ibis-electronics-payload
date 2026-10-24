@@ -15,6 +15,24 @@ export const stripLocale = (pathname: string): string => {
 
 /** Only local page paths are localized. Assets, API URLs and external links stay intact. */
 export const localizeHref = (href: string, locale: Locale): string => {
+  if (locale === 'en' && /^https?:\/\//i.test(href)) {
+    try {
+      const url = new URL(href)
+      const configuredOrigin = new URL(
+        process.env.NEXT_PUBLIC_SERVER_URL || 'https://ibis-electronics.com',
+      ).origin
+      const sameSite =
+        url.origin === configuredOrigin ||
+        ['https://ibis-electronics.com', 'https://www.ibis-electronics.com'].includes(url.origin)
+      const nonPage =
+        /^\/(?:api|admin|_next)(?:\/|$)/.test(url.pathname) ||
+        (!hasEnglishRoute(url.pathname) && /\.[^/]+$/.test(url.pathname))
+      if (sameSite && !nonPage)
+        return localizeHref(`${url.pathname}${url.search}${url.hash}`, locale)
+    } catch {
+      return href
+    }
+  }
   if (!href.startsWith('/') || href.startsWith('//')) return href
   const boundary = href.search(/[?#]/)
   const pathname = boundary === -1 ? href : href.slice(0, boundary)
@@ -37,6 +55,7 @@ export const hasEnglishRoute = (pathname: string): boolean => {
     path === '/' ||
     path === '/magazin' ||
     [
+      'kategorii',
       'checkout',
       'checkout/confirm-order',
       'account',

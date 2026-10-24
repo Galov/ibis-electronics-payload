@@ -1,5 +1,7 @@
 'use client'
 
+import { CheckoutCountryStep } from './CheckoutCountryStep'
+import { getCheckoutDestination, type CheckoutCountry } from '@/ecommerce/checkoutDestination'
 import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
 
 import { BoxNowOfficeSelector } from '@/components/checkout/BoxNowOfficeSelector'
@@ -35,6 +37,7 @@ export const CheckoutPage: React.FC<{
 }> = ({ freeShippingThreshold: _freeShippingThreshold, revolutPayEnabled = false }) => {
   const ui = useCommerceTranslation()
 
+  const [deliveryCountry, setDeliveryCountry] = useState<CheckoutCountry>('')
   const { user } = useAuth()
   const { cart } = useCart()
   const { addresses } = useAddresses()
@@ -158,9 +161,29 @@ export const CheckoutPage: React.FC<{
     )
   }
 
+  const onCountryChange = (country: CheckoutCountry) => {
+    setDeliveryCountry(country)
+    setBoxNowLocker(null)
+    setSpeedyOffice(null)
+    setSpeedySite(null)
+    setSpeedyState(null)
+    setEcontOffice(null)
+    setEcontCity(null)
+    setEcontRegion(null)
+    setShippingAddress(undefined)
+    setBillingAddress(undefined)
+    setBillingAddressSameAsShipping(true)
+    setDeliveryMethod('boxnow')
+  }
+  const countryStep = <CheckoutCountryStep country={deliveryCountry} onChange={onCountryChange} />
+  if (getCheckoutDestination(deliveryCountry).kind !== 'local') {
+    return <div className="my-8 w-full">{countryStep}</div>
+  }
+
   if (cartIsEmpty) {
     return (
       <div className="w-full py-12 text-primary/70">
+        <div className="mb-8">{countryStep}</div>
         <p className="mb-3 text-lg">
           <CommerceText source={'Количката е празна.'} />
         </p>
@@ -220,256 +243,309 @@ export const CheckoutPage: React.FC<{
       : customerContactAddress
 
   return (
-    <div className="my-8 flex grow flex-col items-stretch justify-stretch gap-10 md:flex-row md:gap-6 lg:gap-8">
-      <div className="flex basis-full flex-col justify-stretch gap-8 lg:basis-2/3">
-        <h2 className="type-section-title text-primary/85">
-          <CommerceText source={'Контакт'} />
-        </h2>
+    <div className="w-full">
+      <div className="mt-8">{countryStep}</div>
+      <div className="my-8 flex grow flex-col items-stretch justify-stretch gap-10 md:flex-row md:gap-6 lg:gap-8">
+        <div className="flex basis-full flex-col justify-stretch gap-8 lg:basis-2/3">
+          <h2 className="type-section-title text-primary/85">
+            <CommerceText source={'Контакт'} />
+          </h2>
 
-        <div className="rounded-[10px] bg-muted/20 px-5 py-5 md:px-6">
-          {!user && (
-            <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
-              <p className="type-subsection-title text-primary/85">
-                <CommerceText source={'Поръчваш като гост'} />
-              </p>
-              <p className="type-body-small mt-2 text-primary/60">
-                <CommerceText
-                  source={
-                    'Можеш да завършиш поръчката и без профил. Ако влезеш или създадеш акаунт, ще имаш по-лесен достъп до адресите и историята на поръчките си.'
-                  }
-                />{' '}
-              </p>
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Button asChild className="sm:min-w-32" variant="outline">
-                  <Link href="/login?redirect=/checkout">
-                    <CommerceText source={'Вход'} />
-                  </Link>
-                </Button>
-                <Button asChild className="sm:min-w-40" variant="ghost">
-                  <Link href="/create-account?redirect=/checkout">
-                    <CommerceText source={'Създай профил'} />
-                  </Link>
-                </Button>
+          <div className="rounded-[10px] bg-muted/20 px-5 py-5 md:px-6">
+            {!user && (
+              <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
+                <p className="type-subsection-title text-primary/85">
+                  <CommerceText source={'Поръчваш като гост'} />
+                </p>
+                <p className="type-body-small mt-2 text-primary/60">
+                  <CommerceText
+                    source={
+                      'Можеш да завършиш поръчката и без профил. Ако влезеш или създадеш акаунт, ще имаш по-лесен достъп до адресите и историята на поръчките си.'
+                    }
+                  />{' '}
+                </p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <Button asChild className="sm:min-w-32" variant="outline">
+                    <Link href="/login?redirect=/checkout">
+                      <CommerceText source={'Вход'} />
+                    </Link>
+                  </Button>
+                  <Button asChild className="sm:min-w-40" variant="ghost">
+                    <Link href="/create-account?redirect=/checkout">
+                      <CommerceText source={'Създай профил'} />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {user ? (
-            <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
-              <p className="type-subsection-title text-primary/85">
-                <CommerceText source={'Продължаваш като'} /> {user.email}
-              </p>
-              <p className="type-body-small mt-2 text-primary/60">
-                <CommerceText
-                  source={
-                    'Попълни данните за контакт и избери начин на доставка, за да изпратим заявката за поръчка.'
-                  }
-                />{' '}
-              </p>
-              <div className="mt-4">
-                <Link
-                  className="text-sm text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]"
-                  href="/logout"
-                >
-                  <CommerceText source={'Изход'} />{' '}
-                </Link>
+            {user ? (
+              <div className="mb-6 rounded-[10px] border border-black/6 bg-white px-4 py-4">
+                <p className="type-subsection-title text-primary/85">
+                  <CommerceText source={'Продължаваш като'} /> {user.email}
+                </p>
+                <p className="type-body-small mt-2 text-primary/60">
+                  <CommerceText
+                    source={
+                      'Попълни данните за контакт и избери начин на доставка, за да изпратим заявката за поръчка.'
+                    }
+                  />{' '}
+                </p>
+                <div className="mt-4">
+                  <Link
+                    className="text-sm text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]"
+                    href="/logout"
+                  >
+                    <CommerceText source={'Изход'} />{' '}
+                  </Link>
+                </div>
               </div>
+            ) : (
+              <div className="mb-6">
+                <p className="type-subsection-title text-primary/85">
+                  <CommerceText source={'Данни за контакт'} />
+                </p>
+                <p className="type-body-small mt-2 text-primary/60">
+                  <CommerceText
+                    source={
+                      'Телефонът е задължителен, за да можем да се свържем с теб при нужда. Имейлът е по желание.'
+                    }
+                  />{' '}
+                </p>
+              </div>
+            )}
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <FormItem>
+                <Label htmlFor="firstName">
+                  <CommerceText source={'Име'} />
+                </Label>
+                <Input
+                  autoComplete="given-name"
+                  id="firstName"
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  value={firstName}
+                />
+              </FormItem>
+
+              <FormItem>
+                <Label htmlFor="lastName">
+                  <CommerceText source={'Фамилия'} />
+                </Label>
+                <Input
+                  autoComplete="family-name"
+                  id="lastName"
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  value={lastName}
+                />
+              </FormItem>
+
+              <FormItem>
+                <Label htmlFor="email">
+                  <CommerceText source={'Имейл'} />
+                </Label>
+                <Input
+                  autoComplete="email"
+                  id="email"
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  value={email}
+                />
+              </FormItem>
+
+              <FormItem>
+                <Label htmlFor="phone">
+                  <CommerceText source={'Телефон'} />
+                </Label>
+                <Input
+                  autoComplete="tel"
+                  id="phone"
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  type="tel"
+                  value={phone}
+                />
+              </FormItem>
             </div>
-          ) : (
-            <div className="mb-6">
-              <p className="type-subsection-title text-primary/85">
-                <CommerceText source={'Данни за контакт'} />
-              </p>
-              <p className="type-body-small mt-2 text-primary/60">
-                <CommerceText
-                  source={
-                    'Телефонът е задължителен, за да можем да се свържем с теб при нужда. Имейлът е по желание.'
-                  }
-                />{' '}
-              </p>
-            </div>
-          )}
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <FormItem>
-              <Label htmlFor="firstName">
-                <CommerceText source={'Име'} />
-              </Label>
-              <Input
-                autoComplete="given-name"
-                id="firstName"
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                value={firstName}
-              />
-            </FormItem>
-
-            <FormItem>
-              <Label htmlFor="lastName">
-                <CommerceText source={'Фамилия'} />
-              </Label>
-              <Input
-                autoComplete="family-name"
-                id="lastName"
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                value={lastName}
-              />
-            </FormItem>
-
-            <FormItem>
-              <Label htmlFor="email">
-                <CommerceText source={'Имейл'} />
-              </Label>
-              <Input
-                autoComplete="email"
-                id="email"
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                value={email}
-              />
-            </FormItem>
-
-            <FormItem>
-              <Label htmlFor="phone">
-                <CommerceText source={'Телефон'} />
-              </Label>
-              <Input
-                autoComplete="tel"
-                id="phone"
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                type="tel"
-                value={phone}
-              />
-            </FormItem>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <div className="w-full rounded-[10px] bg-muted/20 px-5 py-5">
-            <p className="mb-4 text-sm text-primary/65">
-              <CommerceText source={'Избери начин на доставка.'} />{' '}
-              <CommerceText source="Доставката в момента е достъпна само в България." />
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="w-full rounded-[10px] bg-muted/20 px-5 py-5">
+              <p className="mb-4 text-sm text-primary/65">
+                <CommerceText source={'Избери начин на доставка.'} />{' '}
+                <CommerceText source="Доставката в момента е достъпна само в България." />
+              </p>
 
-            <div className="grid gap-3 sm:grid-cols-4">
-              <button
-                className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                  deliveryMethod === 'boxnow'
-                    ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                    : 'border-black/8 bg-white hover:border-black/15'
-                }`}
-                onClick={(event) => {
-                  event.preventDefault()
-                  setDeliveryMethod('boxnow')
-                }}
-                type="button"
-              >
-                <p className="type-subsection-title text-primary/85">
-                  <CommerceText source={'Автомат на BoxNow'} />
-                </p>
-                <p className="mt-1 text-sm text-primary/60">
-                  <CommerceText source={'Избери удобен автомат'} />
-                </p>
-              </button>
-
-              <button
-                className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                  deliveryMethod === 'address'
-                    ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                    : 'border-black/8 bg-white hover:border-black/15'
-                }`}
-                onClick={(event) => {
-                  event.preventDefault()
-                  setDeliveryMethod('address')
-                }}
-                type="button"
-              >
-                <p className="type-subsection-title text-primary/85">
-                  <CommerceText source={'Адрес'} />
-                </p>
-                <p className="mt-1 text-sm text-primary/60">
-                  <CommerceText source={'Използвай въведения адрес за доставка.'} />
-                </p>
-              </button>
-
-              <button
-                className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                  deliveryMethod === 'econt-office'
-                    ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                    : 'border-black/8 bg-white hover:border-black/15'
-                }`}
-                onClick={(event) => {
-                  event.preventDefault()
-                  setDeliveryMethod('econt-office')
-                }}
-                type="button"
-              >
-                <p className="type-subsection-title text-primary/85">
-                  <CommerceText source={'Офис на Econt'} />
-                </p>
-                <p className="mt-1 text-sm text-primary/60">
-                  <CommerceText source={'Избери удобен офис.'} />
-                </p>
-              </button>
-
-              <button
-                className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                  deliveryMethod === 'speedy-office'
-                    ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                    : 'border-black/8 bg-white hover:border-black/15'
-                }`}
-                onClick={(event) => {
-                  event.preventDefault()
-                  setDeliveryMethod('speedy-office')
-                }}
-                type="button"
-              >
-                <p className="type-subsection-title text-primary/85">
-                  <CommerceText source={'Офис на Speedy'} />
-                </p>
-                <p className="mt-1 text-sm text-primary/60">
-                  <CommerceText source={'Избери удобен офис.'} />
-                </p>
-              </button>
-            </div>
-            <p className="mt-4 text-sm text-primary/60">
-              <CommerceText source={deliveryPricingNote} />
-            </p>
-          </div>
-        </div>
-
-        {deliveryMethod === 'address' ? (
-          <>
-            {!user ? (
-              <div className="rounded-[10px] bg-muted/20 px-5 py-5">
-                <AddressForm
-                  callback={(address) => {
-                    setBillingAddress(address)
+              <div className="grid gap-3 sm:grid-cols-4">
+                <button
+                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                    deliveryMethod === 'boxnow'
+                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                      : 'border-black/8 bg-white hover:border-black/15'
+                  }`}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    setDeliveryMethod('boxnow')
                   }}
-                  initialData={{
+                  type="button"
+                >
+                  <p className="type-subsection-title text-primary/85">
+                    <CommerceText source={'Автомат на BoxNow'} />
+                  </p>
+                  <p className="mt-1 text-sm text-primary/60">
+                    <CommerceText source={'Избери удобен автомат'} />
+                  </p>
+                </button>
+
+                <button
+                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                    deliveryMethod === 'address'
+                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                      : 'border-black/8 bg-white hover:border-black/15'
+                  }`}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    setDeliveryMethod('address')
+                  }}
+                  type="button"
+                >
+                  <p className="type-subsection-title text-primary/85">
+                    <CommerceText source={'Адрес'} />
+                  </p>
+                  <p className="mt-1 text-sm text-primary/60">
+                    <CommerceText source={'Използвай въведения адрес за доставка.'} />
+                  </p>
+                </button>
+
+                <button
+                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                    deliveryMethod === 'econt-office'
+                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                      : 'border-black/8 bg-white hover:border-black/15'
+                  }`}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    setDeliveryMethod('econt-office')
+                  }}
+                  type="button"
+                >
+                  <p className="type-subsection-title text-primary/85">
+                    <CommerceText source={'Офис на Econt'} />
+                  </p>
+                  <p className="mt-1 text-sm text-primary/60">
+                    <CommerceText source={'Избери удобен офис.'} />
+                  </p>
+                </button>
+
+                <button
+                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                    deliveryMethod === 'speedy-office'
+                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                      : 'border-black/8 bg-white hover:border-black/15'
+                  }`}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    setDeliveryMethod('speedy-office')
+                  }}
+                  type="button"
+                >
+                  <p className="type-subsection-title text-primary/85">
+                    <CommerceText source={'Офис на Speedy'} />
+                  </p>
+                  <p className="mt-1 text-sm text-primary/60">
+                    <CommerceText source={'Избери удобен офис.'} />
+                  </p>
+                </button>
+              </div>
+              <p className="mt-4 text-sm text-primary/60">
+                <CommerceText source={deliveryPricingNote} />
+              </p>
+            </div>
+          </div>
+
+          {deliveryMethod === 'address' ? (
+            <>
+              {!user ? (
+                <div className="rounded-[10px] bg-muted/20 px-5 py-5">
+                  <AddressForm
+                    callback={(address) => {
+                      setBillingAddress(address)
+                    }}
+                    initialData={{
+                      firstName,
+                      lastName,
+                      phone,
+                    }}
+                    skipSubmission={true}
+                  />
+                </div>
+              ) : billingAddress ? (
+                <AddressItem
+                  actions={
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setBillingAddress(undefined)
+                      }}
+                      variant="outline"
+                    >
+                      <CommerceText source={'Премахни'} />{' '}
+                    </Button>
+                  }
+                  address={billingAddress}
+                />
+              ) : user ? (
+                <CheckoutAddresses
+                  description={ui('Избери адреса, на който искаш да бъде доставена поръчката.')}
+                  initialAddressData={{
                     firstName,
                     lastName,
                     phone,
                   }}
-                  skipSubmission={true}
+                  setAddress={setBillingAddress}
                 />
-              </div>
-            ) : billingAddress ? (
+              ) : null}
+
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <Checkbox
+                    checked={billingAddressSameAsShipping}
+                    disabled={Boolean(!firstName.trim() || !lastName.trim() || !phone.trim())}
+                    id="shippingTheSameAsBilling"
+                    onCheckedChange={(state) => {
+                      setBillingAddressSameAsShipping(state as boolean)
+                    }}
+                  />
+                  <Label
+                    className="font-sans font-normal tracking-normal text-primary/65"
+                    htmlFor="shippingTheSameAsBilling"
+                  >
+                    <CommerceText source={'Адресът за доставка е същият'} />{' '}
+                  </Label>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+
+          {deliveryMethod === 'address' &&
+            user &&
+            !billingAddressSameAsShipping &&
+            (shippingAddress ? (
               <AddressItem
                 actions={
                   <Button
                     onClick={(e) => {
                       e.preventDefault()
-                      setBillingAddress(undefined)
+                      setShippingAddress(undefined)
                     }}
                     variant="outline"
                   >
                     <CommerceText source={'Премахни'} />{' '}
                   </Button>
                 }
-                address={billingAddress}
+                address={shippingAddress}
               />
             ) : user ? (
               <CheckoutAddresses
@@ -479,259 +555,213 @@ export const CheckoutPage: React.FC<{
                   lastName,
                   phone,
                 }}
-                setAddress={setBillingAddress}
+                setAddress={setShippingAddress}
               />
-            ) : null}
-
-            {user ? (
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  checked={billingAddressSameAsShipping}
-                  disabled={Boolean(!firstName.trim() || !lastName.trim() || !phone.trim())}
-                  id="shippingTheSameAsBilling"
-                  onCheckedChange={(state) => {
-                    setBillingAddressSameAsShipping(state as boolean)
+            ) : (
+              <div className="rounded-[10px] bg-muted/20 px-5 py-5">
+                <AddressForm
+                  callback={(address) => {
+                    setShippingAddress(address)
                   }}
+                  initialData={{
+                    firstName,
+                    lastName,
+                    phone,
+                  }}
+                  skipSubmission={true}
                 />
-                <Label
-                  className="font-sans font-normal tracking-normal text-primary/65"
-                  htmlFor="shippingTheSameAsBilling"
-                >
-                  <CommerceText source={'Адресът за доставка е същият'} />{' '}
-                </Label>
               </div>
-            ) : null}
-          </>
-        ) : null}
+            ))}
 
-        {deliveryMethod === 'address' &&
-          user &&
-          !billingAddressSameAsShipping &&
-          (shippingAddress ? (
-            <AddressItem
-              actions={
-                <Button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setShippingAddress(undefined)
-                  }}
-                  variant="outline"
-                >
-                  <CommerceText source={'Премахни'} />{' '}
-                </Button>
-              }
-              address={shippingAddress}
-            />
-          ) : user ? (
-            <CheckoutAddresses
-              description={ui('Избери адреса, на който искаш да бъде доставена поръчката.')}
-              initialAddressData={{
-                firstName,
-                lastName,
-                phone,
-              }}
-              setAddress={setShippingAddress}
-            />
-          ) : (
-            <div className="rounded-[10px] bg-muted/20 px-5 py-5">
-              <AddressForm
-                callback={(address) => {
-                  setShippingAddress(address)
-                }}
-                initialData={{
-                  firstName,
-                  lastName,
-                  phone,
-                }}
-                skipSubmission={true}
-              />
-            </div>
-          ))}
+          {deliveryMethod === 'speedy-office' ? (
+            <SpeedyOfficeSelector
+              onSelect={({ office, site, state }) => {
+                if (!office || !site || !state) {
+                  setSpeedyOffice(null)
+                  setSpeedySite(site)
+                  setSpeedyState(state)
+                  return
+                }
 
-        {deliveryMethod === 'speedy-office' ? (
-          <SpeedyOfficeSelector
-            onSelect={({ office, site, state }) => {
-              if (!office || !site || !state) {
-                setSpeedyOffice(null)
+                setSpeedyOffice({
+                  ...office,
+                  siteName: site.name,
+                  stateId: state.id,
+                  stateName: state.name,
+                })
                 setSpeedySite(site)
                 setSpeedyState(state)
-                return
-              }
+              }}
+              selectedOffice={speedyOffice}
+              selectedSite={speedySite}
+              selectedState={speedyState}
+            />
+          ) : null}
 
-              setSpeedyOffice({
-                ...office,
-                siteName: site.name,
-                stateId: state.id,
-                stateName: state.name,
-              })
-              setSpeedySite(site)
-              setSpeedyState(state)
-            }}
-            selectedOffice={speedyOffice}
-            selectedSite={speedySite}
-            selectedState={speedyState}
-          />
-        ) : null}
+          {deliveryMethod === 'boxnow' ? (
+            <BoxNowOfficeSelector onSelect={setBoxNowLocker} selectedLocker={boxNowLocker} />
+          ) : null}
 
-        {deliveryMethod === 'boxnow' ? (
-          <BoxNowOfficeSelector onSelect={setBoxNowLocker} selectedLocker={boxNowLocker} />
-        ) : null}
+          {deliveryMethod === 'econt-office' ? (
+            <EcontOfficeSelector
+              onSelect={({ city, office, region }) => {
+                if (!office || !city || !region) {
+                  setEcontOffice(null)
+                  setEcontCity(city)
+                  setEcontRegion(region)
+                  return
+                }
 
-        {deliveryMethod === 'econt-office' ? (
-          <EcontOfficeSelector
-            onSelect={({ city, office, region }) => {
-              if (!office || !city || !region) {
-                setEcontOffice(null)
+                setEcontOffice({
+                  ...office,
+                  cityId: city.id,
+                  cityName: city.name,
+                  regionId: region.id,
+                  regionName: region.name,
+                })
                 setEcontCity(city)
                 setEcontRegion(region)
-                return
-              }
-
-              setEcontOffice({
-                ...office,
-                cityId: city.id,
-                cityName: city.name,
-                regionId: region.id,
-                regionName: region.name,
-              })
-              setEcontCity(city)
-              setEcontRegion(region)
-            }}
-            selectedCity={econtCity}
-            selectedOffice={econtOffice}
-            selectedRegion={econtRegion}
-          />
-        ) : null}
-
-        <div className="rounded-[10px] bg-muted/20 px-5 py-5">
-          <FormItem>
-            <Label htmlFor="customerNotes">
-              <CommerceText source={'Бележки към поръчката'} />
-            </Label>
-            <Textarea
-              id="customerNotes"
-              onChange={(e) => setCustomerNotes(e.target.value)}
-              placeholder={ui('Допълнителни инструкции за доставка или уточнения към поръчката.')}
-              rows={6}
-              value={customerNotes}
+              }}
+              selectedCity={econtCity}
+              selectedOffice={econtOffice}
+              selectedRegion={econtRegion}
             />
-          </FormItem>
+          ) : null}
+
+          <div className="rounded-[10px] bg-muted/20 px-5 py-5">
+            <FormItem>
+              <Label htmlFor="customerNotes">
+                <CommerceText source={'Бележки към поръчката'} />
+              </Label>
+              <Textarea
+                id="customerNotes"
+                onChange={(e) => setCustomerNotes(e.target.value)}
+                placeholder={ui('Допълнителни инструкции за доставка или уточнения към поръчката.')}
+                rows={6}
+                value={customerNotes}
+              />
+            </FormItem>
+          </div>
+
+          <div className="bg-muted/20 px-5 py-4 text-sm text-primary/60">
+            {revolutPayEnabled
+              ? ui(
+                  'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн с карта или през Revolut Pay.',
+                )
+              : ui(
+                  'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.',
+                )}
+          </div>
+
+          <div className="space-y-2 rounded-[10px] bg-muted/20 px-5 py-4 text-sm leading-6 text-primary/70">
+            <ReturnCostNotice />
+            <Link className="underline underline-offset-4" href="/terms#return-costs">
+              <CommerceText source={'Подробности в условията за ползване'} />{' '}
+            </Link>
+          </div>
+
+          <CheckoutForm
+            billingAddress={resolvedBillingAddress}
+            boxNowLocker={boxNowLocker}
+            customerEmail={email}
+            customerNotes={customerNotes}
+            deliveryMethod={deliveryMethod}
+            disabled={!canSubmitOrder}
+            econtOffice={econtOffice}
+            revolutPayEnabled={revolutPayEnabled}
+            setProcessingPayment={setProcessingPayment}
+            shippingFee={shippingFee}
+            shippingAddress={resolvedShippingAddress}
+            speedyOffice={speedyOffice}
+            totalAmount={orderTotal}
+          />
         </div>
 
-        <div className="bg-muted/20 px-5 py-4 text-sm text-primary/60">
-          {revolutPayEnabled
-            ? ui(
-                'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн с карта или през Revolut Pay.',
-              )
-            : ui(
-                'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.',
-              )}
-        </div>
+        <div className="flex basis-full flex-col gap-6 bg-muted/20 px-5 pb-6 pt-1 md:px-7 md:pb-8 md:pt-1 lg:basis-1/3">
+          <h2 className="type-section-title text-primary/85">
+            <CommerceText source={'Твоята количка'} />
+          </h2>
 
-        <div className="space-y-2 rounded-[10px] bg-muted/20 px-5 py-4 text-sm leading-6 text-primary/70">
-          <ReturnCostNotice />
-          <Link className="underline underline-offset-4" href="/terms#return-costs">
-            <CommerceText source={'Подробности в условията за ползване'} />{' '}
-          </Link>
-        </div>
+          {cart?.items?.map((item, index) => {
+            if (typeof item.product !== 'object' || !item.quantity) {
+              return null
+            }
 
-        <CheckoutForm
-          billingAddress={resolvedBillingAddress}
-          boxNowLocker={boxNowLocker}
-          customerEmail={email}
-          customerNotes={customerNotes}
-          deliveryMethod={deliveryMethod}
-          disabled={!canSubmitOrder}
-          econtOffice={econtOffice}
-          revolutPayEnabled={revolutPayEnabled}
-          setProcessingPayment={setProcessingPayment}
-          shippingFee={shippingFee}
-          shippingAddress={resolvedShippingAddress}
-          speedyOffice={speedyOffice}
-          totalAmount={orderTotal}
-        />
-      </div>
+            const image = getProductPrimaryImage(item.product)
 
-      <div className="flex basis-full flex-col gap-6 bg-muted/20 px-5 pb-6 pt-1 md:px-7 md:pb-8 md:pt-1 lg:basis-1/3">
-        <h2 className="type-section-title text-primary/85">
-          <CommerceText source={'Твоята количка'} />
-        </h2>
-
-        {cart?.items?.map((item, index) => {
-          if (typeof item.product !== 'object' || !item.quantity) {
-            return null
-          }
-
-          const image = getProductPrimaryImage(item.product)
-
-          return (
-            <div
-              className="flex items-start gap-3 border-b border-black/5 pb-4 last:border-b-0 last:pb-0"
-              key={index}
-            >
-              <div className="flex h-16 w-16 items-stretch justify-stretch rounded-md border border-black/8 bg-white p-2">
-                <div className="relative h-full w-full">
-                  {image?.url ? (
-                    <Image
-                      alt={image.alt}
-                      className="rounded-md object-contain"
-                      fill
-                      sizes="64px"
-                      src={image.url}
-                    />
-                  ) : null}
-                </div>
-              </div>
-              <div className="flex grow items-center justify-between">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium leading-5 text-primary/85">
-                    {item.product.title}
-                  </p>
-                  <div className="flex h-8 w-fit flex-row items-center rounded-md border border-black/10 bg-white">
-                    <EditItemQuantityButton item={item} type="minus" />
-                    <p className="w-8 text-center text-sm text-primary/70">{item.quantity}</p>
-                    <EditItemQuantityButton item={item} type="plus" />
+            return (
+              <div
+                className="flex items-start gap-3 border-b border-black/5 pb-4 last:border-b-0 last:pb-0"
+                key={index}
+              >
+                <div className="flex h-16 w-16 items-stretch justify-stretch rounded-md border border-black/8 bg-white p-2">
+                  <div className="relative h-full w-full">
+                    {image?.url ? (
+                      <Image
+                        alt={image.alt}
+                        className="rounded-md object-contain"
+                        fill
+                        sizes="64px"
+                        src={image.url}
+                      />
+                    ) : null}
                   </div>
                 </div>
+                <div className="flex grow items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium leading-5 text-primary/85">
+                      {item.product.title}
+                    </p>
+                    <div className="flex h-8 w-fit flex-row items-center rounded-md border border-black/10 bg-white">
+                      <EditItemQuantityButton item={item} type="minus" />
+                      <p className="w-8 text-center text-sm text-primary/70">{item.quantity}</p>
+                      <EditItemQuantityButton item={item} type="plus" />
+                    </div>
+                  </div>
 
-                {typeof item.product.price === 'number' && (
-                  <Price
-                    amount={item.product.price}
-                    className="text-sm text-primary/75"
-                    currencyCode="EUR"
-                  />
-                )}
+                  {typeof item.product.price === 'number' && (
+                    <Price
+                      amount={item.product.price}
+                      className="text-sm text-primary/75"
+                      currencyCode="EUR"
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
 
-        <div className="border-t border-black/5 pt-6">
-          <div className="mb-3 flex items-start justify-between gap-4">
-            <span className="type-eyebrow text-primary/45">
-              <CommerceText source={'Доставка'} />
-            </span>
-            <p className="max-w-[16rem] text-right text-sm leading-6 text-primary/60">
-              <CommerceText source={deliveryPricingNote} />
-            </p>
-          </div>
-          {shippingFee > 0 ? (
-            <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="border-t border-black/5 pt-6">
+            <div className="mb-3 flex items-start justify-between gap-4">
               <span className="type-eyebrow text-primary/45">
-                <CommerceText source={'Цена на доставка'} />
+                <CommerceText source={'Доставка'} />
               </span>
-              <Price amount={shippingFee} className="text-sm text-primary/70" currencyCode="EUR" />
+              <p className="max-w-[16rem] text-right text-sm leading-6 text-primary/60">
+                <CommerceText source={deliveryPricingNote} />
+              </p>
             </div>
-          ) : null}
-          <div className="flex items-center justify-between gap-2">
-            <span className="type-eyebrow text-primary/45">
-              <CommerceText source={'Общо'} />
-            </span>
-            <Price
-              amount={orderTotal}
-              className="text-2xl font-medium text-primary/80"
-              currencyCode="EUR"
-            />
+            {shippingFee > 0 ? (
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <span className="type-eyebrow text-primary/45">
+                  <CommerceText source={'Цена на доставка'} />
+                </span>
+                <Price
+                  amount={shippingFee}
+                  className="text-sm text-primary/70"
+                  currencyCode="EUR"
+                />
+              </div>
+            ) : null}
+            <div className="flex items-center justify-between gap-2">
+              <span className="type-eyebrow text-primary/45">
+                <CommerceText source={'Общо'} />
+              </span>
+              <Price
+                amount={orderTotal}
+                className="text-2xl font-medium text-primary/80"
+                currencyCode="EUR"
+              />
+            </div>
           </div>
         </div>
       </div>

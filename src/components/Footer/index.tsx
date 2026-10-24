@@ -1,22 +1,25 @@
+import type { Locale } from '@/i18n/config'
+import { translateCommerce } from '@/i18n/commerce'
+import { CommerceText } from '@/i18n/CommerceText'
 import { CMSLink } from '@/components/Link'
 import { OpenCookiePreferencesButton } from '@/components/CookieConsent/OpenPreferencesButton'
 import { SiteLogo } from '@/components/Logo/SiteLogo'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import type { ContactPage, Footer as FooterGlobal } from '@/payload-types'
 import { Clock3, MapPin, Phone } from 'lucide-react'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
 import React from 'react'
 
 const { SITE_NAME = 'Ibis Electronics' } = process.env
 
 const formatWorkingHours = (value?: string | null) => value?.replace(/:\s*/, ':\n')
 
-const locationRows = (location?: ContactPage['store'] | null) =>
+const locationRows = (location: ContactPage['store'] | null | undefined, locale: Locale) =>
   [
     {
       icon: MapPin,
       label: 'Адрес',
-      value: location?.address,
+      value: location?.address ? translateCommerce(locale, location.address) : undefined,
     },
     {
       icon: Phone,
@@ -27,11 +30,13 @@ const locationRows = (location?: ContactPage['store'] | null) =>
     {
       icon: Clock3,
       label: 'Работно време',
-      value: formatWorkingHours(location?.workingHours),
+      value: location?.workingHours
+        ? formatWorkingHours(translateCommerce(locale, location.workingHours))
+        : undefined,
     },
   ].filter((row): row is typeof row & { value: string } => Boolean(row.value))
 
-export async function Footer() {
+export async function Footer({ locale = 'bg' }: { locale?: Locale }) {
   const footer = (await getCachedGlobal('footer', 1)()) as FooterGlobal
   const contactPage = (await getCachedGlobal('contact-page', 0)()) as ContactPage
 
@@ -49,10 +54,12 @@ export async function Footer() {
           </div>
 
           <div>
-            <h3 className="type-eyebrow mb-4 text-white/95">Контакти</h3>
+            <h3 className="type-eyebrow mb-4 text-white/95">
+              <CommerceText source="Контакти" />
+            </h3>
 
             <div className="space-y-3 text-sm leading-6 text-white/80">
-              {locationRows(location).map((row) => {
+              {locationRows(location, locale).map((row) => {
                 const Icon = row.icon
 
                 return (
@@ -74,15 +81,25 @@ export async function Footer() {
           <div className="hidden lg:block" aria-hidden="true" />
 
           <div>
-            <h3 className="type-eyebrow mb-4 text-white/95">Навигация</h3>
+            <h3 className="type-eyebrow mb-4 text-white/95">
+              <CommerceText source="Навигация" />
+            </h3>
 
             <nav>
               <ul className="space-y-3">
-                <li><Link className="text-white/82 transition hover:text-white" href="/otkaz-porachka">Отказ от поръчка</Link></li>
+                <li>
+                  <Link
+                    className="text-white/82 transition hover:text-white"
+                    href="/otkaz-porachka"
+                  >
+                    <CommerceText source="Отказ от поръчка" />
+                  </Link>
+                </li>
                 {footer.navItems?.map((item) => (
                   <li key={item.id}>
                     <CMSLink
                       {...item.link}
+                      label={translateCommerce(locale, item.link.label || '')}
                       appearance="inline"
                       className="text-white/82 transition hover:text-white"
                     />
@@ -96,18 +113,15 @@ export async function Footer() {
 
       <div className="border-t border-white/15 bg-[rgb(1,55,186)] py-6 text-sm">
         <div className="container mx-auto flex w-full flex-col items-center gap-2 md:flex-row md:flex-wrap md:gap-y-2">
-          <p>&copy; 2026 Ibis Electronics. Всички права запазени.</p>
+          <p>
+            &copy; 2026 Ibis Electronics. <CommerceText source="Всички права запазени." />
+          </p>
           <hr className="mx-4 hidden h-4 w-px border-l border-white/30 md:inline-block" />
           <OpenCookiePreferencesButton className="text-white/82 transition hover:text-white" />
           <hr className="mx-4 hidden h-4 w-px border-l border-white/30 md:inline-block" />
           <p className="md:ml-auto">
-            Създаден от{' '}
-            <a
-              className="text-white"
-              href="https://nevoweb.dev"
-              rel="noreferrer"
-              target="_blank"
-            >
+            <CommerceText source="Създаден от" />{' '}
+            <a className="text-white" href="https://nevoweb.dev" rel="noreferrer" target="_blank">
               Nevo Web
             </a>
           </p>

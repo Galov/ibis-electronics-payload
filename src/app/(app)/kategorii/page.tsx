@@ -1,5 +1,6 @@
 import configPromise from '@payload-config'
-import Link from 'next/link'
+import Link from '@/i18n/Link'
+import { CommerceText } from '@/i18n/CommerceText'
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import React from 'react'
@@ -64,13 +65,7 @@ const renderCategoryBranch = (category: CategoryNode, level = 0): React.ReactNod
       {isTopLevel ? <div className="mt-3 border-t border-[rgb(1,55,186)]/10 pt-3" /> : null}
 
       {category.children.length > 0 ? (
-        <ul
-          className={
-            isTopLevel
-              ? 'space-y-1 list-none'
-              : 'mt-1 space-y-0.5 list-none pl-3'
-          }
-        >
+        <ul className={isTopLevel ? 'space-y-1 list-none' : 'mt-1 space-y-0.5 list-none pl-3'}>
           {category.children.map((child) => renderCategoryBranch(child, level + 1))}
         </ul>
       ) : null}
@@ -158,11 +153,10 @@ export default async function CategoriesDirectoryPage() {
     <div className="container py-12 md:py-16">
       <div className="mx-auto mb-12 max-w-3xl space-y-4 text-center">
         <h1 className="text-[36px] leading-[43px] font-normal text-[rgb(1,55,186)]">
-          Продуктови категории
+          <CommerceText source="Продуктови категории" />
         </h1>
         <p className="text-base leading-7 text-primary/70 md:text-lg">
-          Разгледайте всички категории в каталога и отворете директно страницата на нужната
-          продуктова група.
+          <CommerceText source="Разгледайте всички категории в каталога и отворете директно страницата на нужната продуктова група." />
         </p>
       </div>
 
@@ -173,15 +167,13 @@ export default async function CategoriesDirectoryPage() {
               className="rounded-[10px] border border-transparent bg-white px-5 py-5 shadow-[0_6px_14px_rgba(15,23,42,0.04)] transition duration-300 ease-out hover:border-black/5 hover:shadow-[0_10px_22px_rgba(15,23,42,0.06)]"
               key={category.id}
             >
-              <ul className="list-none">
-                {renderCategoryBranch(category)}
-              </ul>
+              <ul className="list-none">{renderCategoryBranch(category)}</ul>
             </section>
           ))}
         </div>
       ) : (
         <div className="mx-auto max-w-2xl rounded-xl bg-muted/20 px-5 py-6 text-sm leading-7 text-primary/68 md:px-7 md:py-8">
-          В момента все още няма добавени продуктови категории.
+          <CommerceText source="В момента все още няма добавени продуктови категории." />
         </div>
       )}
     </div>
