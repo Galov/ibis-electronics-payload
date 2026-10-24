@@ -1,3 +1,4 @@
+import { reviewedCandidate, assertReviewedRecovery } from './reviewRecovery.ts'
 import { incompleteCandidate, assertIncompleteReconstruction } from './incompleteRecovery.ts'
 // Local/offline replay only. No API key is loaded and external fetch is blocked.
 import fs from 'node:fs'
@@ -46,12 +47,21 @@ export function recoveryCandidate(job) {
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  if (argv.some((arg) => !['--apply', '--incomplete'].includes(arg)))
-    throw new Error('Usage: recoverTranslations.mjs [--incomplete] [--apply]')
+  if (argv.some((arg) => !['--apply', '--incomplete', '--reviewed'].includes(arg)))
+    throw new Error('Usage: recoverTranslations.mjs [--incomplete | --reviewed] [--apply]')
+  const reviewed = argv.includes('--reviewed')
+  if (reviewed && argv.includes('--incomplete')) throw new Error('Choose one recovery mode')
   const apply = argv.includes('--apply')
   const incomplete = argv.includes('--incomplete')
-  const version = incomplete ? 'immutable-model-lists-v4' : 'safe-lists-units-v3'
-  const directory = path.join(baseDirectory, incomplete ? 'recovery-v4' : 'recovery-v3')
+  const version = reviewed
+    ? 'reviewed-equivalences-v5'
+    : incomplete
+      ? 'immutable-model-lists-v4'
+      : 'safe-lists-units-v3'
+  const directory = path.join(
+    baseDirectory,
+    reviewed ? 'recovery-v5' : incomplete ? 'recovery-v4' : 'recovery-v3',
+  )
   globalThis.fetch = () =>
     Promise.reject(new Error('External API calls are disabled during local recovery'))
   assertLocalTranslationURI(localTranslationURI)
@@ -81,7 +91,11 @@ export async function main(argv = process.argv.slice(2)) {
         if (rows.length !== 1) throw new Error('Cached response is missing or duplicated')
         response = rows[0]
       }
-      const candidate = incomplete ? incompleteCandidate(job, response) : recoveryCandidate(job)
+      const candidate = reviewed
+        ? reviewedCandidate(job)
+        : incomplete
+          ? incompleteCandidate(job, response)
+          : recoveryCandidate(job)
       if (candidate.accepted) accepted.push({ job, candidate, response })
       else held.push({ id: job._id, sku: job.sku, reason: candidate.reason })
     }
@@ -153,10 +167,13 @@ export async function main(argv = process.argv.slice(2)) {
                 ...job,
                 translation: candidate.translation,
               },
-              incomplete
+              reviewed
                 ? (source, fields, translation) =>
-                    assertIncompleteReconstruction(job, response, source, fields, translation)
-                : undefined,
+                    assertReviewedRecovery(job, source, fields, translation)
+                : incomplete
+                  ? (source, fields, translation) =>
+                      assertIncompleteReconstruction(job, response, source, fields, translation)
+                  : undefined,
             )
             if (!ok) {
               return false
