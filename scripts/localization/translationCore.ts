@@ -1,3 +1,4 @@
+import { formatLegacyProductDescription } from '../../src/utilities/formatLegacyProductDescription'
 import { createHash } from 'node:crypto'
 
 export const translationPaths = [
@@ -50,7 +51,7 @@ export const sourceFingerprint = (source: SourceText) =>
 export function missingEnglishFields(doc: unknown, source: SourceText): TranslationPath[] {
   return translationPaths.filter(
     (path) =>
-      source[path]?.trim() &&
+      !isEmptyProductText(source[path]) &&
       !(
         typeof readPath(doc, `${path}.en`) === 'string' &&
         (readPath(doc, `${path}.en`) as string).trim()
@@ -81,6 +82,65 @@ export function translationRequest(source: SourceText, fields: TranslationPath[]
     },
   }
 }
+// Use the same visible-text interpretation as the product page. Numeric HTML
+// entities are characters, not part numbers; CSS values are not specifications.
+export function visibleTranslationText(value: string): string {
+  return formatLegacyProductDescription(value)
+    .replace(/&#(x[0-9a-f]+|[0-9]+);/gi, (entity, code: string) => {
+      const number = code[0].toLowerCase() === 'x' ? parseInt(code.slice(1), 16) : Number(code)
+      return number > 0 && number <= 0x10ffff ? String.fromCodePoint(number) : entity
+    })
+    .trim()
+}
+export const isEmptyProductText = (value: string | null | undefined): boolean =>
+  !visibleTranslationText(value || '').trim()
+
+const presentationTags = new Set([
+  'div',
+  'p',
+  'span',
+  'b',
+  'strong',
+  'i',
+  'em',
+  'u',
+  'ul',
+  'ol',
+  'li',
+  'br',
+  'section',
+  'article',
+])
+function protectedMarkup(value: string): string[] {
+  return (value.match(/<\/?[a-z][^>]*>/gi) || []).filter((tag) => {
+    const name = tag.match(/^<\/?([a-z]+)/i)?.[1].toLowerCase()
+    // Changes to links, images, tables, superscripts, accessibility attributes,
+    // event handlers or data attributes need review. Only cosmetic wrappers vary.
+    return (
+      !presentationTags.has(name || '') ||
+      /\b(?:href|src|alt|title|aria-[\w-]+|data-[\w-]+|on[a-z]+)\s*=/i.test(tag)
+    )
+  })
+}
+const numericTokens = (value: string) =>
+  (value.match(/\d+(?:[.,]\d+)*/g) || []).map((v) => v.replaceAll(',', '.')).sort()
+function technicalTokens(value: string): string[] {
+  const tokens = value.match(/[A-Za-z0-9]+(?:[._/+\-][A-Za-z0-9]+)*/g) || []
+  return tokens
+    .filter((token) => (/[A-Za-z]/.test(token) && /\d/.test(token)) || /^[A-Z]{2,}$/.test(token))
+    .map((token) => token.toUpperCase())
+    .sort()
+}
+function measurements(value: string): string[] {
+  const normalized = value
+    .replace(/°С/g, '°C')
+    .replace(/(\d)\s*мм(?!\p{L})/gu, '$1 mm')
+    .replace(/(\d)\s*см(?!\p{L})/gu, '$1 cm')
+  const matches = normalized.matchAll(
+    /(\d+(?:[.,]\d+)?)\s*(°C|°F|mm|cm|kW|W|kV|V|mA|A|kHz|Hz|kΩ|Ω|Nm|N|kg|g|ml|l)(?![\p{L}\p{N}])/gu,
+  )
+  return [...matches].map((m) => `${m[1].replace(',', '.')}:${m[2]}`).sort()
+}
 export function validateTranslation(
   source: SourceText,
   fields: TranslationPath[],
@@ -92,29 +152,75 @@ export function validateTranslation(
     throw new Error('Unexpected translation fields')
   for (const path of fields) {
     const text = (translation as Record<string, unknown>)[path]
-    if (typeof text !== 'string' || !text.trim()) throw new Error(`Empty translation: ${path}`)
-    const numbers = (value: string) =>
-      (value.match(/\d+(?:[.,]\d+)*/g) || []).map((v) => v.replaceAll(',', '.')).sort()
-    if (JSON.stringify(numbers(source[path] || '')) !== JSON.stringify(numbers(text)))
+    if (typeof text !== 'string') throw new Error(`Invalid translation: ${path}`)
+    const bg = source[path] || ''
+    const visibleBG = visibleTranslationText(bg),
+      visibleEN = visibleTranslationText(text)
+    if (!visibleBG) {
+      if (visibleEN) throw new Error(`Invented text in empty source: ${path}`)
+      continue
+    }
+    if (!visibleEN) throw new Error(`Empty translation: ${path}`)
+    if (JSON.stringify(numericTokens(visibleBG)) !== JSON.stringify(numericTokens(visibleEN)))
       throw new Error(`Numeric review required: ${path}`)
-    const tags = (value: string) => value.match(/<\/?[a-z][^>]*>/gi) || []
-    if (JSON.stringify(tags(source[path] || '')) !== JSON.stringify(tags(text)))
+    if (JSON.stringify(protectedMarkup(bg)) !== JSON.stringify(protectedMarkup(text)))
       throw new Error(`HTML review required: ${path}`)
+    if (JSON.stringify(technicalTokens(visibleBG)) !== JSON.stringify(technicalTokens(visibleEN)))
+      throw new Error(`Identifier review required: ${path}`)
+    if (JSON.stringify(measurements(visibleBG)) !== JSON.stringify(measurements(visibleEN)))
+      throw new Error(`Measurement review required: ${path}`)
+    if (/рийд/i.test(visibleBG) && !/\breed\b/i.test(visibleEN))
+      throw new Error(`Terminology review required: ${path}`)
+    if (/ключ/i.test(visibleBG) && /фурн/i.test(visibleBG) && /oven key/i.test(visibleEN))
+      throw new Error(`Terminology review required: ${path}`)
   }
 }
-export function englishPatch(translation: Record<string, string>): Record<string, string> {
+export function englishPatch(
+  translation: Record<string, string>,
+  source?: SourceText,
+): Record<string, string> {
   const patch: Record<string, string> = {}
   for (const [path, value] of Object.entries(translation)) {
-    if (
-      !(translationPaths as readonly string[]).includes(path) ||
-      typeof value !== 'string' ||
-      !value.trim()
-    )
+    if (!(translationPaths as readonly string[]).includes(path) || typeof value !== 'string')
       throw new Error('Unsafe translation patch')
+    if (source && isEmptyProductText(source[path as TranslationPath]) && isEmptyProductText(value))
+      continue
+    if (!value.trim()) throw new Error('Unsafe translation patch')
     patch[`${path}.en`] = value
   }
   return patch
 }
+
+// A code-only field whose visible characters are identical can retain the exact
+// source formatting. This fixes separator spacing without guessing decimal sizes.
+export function normalizeSavedTranslation(
+  source: SourceText,
+  fields: TranslationPath[],
+  saved: unknown,
+) {
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved))
+    throw new Error('Invalid saved response')
+  const translation = { ...saved } as Record<string, string>
+  const restoredCodeFields: TranslationPath[] = []
+  for (const path of fields) {
+    const bg = source[path],
+      en = translation[path]
+    if (typeof bg !== 'string' || typeof en !== 'string') continue
+    const bgText = visibleTranslationText(bg),
+      enText = visibleTranslationText(en)
+    if (
+      !/[А-Яа-я]/u.test(bgText) &&
+      bgText.replace(/\s/g, '').toUpperCase() === enText.replace(/\s/g, '').toUpperCase() &&
+      bg !== en
+    ) {
+      translation[path] = bg
+      restoredCodeFields.push(path)
+    }
+  }
+  validateTranslation(source, fields, translation)
+  return { translation, restoredCodeFields }
+}
+
 export function batchCustomID(productId: string, fingerprint: string) {
   if (!/^[a-f0-9]{24}$/.test(productId) || !/^[a-f0-9]{64}$/.test(fingerprint))
     throw new Error('Invalid translation identity')

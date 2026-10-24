@@ -101,7 +101,7 @@ describe('local bulk translation safeguards', () => {
     expect(() => sourceText({ ...product(), title: 'Unmigrated' })).toThrow('Unmigrated')
     expect(() => sourceText({ ...product(), title: { bg: '' } })).toThrow('Missing BG')
   })
-  it('holds malformed, numerically changed or HTML-altered results for review', () => {
+  it('holds malformed, numerically changed or link-altered results for review', () => {
     const source = sourceText(product())
     expect(() =>
       validateTranslation(source, ['title'], { title: 'Shock absorber 120N' }),
@@ -114,7 +114,9 @@ describe('local bulk translation safeguards', () => {
     ).toThrow('Unexpected')
     expect(() => validateTranslation(source, ['title'], { title: '' })).toThrow('Empty')
     expect(() =>
-      validateTranslation({ ...source, title: '<b>Име</b>' }, ['title'], { title: 'Name' }),
+      validateTranslation({ ...source, title: '<a href="/original">Име</a>' }, ['title'], {
+        title: 'Name',
+      }),
     ).toThrow('HTML')
   })
   it('creates patches exclusively for allowed EN text paths', () => {

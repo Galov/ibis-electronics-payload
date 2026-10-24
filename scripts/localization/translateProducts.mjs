@@ -169,7 +169,7 @@ export async function applySavedTranslation(db, job) {
     return false
   }
   validateTranslation(job.source, job.fields, job.translation)
-  const patch = englishPatch(job.translation)
+  const patch = englishPatch(job.translation, job.source)
   if (Object.entries(patch).every(([p, v]) => readPath(product, p) === v)) {
     await mark('completed', { appliedAt: new Date() })
     return true
