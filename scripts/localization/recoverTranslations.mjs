@@ -1,3 +1,4 @@
+import { approvedCandidate, assertApprovedRecovery } from './approvedRecovery.ts'
 import { finalCandidate, assertFinalRecovery } from './finalRecovery.ts'
 import { reviewedCandidate, assertReviewedRecovery } from './reviewRecovery.ts'
 import { incompleteCandidate, assertIncompleteReconstruction } from './incompleteRecovery.ts'
@@ -48,10 +49,20 @@ export function recoveryCandidate(job) {
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  if (argv.some((arg) => !['--apply', '--incomplete', '--reviewed', '--finalize'].includes(arg)))
-    throw new Error(
-      'Usage: recoverTranslations.mjs [--incomplete | --reviewed | --finalize] [--apply]',
+  if (
+    argv.some(
+      (arg) => !['--apply', '--incomplete', '--reviewed', '--finalize', '--approved'].includes(arg),
     )
+  )
+    throw new Error(
+      'Usage: recoverTranslations.mjs [--incomplete | --reviewed | --finalize | --approved] [--apply]',
+    )
+  const approved = argv.includes('--approved')
+  if (approved && argv.some((arg) => ['--finalize', '--reviewed', '--incomplete'].includes(arg)))
+    throw new Error('Choose one recovery mode')
+  const approvals = approved
+    ? JSON.parse(fs.readFileSync(path.join(baseDirectory, 'review-v7/approved.json'), 'utf8'))
+    : {}
   const finalize = argv.includes('--finalize')
   if (finalize && (argv.includes('--reviewed') || argv.includes('--incomplete')))
     throw new Error('Choose one recovery mode')
@@ -59,22 +70,26 @@ export async function main(argv = process.argv.slice(2)) {
   if (reviewed && argv.includes('--incomplete')) throw new Error('Choose one recovery mode')
   const apply = argv.includes('--apply')
   const incomplete = argv.includes('--incomplete')
-  const version = finalize
-    ? 'final-reviewed-v6'
-    : reviewed
-      ? 'reviewed-equivalences-v5'
-      : incomplete
-        ? 'immutable-model-lists-v4'
-        : 'safe-lists-units-v3'
+  const version = approved
+    ? 'manually-reviewed-v7'
+    : finalize
+      ? 'final-reviewed-v6'
+      : reviewed
+        ? 'reviewed-equivalences-v5'
+        : incomplete
+          ? 'immutable-model-lists-v4'
+          : 'safe-lists-units-v3'
   const directory = path.join(
     baseDirectory,
-    finalize
-      ? 'recovery-v6'
-      : reviewed
-        ? 'recovery-v5'
-        : incomplete
-          ? 'recovery-v4'
-          : 'recovery-v3',
+    approved
+      ? 'recovery-v7'
+      : finalize
+        ? 'recovery-v6'
+        : reviewed
+          ? 'recovery-v5'
+          : incomplete
+            ? 'recovery-v4'
+            : 'recovery-v3',
   )
   globalThis.fetch = () =>
     Promise.reject(new Error('External API calls are disabled during local recovery'))
@@ -105,13 +120,15 @@ export async function main(argv = process.argv.slice(2)) {
         if (rows.length !== 1) throw new Error('Cached response is missing or duplicated')
         response = rows[0]
       }
-      const candidate = finalize
-        ? finalCandidate(job)
-        : reviewed
-          ? reviewedCandidate(job)
-          : incomplete
-            ? incompleteCandidate(job, response)
-            : recoveryCandidate(job)
+      const candidate = approved
+        ? approvedCandidate(job, approvals[job._id])
+        : finalize
+          ? finalCandidate(job)
+          : reviewed
+            ? reviewedCandidate(job)
+            : incomplete
+              ? incompleteCandidate(job, response)
+              : recoveryCandidate(job)
       if (candidate.accepted) accepted.push({ job, candidate, response })
       else held.push({ id: job._id, sku: job.sku, reason: candidate.reason })
     }
@@ -185,16 +202,19 @@ export async function main(argv = process.argv.slice(2)) {
                 ...job,
                 translation: candidate.translation,
               },
-              finalize
+              approved
                 ? (source, fields, translation) =>
-                    assertFinalRecovery(job, source, fields, translation)
-                : reviewed
+                    assertApprovedRecovery(job, approvals[job._id], source, fields, translation)
+                : finalize
                   ? (source, fields, translation) =>
-                      assertReviewedRecovery(job, source, fields, translation)
-                  : incomplete
+                      assertFinalRecovery(job, source, fields, translation)
+                  : reviewed
                     ? (source, fields, translation) =>
-                        assertIncompleteReconstruction(job, response, source, fields, translation)
-                    : undefined,
+                        assertReviewedRecovery(job, source, fields, translation)
+                    : incomplete
+                      ? (source, fields, translation) =>
+                          assertIncompleteReconstruction(job, response, source, fields, translation)
+                      : undefined,
             )
             if (!ok) {
               return false
