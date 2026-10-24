@@ -1,3 +1,4 @@
+import { incompleteCandidate, assertIncompleteReconstruction } from './incompleteRecovery.ts'
 // Local/offline replay only. No API key is loaded and external fetch is blocked.
 import fs from 'node:fs'
 import path from 'node:path'
@@ -15,12 +16,12 @@ import {
 } from './translationCore.ts'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-const directory = path.join(root, '.local-notes/product-translation/recovery-v3')
+const baseDirectory = path.join(root, '.local-notes/product-translation')
 const require = createRequire(import.meta.url)
 const { MongoClient, BSON } = require(
   require.resolve('mongodb', { paths: [path.dirname(require.resolve('@payloadcms/db-mongodb'))] }),
 )
-const version = 'safe-lists-units-v3'
+
 const hash = (value) => createHash('sha256').update(value).digest('hex')
 function withoutEN(doc) {
   const copy = BSON.EJSON.parse(BSON.EJSON.stringify(doc))
@@ -45,9 +46,12 @@ export function recoveryCandidate(job) {
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  if (argv.some((arg) => arg !== '--apply'))
-    throw new Error('Usage: recoverTranslations.mjs [--apply]')
+  if (argv.some((arg) => !['--apply', '--incomplete'].includes(arg)))
+    throw new Error('Usage: recoverTranslations.mjs [--incomplete] [--apply]')
   const apply = argv.includes('--apply')
+  const incomplete = argv.includes('--incomplete')
+  const version = incomplete ? 'immutable-model-lists-v4' : 'safe-lists-units-v3'
+  const directory = path.join(baseDirectory, incomplete ? 'recovery-v4' : 'recovery-v3')
   globalThis.fetch = () =>
     Promise.reject(new Error('External API calls are disabled during local recovery'))
   assertLocalTranslationURI(localTranslationURI)
@@ -58,14 +62,27 @@ export async function main(argv = process.argv.slice(2)) {
     const db = client.db('ibis_bg_en_test')
     const queue = await db
       .collection('local_translation_jobs')
-      .find({ status: 'needs_review' })
+      .find({ status: 'needs_review', ...(incomplete ? { errorCode: 'API_RESPONSE_FAILED' } : {}) })
       .sort({ _id: 1 })
       .toArray()
     const accepted = [],
       held = []
     for (const job of queue) {
-      const candidate = recoveryCandidate(job)
-      if (candidate.accepted) accepted.push({ job, candidate })
+      let response
+      if (incomplete) {
+        const batchId = job.lastBatchId || job.batchId
+        if (!/^[a-f0-9-]{36}$/.test(batchId)) throw new Error('Invalid cached batch identity')
+        const rows = fs
+          .readFileSync(path.join(baseDirectory, `${batchId}.output.jsonl`), 'utf8')
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => JSON.parse(line))
+          .filter((row) => row.custom_id === job.customId)
+        if (rows.length !== 1) throw new Error('Cached response is missing or duplicated')
+        response = rows[0]
+      }
+      const candidate = incomplete ? incompleteCandidate(job, response) : recoveryCandidate(job)
+      if (candidate.accepted) accepted.push({ job, candidate, response })
       else held.push({ id: job._id, sku: job.sku, reason: candidate.reason })
     }
     const report = {
@@ -91,7 +108,7 @@ export async function main(argv = process.argv.slice(2)) {
       } finally {
         fs.closeSync(fd)
       }
-      for (const { job, candidate } of accepted) {
+      for (const { job, candidate, response } of accepted) {
         const session = client.startSession()
         try {
           const recovered = await session.withTransaction(async () => {
@@ -121,7 +138,8 @@ export async function main(argv = process.argv.slice(2)) {
                   translation: candidate.translation,
                   recovery: {
                     version,
-                    sourceResponseHash: hash(job.rawOutput),
+                    sourceResponseHash: hash(job.rawOutput || JSON.stringify(response)),
+                    ...(candidate.proof ? { reconstructionProof: candidate.proof } : {}),
                     restoredCodeFields: candidate.restoredCodeFields,
                     previousErrorCode: job.errorCode,
                     at: new Date(),
@@ -129,10 +147,17 @@ export async function main(argv = process.argv.slice(2)) {
                 },
               },
             )
-            const ok = await applySavedTranslation(scoped, {
-              ...job,
-              translation: candidate.translation,
-            })
+            const ok = await applySavedTranslation(
+              scoped,
+              {
+                ...job,
+                translation: candidate.translation,
+              },
+              incomplete
+                ? (source, fields, translation) =>
+                    assertIncompleteReconstruction(job, response, source, fields, translation)
+                : undefined,
+            )
             if (!ok) {
               return false
             }

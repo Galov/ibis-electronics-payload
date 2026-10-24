@@ -154,7 +154,7 @@ export async function prepareQueue(db) {
   log('queue_prepared', { created, alreadyJournaled: existing })
 }
 
-export async function applySavedTranslation(db, job) {
+export async function applySavedTranslation(db, job, validate = validateTranslation) {
   const product = await db.collection('products').findOne({ _id: job.productId })
   const mark = async (status, extra = {}) =>
     jobs(db).updateOne({ _id: job._id }, { $set: { status, ...extra, updatedAt: new Date() } })
@@ -168,7 +168,7 @@ export async function applySavedTranslation(db, job) {
     await mark('stale_source')
     return false
   }
-  validateTranslation(job.source, job.fields, job.translation)
+  validate(job.source, job.fields, job.translation)
   const patch = englishPatch(job.translation, job.source)
   if (Object.entries(patch).every(([p, v]) => readPath(product, p) === v)) {
     await mark('completed', { appliedAt: new Date() })
