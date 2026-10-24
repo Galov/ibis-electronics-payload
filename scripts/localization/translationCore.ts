@@ -1,3 +1,9 @@
+import {
+  comparisonText,
+  measurementSignature,
+  diameterSignature,
+  modelSeriesSignature,
+} from './comparisonText'
 import { formatLegacyProductDescription } from '../../src/utilities/formatLegacyProductDescription'
 import { createHash } from 'node:crypto'
 
@@ -124,22 +130,21 @@ function protectedMarkup(value: string): string[] {
 }
 const numericTokens = (value: string) =>
   (value.match(/\d+(?:[.,]\d+)*/g) || []).map((v) => v.replaceAll(',', '.')).sort()
-function technicalTokens(value: string): string[] {
-  const tokens = value.match(/[A-Za-z0-9]+(?:[._/+\-][A-Za-z0-9]+)*/g) || []
-  return tokens
-    .filter((token) => (/[A-Za-z]/.test(token) && /\d/.test(token)) || /^[A-Z]{2,}$/.test(token))
-    .map((token) => token.toUpperCase())
-    .sort()
-}
-function measurements(value: string): string[] {
-  const normalized = value
-    .replace(/°С/g, '°C')
-    .replace(/(\d)\s*мм(?!\p{L})/gu, '$1 mm')
-    .replace(/(\d)\s*см(?!\p{L})/gu, '$1 cm')
-  const matches = normalized.matchAll(
-    /(\d+(?:[.,]\d+)?)\s*(°C|°F|mm|cm|kW|W|kV|V|mA|A|kHz|Hz|kΩ|Ω|Nm|N|kg|g|ml|l)(?![\p{L}\p{N}])/gu,
-  )
-  return [...matches].map((m) => `${m[1].replace(',', '.')}:${m[2]}`).sort()
+function technicalPair(bg: string, en: string): [string[], string[]] {
+  const tokens = (value: string) => value.match(/[A-Za-z0-9]+(?:[._/+\-][A-Za-z0-9]+)*/g) || []
+  const source = tokens(bg)
+  const alphabetic = new Set(source.filter((t) => /^[A-Z]{2,}$/.test(t)))
+  const mixed = (t: string) => /[A-Za-z]/.test(t) && /\d/.test(t)
+  return [
+    source
+      .filter((t) => mixed(t) || alphabetic.has(t.toUpperCase()))
+      .map((t) => t.toUpperCase())
+      .sort(),
+    tokens(en)
+      .filter((t) => mixed(t) || alphabetic.has(t.toUpperCase()) || /^[A-Z]{2,}$/.test(t))
+      .map((t) => t.toUpperCase())
+      .sort(),
+  ]
 }
 export function validateTranslation(
   source: SourceText,
@@ -161,13 +166,27 @@ export function validateTranslation(
       continue
     }
     if (!visibleEN) throw new Error(`Empty translation: ${path}`)
-    if (JSON.stringify(numericTokens(visibleBG)) !== JSON.stringify(numericTokens(visibleEN)))
+    const context = `${source.title || ''}\n${visibleBG}`
+    const bgComparison = comparisonText(visibleBG, context),
+      enComparison = comparisonText(visibleEN, context)
+    if (JSON.stringify(numericTokens(bgComparison)) !== JSON.stringify(numericTokens(enComparison)))
       throw new Error(`Numeric review required: ${path}`)
     if (JSON.stringify(protectedMarkup(bg)) !== JSON.stringify(protectedMarkup(text)))
       throw new Error(`HTML review required: ${path}`)
-    if (JSON.stringify(technicalTokens(visibleBG)) !== JSON.stringify(technicalTokens(visibleEN)))
+    if (
+      JSON.stringify(modelSeriesSignature(bgComparison)) !==
+      JSON.stringify(modelSeriesSignature(enComparison))
+    )
+      throw new Error(`Identifier association review required: ${path}`)
+    const [sourceTechnical, targetTechnical] = technicalPair(bgComparison, enComparison)
+    if (JSON.stringify(sourceTechnical) !== JSON.stringify(targetTechnical))
       throw new Error(`Identifier review required: ${path}`)
-    if (JSON.stringify(measurements(visibleBG)) !== JSON.stringify(measurements(visibleEN)))
+    if (
+      JSON.stringify(measurementSignature(bgComparison)) !==
+        JSON.stringify(measurementSignature(enComparison)) ||
+      JSON.stringify(diameterSignature(bgComparison)) !==
+        JSON.stringify(diameterSignature(enComparison))
+    )
       throw new Error(`Measurement review required: ${path}`)
     if (/рийд/i.test(visibleBG) && !/\breed\b/i.test(visibleEN))
       throw new Error(`Terminology review required: ${path}`)

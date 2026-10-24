@@ -50,8 +50,11 @@ describe('offline safe translation recovery', () => {
     const recovered = normalizeSavedTranslation(bg, ['title'], { title: '25X50, 75X10/12' })
     expect(recovered.translation.title).toBe('25X50,75X10/12')
     expect(recovered.restoredCodeFields).toEqual(['title'])
-    expect(() => normalizeSavedTranslation(bg, ['title'], { title: '25X50.75X10/12' })).toThrow(
-      'Identifier',
+    expect(
+      normalizeSavedTranslation(bg, ['title'], { title: '25X50.75X10/12' }).translation.title,
+    ).toBe('25X50.75X10/12')
+    expect(() => normalizeSavedTranslation(bg, ['title'], { title: '25X50.7X10/12' })).toThrow(
+      'Numeric',
     )
   })
   it('preserves exact source casing for unchanged brand and model-only fields', () => {

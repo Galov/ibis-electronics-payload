@@ -15,12 +15,12 @@ import {
 } from './translationCore.ts'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-const directory = path.join(root, '.local-notes/product-translation/recovery-v2')
+const directory = path.join(root, '.local-notes/product-translation/recovery-v3')
 const require = createRequire(import.meta.url)
 const { MongoClient, BSON } = require(
   require.resolve('mongodb', { paths: [path.dirname(require.resolve('@payloadcms/db-mongodb'))] }),
 )
-const version = 'safe-formatting-v2'
+const version = 'safe-lists-units-v3'
 const hash = (value) => createHash('sha256').update(value).digest('hex')
 function withoutEN(doc) {
   const copy = BSON.EJSON.parse(BSON.EJSON.stringify(doc))
