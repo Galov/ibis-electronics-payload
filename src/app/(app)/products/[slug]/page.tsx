@@ -1,3 +1,4 @@
+import { localProductLocalizationEnabled } from '@/i18n/localProductLocalization'
 import { Text } from '@/i18n/Text'
 import { localizeHref, type Locale } from '@/i18n/config'
 import { Gallery } from '@/components/product/Gallery'
@@ -39,8 +40,8 @@ type Args = {
 }
 
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
-  const { slug } = await params
-  const product = await queryProductBySlug({ slug })
+  const { slug, locale = 'bg' } = await params
+  const product = await queryProductBySlug({ slug, locale })
 
   if (!product) return notFound()
 
@@ -61,25 +62,25 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     },
     fallbackDescription: getProductSEODescription(product),
     fallbackTitle: product.title,
-    path: `/products/${product.slug || slug}`,
+    path: localizeHref(`/products/${product.slug || slug}`, locale),
   })
 
   return {
     ...metadata,
     robots: {
-      follow: true,
+      follow: locale === 'bg',
       googleBot: {
-        follow: true,
-        index: true,
+        follow: locale === 'bg',
+        index: locale === 'bg',
       },
-      index: true,
+      index: locale === 'bg',
     },
   }
 }
 
 export default async function ProductPage({ params }: Args) {
   const { slug, locale = 'bg' } = await params
-  const product = await queryProductBySlug({ slug })
+  const product = await queryProductBySlug({ slug, locale })
 
   if (!product) return notFound()
   if (product.slug && product.slug !== decodeRouteSlug(slug)) {
@@ -102,6 +103,7 @@ export default async function ProductPage({ params }: Args) {
         ?.map((category) => (category && typeof category !== 'string' ? category.id : category))
         .filter(Boolean) || [],
     productID: product.id,
+    locale,
   })
   const shopPage = await getCachedGlobal('shopPage', 1)()
 
@@ -141,6 +143,12 @@ export default async function ProductPage({ params }: Args) {
         type="application/ld+json"
       />
       <div className="container pt-8 pb-8">
+        {locale === 'en' && (product.stockQty || 0) <= 0 && localProductLocalizationEnabled() ? (
+          <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+            Local translation preview. This product is out of stock and remains hidden from the
+            catalogue.
+          </p>
+        ) : null}
         <div className="mb-3">
           <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-primary/55">
             <Link className="transition hover:text-primary/80" href="/magazin">
@@ -212,7 +220,7 @@ export default async function ProductPage({ params }: Args) {
   )
 }
 
-const queryProductBySlug = async ({ slug }: { slug: string }) => {
+const queryProductBySlug = async ({ slug, locale = 'bg' }: { slug: string; locale?: Locale }) => {
   const payload = await getPayload({ config: configPromise })
   const routeSlug = decodeRouteSlug(slug)
   const decodedSlug = decodeMangledLegacySlug(routeSlug)
@@ -220,6 +228,8 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
 
   const result = await payload.find({
     collection: 'products',
+    locale,
+    fallbackLocale: 'bg',
     depth: 2,
     draft: false,
     limit: 1,
@@ -241,15 +251,40 @@ const queryProductBySlug = async ({ slug }: { slug: string }) => {
     },
   })
 
-  return result.docs?.[0] || null
+  if (result.docs?.[0]) return result.docs[0]
+
+  // Only the three explicitly selected local translation examples may bypass
+  // public visibility for review. Stock and the normal catalog access stay intact.
+  if (locale === 'en' && localProductLocalizationEnabled()) {
+    const preview = await payload.find({
+      collection: 'products',
+      locale: 'en',
+      fallbackLocale: 'bg',
+      depth: 2,
+      limit: 1,
+      overrideAccess: true,
+      pagination: false,
+      where: {
+        and: [
+          { slug: { in: slugs } },
+          { published: { equals: true } },
+          { sku: { in: ['126ZN07OR', '167AR06', '219FR05'] } },
+        ],
+      },
+    })
+    return preview.docs[0] || null
+  }
+  return null
 }
 
 const queryRelatedProducts = async ({
   categoryIDs,
   productID,
+  locale = 'bg',
 }: {
   categoryIDs: string[]
   productID: string
+  locale?: Locale
 }) => {
   if (categoryIDs.length === 0) return []
 
@@ -257,6 +292,8 @@ const queryRelatedProducts = async ({
 
   const result = await payload.find({
     collection: 'products',
+    locale,
+    fallbackLocale: 'bg',
     depth: 1,
     draft: false,
     limit: 5,

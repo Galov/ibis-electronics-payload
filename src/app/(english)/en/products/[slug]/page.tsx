@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 
-import ProductPage from '@/app/(app)/products/[slug]/page'
+import ProductPage, {
+  generateMetadata as generateProductMetadata,
+} from '@/app/(app)/products/[slug]/page'
 
 export default async function EnglishProductPage({
   params,
@@ -16,7 +18,6 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { slug } = await params
-  const path = encodeURIComponent(slug)
-  return { title: 'Product', alternates: { canonical: `/en/products/${path}` } }
+  const resolved = await params
+  return generateProductMetadata({ params: Promise.resolve({ ...resolved, locale: 'en' }) })
 }

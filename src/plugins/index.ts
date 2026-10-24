@@ -1,3 +1,4 @@
+import { localProductLocalizationPlugin } from '@/i18n/localProductLocalization'
 import crypto from 'crypto'
 import type { Plugin } from 'payload'
 import { ecommercePlugin, EUR } from '@payloadcms/plugin-ecommerce'
@@ -889,4 +890,5 @@ export const plugins: Plugin[] = [
       region: process.env.R2_REGION || 'auto',
     },
   }),
+  localProductLocalizationPlugin,
 ]

@@ -133,7 +133,7 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
-  fallbackLocale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('bg' | 'en') | ('bg' | 'en')[];
   globals: {
     header: Header;
     footer: Footer;
@@ -156,7 +156,7 @@ export interface Config {
     'order-settings': OrderSettingsSelect<false> | OrderSettingsSelect<true>;
     'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
-  locale: null;
+  locale: 'bg' | 'en';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -481,6 +481,7 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1932,6 +1933,7 @@ export interface ContactInquiriesSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import CatalogPage from '@/app/(app)/magazin/page'
+import { MagazinPageContent as CatalogPage } from '@/components/catalog/CatalogPage'
 import CatalogLayout from '@/app/(app)/magazin/layout'
 
 export const metadata: Metadata = { title: 'Products', alternates: { canonical: '/en' } }
@@ -8,7 +8,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 export default function EnglishCatalog({ searchParams }: Props) {
   return (
     <CatalogLayout>
-      <CatalogPage searchParams={searchParams} />
+      <CatalogPage searchParams={searchParams} locale="en" />
     </CatalogLayout>
   )
 }

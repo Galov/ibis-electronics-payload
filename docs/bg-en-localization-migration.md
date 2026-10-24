@@ -133,3 +133,29 @@ Their previous behavior is unchanged. Their audit entries above are future revie
 items, not implemented changes; these tools have not been run. The WooCommerce
 importer and its npm command were subsequently removed at the user's request.
 The separate slug-repair and category-merge tools remain unchanged.
+
+## Local three-product trial
+
+The isolated database `ibis_bg_en_test` now uses native BG/EN product text fields.
+This is guarded by `IBIS_PRODUCT_LOCALIZATION_PREVIEW=true`, `IBIS_LOCAL_PREVIEW=true`
+and the exact loopback database address; the switch rejects any other database.
+Only product title, descriptions and text SEO fields are localized in this trial.
+Other collection fields and SEO images retain their existing storage shape.
+The local main documents and product history were converted after a fresh local
+backup. Full document hashes, with the BG wrappers normalized, matched before
+and after conversion. No production connections were used for this trial.
+
+OpenAI Responses API (`gpt-4.1-mini-2025-04-14`, structured output, `store:false`)
+translated exactly `126ZN07OR`, `167AR06` and `219FR05`. Only product text was sent.
+The results were saved in EN paths of the same three products in a local transaction,
+after rechecking the BG source fingerprints. Other document fields were verified
+unchanged. Translation responses and recovery scripts remain in private ignored
+local notes; the API key is not passed to the site process. This is a manual trial,
+not an automatic translation queue or production migration executor.
+
+The shared catalog and product views now request their language explicitly.
+Untranslated products fall back to BG during the local trial. The third sample,
+`219FR05`, has zero stock and is normally inaccessible through public product access.
+Its EN detail page permits an explicitly labelled local review for the selected
+sample only. Normal catalogue access and the stock value are unchanged. The two
+available samples were checked in BG/EN detail pages and EN catalogue search.
