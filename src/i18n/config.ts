@@ -40,9 +40,12 @@ export const localizeHref = (href: string, locale: Locale): string => {
   const unprefixed = stripLocale(pathname)
   const path =
     locale === 'en'
-      ? ({ '/contact': '/kontakti', '/shop': '/magazin' } as Record<string, string>)[unprefixed] ||
-        unprefixed
-      : unprefixed
+      ? ({ '/contact': '/kontakti', '/shop': '/', '/magazin': '/' } as Record<string, string>)[
+          unprefixed
+        ] || unprefixed
+      : getPathLocale(pathname) === 'en' && unprefixed === '/'
+        ? '/magazin'
+        : unprefixed
   if (/^\/(?:api|admin|_next)(?:\/|$)/.test(path)) return href
   if (!hasEnglishRoute(path) && /\.[^/]+$/.test(path)) return href
   return `${locale === 'en' ? `/en${path === '/' ? '' : path}` : path}${suffix}`
@@ -54,6 +57,7 @@ export const hasEnglishRoute = (pathname: string): boolean => {
   return (
     path === '/' ||
     path === '/magazin' ||
+    path === '/shop' ||
     [
       'kategorii',
       'checkout',

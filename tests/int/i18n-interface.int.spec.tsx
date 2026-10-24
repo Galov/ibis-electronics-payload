@@ -17,7 +17,7 @@ import type { Product } from '@/payload-types'
 const push = vi.hoisted(() => vi.fn())
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
-  usePathname: () => '/en/magazin',
+  usePathname: () => '/en',
   useSearchParams: () => new URLSearchParams('q=NE555&page=2'),
 }))
 
@@ -109,7 +109,7 @@ describe('translated storefront interface', () => {
       </LocaleProvider>,
     )
     fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'priceInUSD' } })
-    expect(push).toHaveBeenCalledWith('/en/magazin?q=NE555&sort=priceInUSD')
+    expect(push).toHaveBeenCalledWith('/en?q=NE555&sort=priceInUSD')
     expect(screen.getByText('Price: low to high')).toBeTruthy()
     expect(screen.getByText('All')).toBeTruthy()
   })

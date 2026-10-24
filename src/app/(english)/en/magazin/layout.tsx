@@ -1,1 +1,4 @@
-export { default } from '@/app/(app)/magazin/layout'
+import type { ReactNode } from 'react'
+export default function LegacyCatalogLayout({ children }: { children: ReactNode }) {
+  return children
+}

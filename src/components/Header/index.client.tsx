@@ -43,7 +43,7 @@ const profileItems = [
 ] as const
 
 const isNavItemActive = (href: string, pathname: string) => {
-  pathname = stripLocale(pathname)
+  pathname = pathname === '/en' || pathname === '/en/' ? '/magazin' : stripLocale(pathname)
   if (href === '/magazin') {
     return (
       pathname.startsWith('/magazin') ||

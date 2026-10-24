@@ -77,7 +77,7 @@ describe('English checkout and account boundaries', () => {
     )
     expect(safeReturnHref('/en/account', 'bg')).toBe('/account')
     expect(safeReturnHref('/contact', 'en')).toBe('/en/kontakti')
-    expect(safeReturnHref('/shop?q=IC', 'en')).toBe('/en/magazin?q=IC')
+    expect(safeReturnHref('/shop?q=IC', 'en')).toBe('/en?q=IC')
   })
   it('gets the server page language explicitly, with a Bulgarian default', async () => {
     expect(await getPageLocale()).toBe('bg')

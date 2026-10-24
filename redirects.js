@@ -37,6 +37,8 @@ const redirects = async () => {
   }
 
   const redirects = [
+    { source: '/en/shop', destination: '/en', permanent: true },
+    { source: '/en/magazin', destination: '/en', permanent: true },
     legacyProductRedirect,
     homeRedirect,
     shopRedirect,

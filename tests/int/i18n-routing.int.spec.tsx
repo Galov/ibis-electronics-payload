@@ -15,11 +15,11 @@ describe('storefront language routing', () => {
 
   it('round trips page URLs without losing filters or fragment', () => {
     const bg = '/magazin?q=IC%20NE555&category=123#results'
-    expect(localizeHref(bg, 'en')).toBe(`/en${bg}`)
-    expect(localizeHref(`/en${bg}`, 'bg')).toBe(bg)
-    expect(localizeHref(`/en${bg}`, 'en')).toBe(`/en${bg}`)
+    expect(localizeHref(bg, 'en')).toBe(`/en${bg.slice('/magazin'.length)}`)
+    expect(localizeHref(`/en${bg.slice('/magazin'.length)}`, 'bg')).toBe(bg)
+    expect(localizeHref(`/en${bg}`, 'en')).toBe(`/en${bg.slice('/magazin'.length)}`)
     expect(localizeHref('/', 'en')).toBe('/en')
-    expect(localizeHref('/en?sort=price', 'bg')).toBe('/?sort=price')
+    expect(localizeHref('/en?sort=price', 'bg')).toBe('/magazin?sort=price')
     expect(stripLocale('/en/products/part')).toBe('/products/part')
   })
 
@@ -74,6 +74,6 @@ describe('storefront language routing', () => {
         <Link href={{ pathname: '/magazin', query: { q: 'NE555' } }}>Search</Link>
       </LocaleProvider>,
     )
-    expect(html).toContain('href="/en/magazin?q=NE555"')
+    expect(html).toContain('href="/en?q=NE555"')
   })
 })
