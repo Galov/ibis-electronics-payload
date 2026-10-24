@@ -227,8 +227,7 @@ export const productVersionsAuditHandler: PayloadHandler = async (req) => {
     let page = 1
 
     while (maxProducts === null || checkedProducts < maxProducts) {
-      const remaining =
-        maxProducts === null ? batchSize : Math.min(batchSize, maxProducts - checkedProducts)
+      const remaining = maxProducts === null ? batchSize : Math.min(batchSize, maxProducts - checkedProducts)
 
       if (remaining <= 0) {
         break
@@ -411,11 +410,8 @@ export const productVersionsAuditHandler: PayloadHandler = async (req) => {
       {
         counts: {
           latestVersionMismatch: latestVersionMismatchCount,
-          missingAnyVersion:
-            checkedProducts - [...anyVersionParents].filter((id) => productById.has(id)).length,
-          missingLatestVersion:
-            checkedProducts -
-            [...latestVersionByParent.keys()].filter((id) => productById.has(id)).length,
+          missingAnyVersion: checkedProducts - [...anyVersionParents].filter((id) => productById.has(id)).length,
+          missingLatestVersion: checkedProducts - [...latestVersionByParent.keys()].filter((id) => productById.has(id)).length,
           orphanLatestVersions: orphanLatestVersions.length,
           products: checkedProducts,
           productSkuDuplicates: collectDuplicates(productSkus, 1).length,
@@ -424,8 +420,7 @@ export const productVersionsAuditHandler: PayloadHandler = async (req) => {
           versionSkuDuplicates: collectDuplicates(latestVersionSkus, 1).length,
           versionSlugDuplicates: collectDuplicates(latestVersionSlugs, 1).length,
           withAnyVersion: [...anyVersionParents].filter((id) => productById.has(id)).length,
-          withLatestVersion: [...latestVersionByParent.keys()].filter((id) => productById.has(id))
-            .length,
+          withLatestVersion: [...latestVersionByParent.keys()].filter((id) => productById.has(id)).length,
         },
         samples: {
           latestVersionMismatch,
@@ -460,15 +455,6 @@ export const productVersionsRepairHandler: PayloadHandler = async (req) => {
   try {
     const requestUrl = new URL(req.url || 'http://localhost')
     const apply = isApplyRequest(req.method, requestUrl)
-    if (apply && req.payload.config.localization) {
-      return Response.json(
-        {
-          message:
-            'Version repair requires a locale-aware implementation before it can run on localized products.',
-        },
-        { status: 409 },
-      )
-    }
     const sampleLimit = parsePositiveInt({
       defaultValue: DEFAULT_SAMPLE_LIMIT,
       maxValue: MAX_SAMPLE_LIMIT,
@@ -493,8 +479,7 @@ export const productVersionsRepairHandler: PayloadHandler = async (req) => {
     let page = 1
 
     while (maxProducts === null || checkedProducts < maxProducts) {
-      const remaining =
-        maxProducts === null ? batchSize : Math.min(batchSize, maxProducts - checkedProducts)
+      const remaining = maxProducts === null ? batchSize : Math.min(batchSize, maxProducts - checkedProducts)
 
       if (remaining <= 0) {
         break

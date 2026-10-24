@@ -117,16 +117,18 @@ preparation commit.
 
 ## Integration preparation implemented
 
-The source-language options now explicitly select BG without fallback for NIK,
-WooCommerce, RO catalog loaders/category ancestry/batches/state writes, RO update
-reads, Merchant reads and the tracked catalog maintenance scripts. A small type
-bridge is isolated in `src/i18n/catalogSource.ts` until localized types are generated.
-Payload ignores these locale options while localization is disabled; no schema
-or database activation is included.
+The source-language options explicitly select BG without fallback for NIK,
+RO catalog loaders/category ancestry/batches/state writes, RO update reads and
+Merchant reads. A small type bridge is isolated in `src/i18n/catalogSource.ts`
+until localized types are generated. Payload ignores these locale options while
+localization is disabled; no schema or database activation is included.
 
 EN text-only updates skip Merchant queueing and do not complete product review.
-Shared-field changes still follow the existing hooks. Woo incremental updates keep
-existing product slugs; destructive replacement is blocked for localized catalogs.
-The legacy version repair writer is blocked when localization is enabled, pending
-its separate adaptation to full locale documents. Offline planning remains available.
-No translation jobs or paid API requests have been introduced in this stage.
+Shared-field changes still follow the existing hooks. Offline planning remains
+available. No translation jobs or paid API requests have been introduced.
+
+At the user's request, the preparation changes to the legacy WooCommerce tools,
+tracked catalog maintenance scripts and version repair endpoint were reverted.
+Their previous behavior is unchanged. Their audit entries above are future review
+items, not implemented changes; these tools have not been run. The WooCommerce
+tools remain in the repository pending a separate decision about removal.

@@ -1,4 +1,3 @@
-import { catalogSourceLocale } from '@/i18n/catalogSource'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
@@ -24,7 +23,6 @@ export const recalculateRetailPrices = async () => {
   while (true) {
     const result = await payload.find({
       collection: 'products',
-      ...catalogSourceLocale,
       depth: 0,
       limit: batchSize,
       page,
@@ -57,7 +55,6 @@ export const recalculateRetailPrices = async () => {
       await payload.update({
         id: product.id,
         collection: 'products',
-        ...catalogSourceLocale,
         data: {
           price: nextPrice,
           sourcePrice,

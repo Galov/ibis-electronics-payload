@@ -1,4 +1,3 @@
-import { catalogSourceLocale } from '../src/i18n/catalogSource'
 import 'dotenv/config'
 
 import configPromise from '@payload-config'
@@ -16,7 +15,6 @@ const syncProducts = async () => {
   while (true) {
     const result = await payload.find({
       collection: 'products',
-      ...catalogSourceLocale,
       depth: 0,
       limit: batchSize,
       page,
@@ -60,7 +58,6 @@ const syncProducts = async () => {
       await payload.update({
         id: product.id,
         collection: 'products',
-        ...catalogSourceLocale,
         data: {
           inventory: stockQty,
           price,
