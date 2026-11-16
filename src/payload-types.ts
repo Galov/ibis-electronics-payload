@@ -305,6 +305,13 @@ export interface Order {
       }[]
     | null;
   customerNotes?: string | null;
+  companyInvoice?: {
+    companyName?: string | null;
+    companyId?: string | null;
+    address?: string | null;
+    vatNumber?: string | null;
+    representative?: string | null;
+  };
   shippingAddress?: {
     title?: string | null;
     firstName?: string | null;
@@ -540,6 +547,13 @@ export interface Category {
  */
 export interface Transaction {
   id: string;
+  companyInvoice?: {
+    companyName?: string | null;
+    companyId?: string | null;
+    address?: string | null;
+    vatNumber?: string | null;
+    representative?: string | null;
+  };
   items?:
     | {
         product?: (string | null) | Product;
@@ -2179,6 +2193,15 @@ export interface OrdersSelect<T extends boolean = true> {
         id?: T;
       };
   customerNotes?: T;
+  companyInvoice?:
+    | T
+    | {
+        companyName?: T;
+        companyId?: T;
+        address?: T;
+        vatNumber?: T;
+        representative?: T;
+      };
   shippingAddress?:
     | T
     | {
@@ -2235,6 +2258,15 @@ export interface OrdersSelect<T extends boolean = true> {
  * via the `definition` "transactions_select".
  */
 export interface TransactionsSelect<T extends boolean = true> {
+  companyInvoice?:
+    | T
+    | {
+        companyName?: T;
+        companyId?: T;
+        address?: T;
+        vatNumber?: T;
+        representative?: T;
+      };
   items?:
     | T
     | {

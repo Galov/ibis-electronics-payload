@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import React, { useCallback, FormEvent, useMemo, useRef } from 'react'
 import { useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
+import type { CompanyInvoice } from '@/ecommerce/companyInvoice'
 import { Address } from '@/payload-types'
 
 type Props = {
+  companyInvoice?: CompanyInvoice | null
   customerEmail?: string
   customerNotes?: string
   billingAddress?: Partial<Address>
@@ -54,6 +56,7 @@ const REVOLUT_PENDING_CART_SECRET_KEY = 'ibis-pending-revolut-cart-secret'
 const REVOLUT_PENDING_CHECKOUT_DATA_KEY = 'ibis-pending-revolut-checkout-data'
 
 export const CheckoutForm: React.FC<Props> = ({
+  companyInvoice,
   customerEmail,
   customerNotes,
   billingAddress,
@@ -83,6 +86,7 @@ export const CheckoutForm: React.FC<Props> = ({
   const checkoutAdditionalData = useMemo(
     () => ({
       billingAddress,
+      companyInvoice,
       customerEmail: effectiveCustomerEmail,
       customerNotes: customerNotes?.trim() || undefined,
       deliveryMethod,
@@ -94,6 +98,7 @@ export const CheckoutForm: React.FC<Props> = ({
     }),
     [
       billingAddress,
+      companyInvoice,
       boxNowLocker,
       customerNotes,
       deliveryMethod,
@@ -144,6 +149,7 @@ export const CheckoutForm: React.FC<Props> = ({
   const handleManualSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault()
+      if (disabled || isLoading) return
       setIsLoading(true)
       setProcessingPayment(true)
 
@@ -161,7 +167,14 @@ export const CheckoutForm: React.FC<Props> = ({
       setIsLoading(false)
       setProcessingPayment(false)
     },
-    [checkoutAdditionalData, confirmOrder, redirectToOrder, setProcessingPayment],
+    [
+      checkoutAdditionalData,
+      confirmOrder,
+      disabled,
+      isLoading,
+      redirectToOrder,
+      setProcessingPayment,
+    ],
   )
 
   const handleRevolutRedirect = useCallback(async () => {
@@ -204,7 +217,8 @@ export const CheckoutForm: React.FC<Props> = ({
       if (cart?.secret) {
         localStorage.setItem(REVOLUT_PENDING_CART_SECRET_KEY, String(cart.secret))
       }
-      localStorage.setItem(REVOLUT_PENDING_CHECKOUT_DATA_KEY, JSON.stringify(checkoutAdditionalData))
+      const { companyInvoice: _companyInvoice, ...returnCheckoutData } = checkoutAdditionalData
+      localStorage.setItem(REVOLUT_PENDING_CHECKOUT_DATA_KEY, JSON.stringify(returnCheckoutData))
 
       window.location.href = result.checkoutURL
     } catch (err) {

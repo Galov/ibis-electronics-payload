@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import type { Plugin } from 'payload'
+import type { Field, Plugin } from 'payload'
 import { ecommercePlugin, EUR } from '@payloadcms/plugin-ecommerce'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { s3Storage } from '@payloadcms/storage-s3'
@@ -10,6 +10,7 @@ import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
 import { ProductsCollection } from '@/collections/Products'
+import { companyInvoiceFields } from '@/ecommerce/companyInvoice'
 import { manualAdapter } from '@/ecommerce/manualAdapter'
 import { revolutAdapter } from '@/ecommerce/revolutAdapter'
 import { nikOrderFields } from '@/services/nikOrders/fields'
@@ -257,7 +258,25 @@ const transactionShippingAddressFields = [
   },
 ]
 
+const companyInvoiceField: Field = {
+  name: 'companyInvoice',
+  label: 'Заявена фирмена фактура',
+  type: 'group',
+  access: { create: () => false, update: () => false, read: adminOnlyFieldAccess },
+  admin: {
+    condition: (data) => Boolean(data?.companyInvoice?.companyName),
+    readOnly: true,
+  },
+  fields: companyInvoiceFields.map(({ name, label, maxLength }) => ({
+    name,
+    label,
+    maxLength,
+    type: 'text',
+  })),
+}
+
 const appendTransactionCheckoutSnapshotFields = (fields: any[]): any[] => [
+  companyInvoiceField,
   ...fields,
   {
     name: 'customerNotes',
@@ -687,7 +706,7 @@ const arrangeOrderAdminTabs = (fields: any[]): any[] => {
         if (index === 0) {
           return {
             ...tab,
-            fields: [...tab.fields, customerNotesField],
+            fields: [...tab.fields, customerNotesField, companyInvoiceField],
           }
         }
 

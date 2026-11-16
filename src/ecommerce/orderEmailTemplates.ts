@@ -29,6 +29,7 @@ type OrderEmailTemplateArgs = {
   currency: string
   customerEmail?: string
   customerNotes?: string
+  invoiceRequested?: boolean
   deliveryMethod?: OrderEmailDeliveryMethod
   econtOfficeAddress?: string
   econtOfficeName?: string
@@ -294,6 +295,7 @@ export const buildAdminOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
     preview: `Нова поръчка #${args.orderID} за ${formatMoney(args.amount, args.currency)}.`,
     children: `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 24px;">
+        ${args.invoiceRequested ? buildDetailRow('Фактура', '<strong>Нужна е фирмена фактура. Данните са в поръчката.</strong>') : ''}
         ${buildDetailRow('Клиентски имейл', escapeHTML(args.customerEmail || '-'))}
         ${buildDetailRow('Сума', escapeHTML(formatMoney(args.amount, args.currency)))}
         ${buildDetailRow('Начин на плащане', escapeHTML(paymentMethodLabel))}

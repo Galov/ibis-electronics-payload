@@ -1,3 +1,4 @@
+import { normalizeCompanyInvoice, type CompanyInvoice } from './companyInvoice'
 import type { Payload, PayloadRequest } from 'payload'
 import { queueNikOrder } from '@/services/nikOrders'
 import { createCheckoutOrderOnce } from './createCheckoutOrderOnce'
@@ -47,6 +48,7 @@ export type CheckoutBoxNowLocker = {
 }
 
 export type CheckoutPaymentData = {
+  companyInvoice?: CompanyInvoice | null
   billingAddress?: Partial<Address> | Record<string, unknown>
   boxNowLocker?: CheckoutBoxNowLocker
   customerEmail?: string
@@ -138,6 +140,7 @@ const sendOrderEmails = async ({
   currency,
   customerEmail,
   customerNotes,
+  invoiceRequested,
   deliveryMethod,
   econtOfficeAddress,
   econtOfficeName,
@@ -159,6 +162,7 @@ const sendOrderEmails = async ({
   currency: string
   customerEmail?: string
   customerNotes?: string
+  invoiceRequested?: boolean
   deliveryMethod?: OrderEmailDeliveryMethod
   econtOfficeAddress?: string
   econtOfficeName?: string
@@ -194,7 +198,7 @@ const sendOrderEmails = async ({
     speedyOfficeName,
   }
   const customerHTML = buildCustomerOrderEmailHTML(templateArgs)
-  const adminHTML = buildAdminOrderEmailHTML(templateArgs)
+  const adminHTML = buildAdminOrderEmailHTML({ ...templateArgs, invoiceRequested })
 
   const emailTasks: Promise<unknown>[] = []
 
@@ -213,7 +217,7 @@ const sendOrderEmails = async ({
       emailTasks.push(
         payload.sendEmail({
           html: adminHTML,
-          subject: `Нова поръчка #${orderID}`,
+          subject: `Нова поръчка #${orderID}${invoiceRequested ? ' – нужна е фактура' : ''}`,
           to: adminEmail,
         }),
       )
@@ -278,6 +282,10 @@ export const createCheckoutTransactionData = ({
     boxNowLockerId: trimToUndefined(checkoutData.boxNowLocker?.id),
     boxNowLockerName: trimToUndefined(checkoutData.boxNowLocker?.name),
     boxNowLockerPostalCode: trimToUndefined(checkoutData.boxNowLocker?.postalCode),
+    companyInvoice:
+      checkoutData.companyInvoice != null
+        ? normalizeCompanyInvoice(checkoutData.companyInvoice)
+        : undefined,
     customerNotes: trimToUndefined(checkoutData.customerNotes),
     deliveryMethod,
     econtOfficeAddress: formatEcontOfficeAddress(checkoutData.econtOffice),
@@ -379,6 +387,7 @@ export const finalizeCheckoutTransaction = async ({
     boxNowLockerId: transaction.boxNowLockerId || undefined,
     boxNowLockerName: transaction.boxNowLockerName || undefined,
     boxNowLockerPostalCode: transaction.boxNowLockerPostalCode || undefined,
+    companyInvoice: transaction.companyInvoice?.companyName ? transaction.companyInvoice : undefined,
     customerNotes: transaction.customerNotes || undefined,
     deliveryMethod: transaction.deliveryMethod || 'address',
     econtOfficeAddress: transaction.econtOfficeAddress || undefined,
@@ -446,6 +455,7 @@ export const finalizeCheckoutTransaction = async ({
     currency: transaction.currency || 'EUR',
     customerEmail: transaction.customerEmail || undefined,
     customerNotes: transaction.customerNotes || undefined,
+    invoiceRequested: Boolean(transaction.companyInvoice?.companyName),
     deliveryMethod: transaction.deliveryMethod || 'address',
     boxNowLockerAddress: transaction.boxNowLockerAddress || undefined,
     boxNowLockerName: transaction.boxNowLockerName || undefined,

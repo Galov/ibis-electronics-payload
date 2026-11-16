@@ -1,5 +1,10 @@
 'use client'
 
+import {
+  companyInvoiceFields,
+  isCompleteCompanyInvoice,
+  type CompanyInvoice,
+} from '@/ecommerce/companyInvoice'
 import { BoxNowOfficeSelector } from '@/components/checkout/BoxNowOfficeSelector'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Price } from '@/components/Price'
@@ -34,6 +39,14 @@ export const CheckoutPage: React.FC<{
   freeShippingThreshold: _freeShippingThreshold,
   revolutPayEnabled = false,
 }) => {
+  const [requestsInvoice, setRequestsInvoice] = useState(false)
+  const [invoice, setInvoice] = useState<CompanyInvoice>({
+    companyName: '',
+    companyId: '',
+    address: '',
+  })
+  const companyInvoice = requestsInvoice ? invoice : null
+
   const { user } = useAuth()
   const { cart } = useCart()
   const { addresses } = useAddresses()
@@ -167,6 +180,7 @@ export const CheckoutPage: React.FC<{
   }
 
   const canSubmitOrder = Boolean(
+    (!companyInvoice || isCompleteCompanyInvoice(companyInvoice)) &&
     firstName.trim() &&
       lastName.trim() &&
       phone.trim() &&
@@ -545,6 +559,44 @@ export const CheckoutPage: React.FC<{
           />
         ) : null}
 
+        <div className="space-y-4 rounded-[10px] bg-muted/20 p-5">
+          <div className="flex items-center gap-4">
+            <Checkbox
+              checked={requestsInvoice}
+              id="requestsCompanyInvoice"
+              onCheckedChange={(checked) => setRequestsInvoice(checked === true)}
+            />
+            <Label htmlFor="requestsCompanyInvoice">Искам фактура на фирма</Label>
+          </div>
+          {requestsInvoice ? (
+            <fieldset className="grid gap-4">
+              <legend className="sr-only">Данни за фактура</legend>
+              {companyInvoiceFields.map(({ label, name, required, maxLength }) => (
+                <FormItem key={name}>
+                  <Label htmlFor={`invoice-${name}`}>
+                    {label}
+                    {required ? ' *' : ''}
+                  </Label>
+                  <Input
+                    aria-required={required}
+                    aria-describedby={name === 'companyId' ? 'invoice-company-id-help' : undefined}
+                    id={`invoice-${name}`}
+                    inputMode={name === 'companyId' ? 'numeric' : undefined}
+                    maxLength={maxLength}
+                    onChange={(event) => setInvoice({ ...invoice, [name]: event.target.value })}
+                    value={invoice[name] ?? ''}
+                  />
+                  {name === 'companyId' ? (
+                    <p className="text-sm text-muted-foreground" id="invoice-company-id-help">
+                      Въведете 9 или 13 цифри.
+                    </p>
+                  ) : null}
+                </FormItem>
+              ))}
+            </fieldset>
+          ) : null}
+        </div>
+
         <div className="rounded-[10px] bg-muted/20 px-5 py-5">
           <FormItem>
             <Label htmlFor="customerNotes">Бележки към поръчката</Label>
@@ -574,6 +626,7 @@ export const CheckoutPage: React.FC<{
         <CheckoutForm
           billingAddress={resolvedBillingAddress}
           boxNowLocker={boxNowLocker}
+          companyInvoice={companyInvoice}
           customerEmail={email}
           customerNotes={customerNotes}
           deliveryMethod={deliveryMethod}

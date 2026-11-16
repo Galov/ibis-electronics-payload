@@ -63,6 +63,7 @@ const extractCheckoutData = (...candidates: Array<RevolutAdapterData | undefined
       candidate.boxNowLocker ||
       candidate.econtOffice ||
       candidate.speedyOffice ||
+      candidate.companyInvoice !== undefined ||
       candidate.customerNotes ||
       typeof candidate.shippingFee === 'number'
     ) {
