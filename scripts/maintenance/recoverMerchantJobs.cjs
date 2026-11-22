@@ -28,7 +28,7 @@ async function isWorkerActive(id) {
 async function recover(db, apply = false, active = isWorkerActive, now = new Date()) {
   const jobs = db.collection('payload-jobs')
   const filter = {
-    taskSlug: 'syncMerchantProduct',
+    taskSlug: { $in: ['syncMerchantProduct', 'reconcileMerchantProducts'] },
     queue: 'merchant',
     processing: true,
     hasError: { $ne: true },

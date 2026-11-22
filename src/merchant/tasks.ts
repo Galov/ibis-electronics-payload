@@ -144,7 +144,7 @@ export const merchantReconcileTask: TaskConfig<{
       },
     },
   ],
-  handler: async ({ input, req }) => {
+  handler: async ({ input, req, job }) => withMerchantJobActivity(String(job.id), async () => {
     if (!merchantEnabled()) return { output: { queued: 0 } }
     const phase = input.phase || 'products'
     const collection = phase === 'products' ? 'products' : 'merchant-sync-entries'
@@ -175,5 +175,5 @@ export const merchantReconcileTask: TaskConfig<{
       })
     }
     return { output: { queued: result.docs.length } }
-  },
+  }),
 }
