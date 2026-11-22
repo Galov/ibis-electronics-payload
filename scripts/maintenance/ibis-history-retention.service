@@ -1,0 +1,12 @@
+[Unit]
+Description=Archive and clean completed Ibis background tasks
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/ibis-electronics/maintenance/run jobs --apply
+TimeoutStartSec=1800
+UMask=0077
+StandardOutput=journal
+StandardError=journal

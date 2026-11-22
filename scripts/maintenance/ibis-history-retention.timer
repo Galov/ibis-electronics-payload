@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Ibis background task retention
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 Europe/Sofia
+Persistent=true
+Unit=ibis-history-retention.service
+
+[Install]
+WantedBy=timers.target
