@@ -1,3 +1,4 @@
+import { withMerchantJobActivity } from './jobActivity'
 import { createHash } from 'node:crypto'
 import type { PayloadRequest, TaskConfig } from 'payload'
 import { publicProductWhere } from '@/access/publicProductWhere'
@@ -115,9 +116,10 @@ export const merchantProductTask: TaskConfig<{
   outputSchema: [{ name: 'status', type: 'text', required: true }],
   concurrency: { key: ({ input }) => `merchant-product-${input.productId}`, exclusive: true },
   retries: { attempts: 4, backoff: { delay: 60_000, type: 'exponential' } },
-  handler: async ({ input, req }) => ({
-    output: { status: await syncMerchantProduct(input.productId, req) },
-  }),
+  handler: async ({ input, req, job }) =>
+    withMerchantJobActivity(String(job.id), async () => ({
+      output: { status: await syncMerchantProduct(input.productId, req) },
+    })),
 }
 
 export const merchantReconcileTask: TaskConfig<{
