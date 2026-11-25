@@ -1,5 +1,6 @@
 'use client'
 
+import { useLocale } from '@/i18n/provider'
 import { AuthProvider } from '@/providers/Auth'
 import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
 import React from 'react'
@@ -22,26 +23,34 @@ const ecommerceCurrenciesConfig = {
 }
 
 const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const locale = useLocale()
+  const cartsFetchQuery = React.useMemo(
+    () =>
+      ({
+        locale,
+        fallbackLocale: 'bg',
+        depth: 2,
+        populate: {
+          products: {
+            images: true,
+            inventory: true,
+            price: true,
+            priceInEUR: true,
+            priceInUSD: true,
+            published: true,
+            slug: true,
+            title: true,
+          },
+        },
+      }) as const,
+    [locale],
+  )
   return (
     <EcommerceProvider
       enableVariants={false}
       currenciesConfig={ecommerceCurrenciesConfig}
       api={{
-        cartsFetchQuery: {
-          depth: 2,
-          populate: {
-            products: {
-              images: true,
-              inventory: true,
-              price: true,
-              priceInEUR: true,
-              priceInUSD: true,
-              published: true,
-              slug: true,
-              title: true,
-            },
-          },
-        },
+        cartsFetchQuery,
       }}
       paymentMethods={[manualAdapterClient(), revolutAdapterClient()]}
       syncLocalStorage={{

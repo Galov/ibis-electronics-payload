@@ -1,7 +1,12 @@
 'use client'
 
+import { useLocale } from '@/i18n/provider'
 import { useCommerceTranslation } from '@/i18n/CommerceText'
 import { getCheckoutDestination, type CheckoutCountry } from '@/ecommerce/checkoutDestination'
+import {
+  internationalDestinations,
+  isInternationalCountry,
+} from '@/ecommerce/internationalDelivery'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
@@ -13,6 +18,8 @@ export function CheckoutCountryStep({
   onChange: (country: CheckoutCountry) => void
 }) {
   const ui = useCommerceTranslation()
+  const locale = useLocale()
+  const countryNames = new Intl.DisplayNames([locale], { type: 'region' })
   const destination = getCheckoutDestination(country)
   return (
     <section
@@ -28,14 +35,18 @@ export function CheckoutCountryStep({
         value={country}
         onChange={(event) => {
           const code = event.target.value
-          onChange(code === 'BG' || code === 'RO' || code === 'DE' ? code : '')
+          onChange(code === 'BG' || code === 'RO' || isInternationalCountry(code) ? code : '')
         }}
         className="mt-2 h-12 w-full rounded-md border bg-white px-4 text-sm text-primary md:max-w-md"
       >
         <option value="">{ui('Избери държава')}</option>
         <option value="BG">{ui('България')}</option>
         <option value="RO">{ui('Румъния')}</option>
-        <option value="DE">{ui('Германия (тест)')}</option>
+        {Object.entries(internationalDestinations).map(([code, destination]) => (
+          <option key={code} value={code}>
+            {countryNames.of(code) || destination.name}
+          </option>
+        ))}
       </select>
       {destination.kind === 'redirect' ? (
         <div className="mt-5 space-y-4">
@@ -48,17 +59,10 @@ export function CheckoutCountryStep({
             <a href={destination.url}>{ui('Към румънския магазин')}</a>
           </Button>
         </div>
-      ) : destination.kind === 'preview' ? (
-        <div className="mt-5 space-y-4">
-          <h3 className="type-subsection-title">{ui('Начин на плащане')}</h3>
-          <p>{ui('Само онлайн плащане с карта')}</p>
-          <p role="status" className="text-sm leading-6 text-primary/65">
-            {ui(
-              'Германия е тестова дестинация. Поръчването ще бъде активирано след потвърждение на тарифата за доставка.',
-            )}
-          </p>
-          <Button disabled>{ui('Плати онлайн')}</Button>
-        </div>
+      ) : destination.kind === 'international' ? (
+        <p className="mt-4 text-sm">
+          {ui('Само онлайн плащане с карта')} · {destination.shippingFee.toFixed(2)} €
+        </p>
       ) : destination.kind === 'unavailable' ? (
         <p className="mt-4 text-sm leading-6 text-primary/65">
           {ui(

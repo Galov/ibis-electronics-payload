@@ -1,4 +1,10 @@
-import { getDeliveryMethodLabel, getDeliveryPricingNote, type DeliveryMethod } from '@/utilities/delivery'
+import { translateCommerce } from '@/i18n/commerce'
+import type { Locale } from '@/i18n/config'
+import {
+  getDeliveryMethodLabel,
+  getDeliveryPricingNote,
+  type DeliveryMethod,
+} from '@/utilities/delivery'
 
 export type OrderEmailItem = {
   product?: unknown
@@ -23,12 +29,14 @@ export type OrderEmailDeliveryMethod = DeliveryMethod
 export type OrderEmailPaymentMethod = 'manual' | 'revolut'
 
 type OrderEmailTemplateArgs = {
+  locale?: Locale
   amount: number
   boxNowLockerAddress?: string
   boxNowLockerName?: string
   currency: string
   customerEmail?: string
   customerNotes?: string
+  invoiceRequested?: boolean
   deliveryMethod?: OrderEmailDeliveryMethod
   econtOfficeAddress?: string
   econtOfficeName?: string
@@ -54,10 +62,10 @@ export const escapeHTML = (value: unknown) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 
-export const formatMoney = (value?: null | number, currency = 'EUR') => {
+export const formatMoney = (value?: null | number, currency = 'EUR', locale: Locale = 'bg') => {
   if (typeof value !== 'number') return '-'
 
-  return new Intl.NumberFormat('bg-BG', {
+  return new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'bg-BG', {
     currency,
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
@@ -99,11 +107,16 @@ export const getPaymentMethodLabel = (paymentMethod?: OrderEmailPaymentMethod) =
   }
 }
 
-const buildOrderItemsRowsHTML = (items?: null | OrderEmailItem[], currency = 'EUR') => {
+const buildOrderItemsRowsHTML = (
+  items?: null | OrderEmailItem[],
+  currency = 'EUR',
+  locale: Locale = 'bg',
+) => {
+  const t = (text: string) => translateCommerce(locale, text)
   if (!items?.length) {
     return `
       <tr>
-        <td colspan="5" style="padding: 16px; color: #667085;">Няма артикули.</td>
+        <td colspan="5" style="padding: 16px; color: #667085;">${t('Няма артикули.')}</td>
       </tr>
     `
   }
@@ -111,7 +124,7 @@ const buildOrderItemsRowsHTML = (items?: null | OrderEmailItem[], currency = 'EU
   return items
     .map((item) => {
       const quantity = item.quantity || 0
-      const title = getProductTitle(item.product) || item.productSKU || 'Продукт'
+      const title = getProductTitle(item.product) || item.productSKU || t('Продукт')
       const unitPrice = item.productUnitPrice
       const lineTotal = typeof unitPrice === 'number' ? unitPrice * quantity : null
 
@@ -127,10 +140,10 @@ const buildOrderItemsRowsHTML = (items?: null | OrderEmailItem[], currency = 'EU
             ${quantity}
           </td>
           <td style="border-top: 1px solid #e8eef9; padding: 14px 12px; text-align: right; color: #243047;">
-            ${escapeHTML(formatMoney(unitPrice, currency))}
+            ${escapeHTML(formatMoney(unitPrice, currency, locale))}
           </td>
           <td style="border-top: 1px solid #e8eef9; padding: 14px 12px; text-align: right; color: #243047; font-weight: 600;">
-            ${escapeHTML(formatMoney(lineTotal, currency))}
+            ${escapeHTML(formatMoney(lineTotal, currency, locale))}
           </td>
         </tr>
       `
@@ -138,19 +151,23 @@ const buildOrderItemsRowsHTML = (items?: null | OrderEmailItem[], currency = 'EU
     .join('')
 }
 
-const buildOrderItemsTableHTML = (items?: null | OrderEmailItem[], currency = 'EUR') => `
+const buildOrderItemsTableHTML = (
+  items?: null | OrderEmailItem[],
+  currency = 'EUR',
+  locale: Locale = 'bg',
+) => `
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; overflow: hidden; border: 1px solid #dbe6f8; border-radius: 12px; background: #ffffff;">
     <thead>
       <tr style="background: #f4f8ff;">
-        <th align="left" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Продукт</th>
-        <th align="left" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Код</th>
-        <th align="right" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Бр.</th>
-        <th align="right" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Ед. цена</th>
-        <th align="right" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Общо</th>
+        <th align="left" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">${translateCommerce(locale, 'Продукт')}</th>
+        <th align="left" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">${translateCommerce(locale, 'Код')}</th>
+        <th align="right" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">${translateCommerce(locale, 'Бр.')}</th>
+        <th align="right" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">${translateCommerce(locale, 'Ед. цена')}</th>
+        <th align="right" style="padding: 12px; color: ${brandBlue}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">${translateCommerce(locale, 'Общо')}</th>
       </tr>
     </thead>
     <tbody>
-      ${buildOrderItemsRowsHTML(items, currency)}
+      ${buildOrderItemsRowsHTML(items, currency, locale)}
     </tbody>
   </table>
 `
@@ -170,13 +187,15 @@ const buildLayout = ({
   children,
   heading,
   preview,
+  locale = 'bg',
 }: {
+  locale?: Locale
   children: string
   heading: string
   preview: string
 }) => `
   <!doctype html>
-  <html lang="bg">
+  <html lang="${locale}">
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -202,7 +221,7 @@ const buildLayout = ({
               <tr>
                 <td style="background: ${brandBlue}; padding: 18px 28px; color: #ffffff; font-size: 13px; line-height: 1.6;">
                   Ibis Electronics<br />
-                  <span style="color: rgba(255,255,255,0.78);">Автоматично съобщение от ibis-electronics.com</span>
+                  <span style="color: rgba(255,255,255,0.78);">${translateCommerce(locale, 'Автоматично съобщение от ibis-electronics.com')}</span>
                 </td>
               </tr>
             </table>
@@ -214,8 +233,10 @@ const buildLayout = ({
 `
 
 export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
-  const deliveryLabel = getDeliveryMethodLabel(args.deliveryMethod)
-  const paymentMethodLabel = getPaymentMethodLabel(args.paymentMethod)
+  const locale = args.locale || 'bg'
+  const t = (text: string) => translateCommerce(locale, text)
+  const deliveryLabel = t(getDeliveryMethodLabel(args.deliveryMethod))
+  const paymentMethodLabel = t(getPaymentMethodLabel(args.paymentMethod))
   const officeName =
     args.deliveryMethod === 'boxnow'
       ? args.boxNowLockerName
@@ -232,34 +253,38 @@ export const buildCustomerOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
         : args.deliveryMethod === 'speedy-office'
           ? args.speedyOfficeAddress
           : undefined
-  const deliveryPricingNote = getDeliveryPricingNote(args.deliveryMethod)
+  const deliveryPricingNote =
+    args.shippingAddress?.country && args.shippingAddress.country !== 'BG'
+      ? t('Фиксирана международна доставка до адрес, включена в общата сума.')
+      : t(getDeliveryPricingNote(args.deliveryMethod))
 
   return buildLayout({
-    heading: 'Поръчката е приета',
-    preview: `Получихме поръчка #${args.orderID}.`,
+    locale,
+    heading: t('Поръчката е приета'),
+    preview: `${t('Получихме поръчка')} #${args.orderID}.`,
     children: `
       <p style="margin: 0 0 18px; color: #475467; font-size: 16px; line-height: 1.7;">
-        Благодарим ви. Получихме поръчка <strong style="color: ${brandBlue};">#${escapeHTML(args.orderID)}</strong>.
+        ${t('Благодарим ви. Получихме поръчка')} <strong style="color: ${brandBlue};">#${escapeHTML(args.orderID)}</strong>.
       </p>
 
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 24px;">
-        ${buildDetailRow('Сума', escapeHTML(formatMoney(args.amount, args.currency)))}
-        ${buildDetailRow('Начин на плащане', escapeHTML(paymentMethodLabel))}
-        ${buildDetailRow('Доставка', escapeHTML(deliveryLabel))}
-        ${officeName ? buildDetailRow('Офис', escapeHTML(officeName)) : ''}
-        ${officeAddress ? buildDetailRow('Адрес на офис', escapeHTML(officeAddress)) : ''}
-        ${args.shippingFee ? buildDetailRow('Цена на доставка', escapeHTML(formatMoney(args.shippingFee, args.currency))) : ''}
+        ${buildDetailRow(t('Сума'), escapeHTML(formatMoney(args.amount, args.currency, locale)))}
+        ${buildDetailRow(t('Начин на плащане'), escapeHTML(paymentMethodLabel))}
+        ${buildDetailRow(t('Доставка'), escapeHTML(deliveryLabel))}
+        ${officeName ? buildDetailRow(t('Офис'), escapeHTML(officeName)) : ''}
+        ${officeAddress ? buildDetailRow(t('Адрес на офис'), escapeHTML(officeAddress)) : ''}
+        ${args.shippingFee ? buildDetailRow(t('Цена на доставка'), escapeHTML(formatMoney(args.shippingFee, args.currency, locale))) : ''}
       </table>
       <p style="margin: 0 0 20px; color: #475467; font-size: 14px; line-height: 1.7;">
         ${escapeHTML(deliveryPricingNote)}
       </p>
 
-      <h2 style="margin: 26px 0 12px; color: ${brandBlue}; font-size: 20px; line-height: 1.3; font-weight: 500;">Артикули</h2>
-      ${buildOrderItemsTableHTML(args.items, args.currency)}
+      <h2 style="margin: 26px 0 12px; color: ${brandBlue}; font-size: 20px; line-height: 1.3; font-weight: 500;">${t('Артикули')}</h2>
+      ${buildOrderItemsTableHTML(args.items, args.currency, locale)}
 
       <div style="margin-top: 28px;">
         <a href="${escapeHTML(args.orderURL)}" style="display: inline-block; border-radius: 10px; background: ${brandBlue}; padding: 13px 18px; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none;">
-          Преглед на поръчката
+          ${t('Преглед на поръчката')}
         </a>
       </div>
     `,
@@ -287,13 +312,17 @@ export const buildAdminOrderEmailHTML = (args: OrderEmailTemplateArgs) => {
           : undefined
   const shippingAddressHTML = formatAddressHTML(args.shippingAddress)
   const notes = args.customerNotes?.trim()
-  const deliveryPricingNote = getDeliveryPricingNote(args.deliveryMethod)
+  const deliveryPricingNote =
+    args.shippingAddress?.country && args.shippingAddress.country !== 'BG'
+      ? 'Фиксирана международна доставка до адрес, включена в общата сума.'
+      : getDeliveryPricingNote(args.deliveryMethod)
 
   return buildLayout({
     heading: `Нова поръчка #${args.orderID}`,
     preview: `Нова поръчка #${args.orderID} за ${formatMoney(args.amount, args.currency)}.`,
     children: `
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 24px;">
+        ${args.invoiceRequested ? buildDetailRow('Фактура', '<strong>Нужна е фирмена фактура. Данните са в поръчката.</strong>') : ''}
         ${buildDetailRow('Клиентски имейл', escapeHTML(args.customerEmail || '-'))}
         ${buildDetailRow('Сума', escapeHTML(formatMoney(args.amount, args.currency)))}
         ${buildDetailRow('Начин на плащане', escapeHTML(paymentMethodLabel))}

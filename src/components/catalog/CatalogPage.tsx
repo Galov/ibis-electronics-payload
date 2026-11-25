@@ -74,7 +74,7 @@ export async function MagazinPageContent({
   const products = await payload.find({
     collection: 'products',
     locale,
-    fallbackLocale: 'bg',
+    fallbackLocale: locale === 'en' ? false : 'bg',
     draft: false,
     limit: pageSize === 'all' ? 1000 : pageSize,
     page: currentPage,
@@ -95,6 +95,7 @@ export async function MagazinPageContent({
     ...(sort ? { sort } : { sort: '-updatedAt' }),
     where: {
       and: [
+        ...(locale === 'en' ? [{ title: { exists: true } }, { title: { not_equals: '' } }] : []),
         {
           published: {
             equals: true,
@@ -209,7 +210,7 @@ export async function MagazinPageContent({
         <>
           <Grid className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products.docs.map((product) => {
-              return <ProductGridItem key={product.id} product={product} />
+              return <ProductGridItem key={product.id} product={product} locale={locale} />
             })}
           </Grid>
           <CatalogPagination

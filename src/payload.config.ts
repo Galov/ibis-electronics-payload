@@ -1,3 +1,5 @@
+import { englishProductTranslationTask, englishTranslationQueueEnabled } from '@/translations/tasks'
+import { localProductLocalizationEnabled } from '@/i18n/localProductLocalization'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { resendAdapter } from '@payloadcms/email-resend'
 import { bg as payloadBg } from '@payloadcms/translations/languages/bg'
@@ -102,15 +104,35 @@ export default buildConfig({
     url: process.env.DATABASE_URL || '',
   }),
   editor: fullLexicalEditor(),
-  ...(resendApiKey
+  ...(process.env.IBIS_EN_RELEASE_REHEARSAL === 'true' && localProductLocalizationEnabled()
     ? {
-        email: resendAdapter({
-          apiKey: resendApiKey,
-          defaultFromAddress,
-          defaultFromName,
+        email: ({ payload }) => ({
+          name: 'local-rehearsal',
+          defaultFromAddress: 'no-reply@rehearsal.invalid',
+          defaultFromName: 'Local rehearsal',
+          sendEmail: async (message) => {
+            const db = payload.db.connection.db
+            if (db?.databaseName !== 'ibis_en_release_rehearsal')
+              throw new Error('Unsafe rehearsal email target')
+            await db.collection('english_rehearsal_emails').insertOne({
+              at: new Date(),
+              subject: message.subject,
+              to: message.to,
+              html: typeof message.html === 'string' ? message.html : '',
+            })
+            return { suppressed: true }
+          },
         }),
       }
-    : {}),
+    : resendApiKey
+      ? {
+          email: resendAdapter({
+            apiKey: resendApiKey,
+            defaultFromAddress,
+            defaultFromName,
+          }),
+        }
+      : {}),
   i18n: {
     fallbackLanguage: 'bg',
     supportedLanguages: {
@@ -227,13 +249,25 @@ export default buildConfig({
       queue: ({ req }) => checkRole(['admin'], req.user),
       run: ({ req }) => checkRole(['admin'], req.user),
     },
-    autoRun: process.env.IBIS_LOCAL_PREVIEW === 'true' ? [] : [
-      { cron: '*/10 * * * * *', limit: 10, queue: 'merchant' },
-      { cron: '*/10 * * * * *', limit: 5, queue: 'order-withdrawal' },
+    autoRun: [
+      ...(process.env.IBIS_LOCAL_PREVIEW === 'true'
+        ? []
+        : [
+            { cron: '*/10 * * * * *', limit: 10, queue: 'merchant' },
+            { cron: '*/10 * * * * *', limit: 5, queue: 'order-withdrawal' },
+          ]),
+      ...(englishTranslationQueueEnabled() && process.env.IBIS_EN_TRANSLATION_API_ENABLED === 'true'
+        ? [{ cron: '*/30 * * * * *', limit: 1, queue: 'english-products' }]
+        : []),
     ],
     enableConcurrencyControl: true,
     deleteJobOnComplete: false,
-    tasks: [merchantProductTask, merchantReconcileTask, withdrawalNotificationTask],
+    tasks: [
+      merchantProductTask,
+      merchantReconcileTask,
+      withdrawalNotificationTask,
+      englishProductTranslationTask,
+    ],
   },
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

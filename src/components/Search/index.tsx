@@ -1,5 +1,6 @@
 'use client'
 
+import { categoryLabel } from '@/i18n/categoryLabel'
 import { useTranslate } from '@/i18n/provider'
 
 import { useMobileCatalogControls } from '@/components/catalog/MobileCatalogControls'
@@ -88,7 +89,7 @@ export const Search: React.FC<Props> = ({
           const category = await response.json()
 
           if (isMounted) {
-            setSelectedCategoryTitle(category?.title || null)
+            setSelectedCategoryTitle(category?.title ? categoryLabel(category.title, locale) : null)
           }
         } catch {
           if (isMounted) {
@@ -103,7 +104,7 @@ export const Search: React.FC<Props> = ({
     return () => {
       isMounted = false
     }
-  }, [availableBrands, selectedBrandSlug, selectedCategoryID])
+  }, [availableBrands, selectedBrandSlug, selectedCategoryID, locale])
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {

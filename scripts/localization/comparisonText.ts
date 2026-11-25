@@ -44,6 +44,18 @@ const aliases: Record<string, string> = {
   '°С': '°C',
   '°F': '°F',
 }
+// Written-out units are equivalent spellings, never conversions or inferred units.
+for (const [names, canonical] of [
+  [['литър', 'литра', 'liter', 'liters', 'litre', 'litres'], 'l'],
+  [['метър', 'метра', 'meter', 'meters', 'metre', 'metres'], 'm'],
+  [['милиметър', 'милиметра', 'millimeter', 'millimeters', 'millimetre', 'millimetres'], 'mm'],
+  [['сантиметър', 'сантиметра', 'centimeter', 'centimeters', 'centimetre', 'centimetres'], 'cm'],
+] as const) {
+  for (const name of names) {
+    aliases[name] = canonical
+    aliases[name[0].toUpperCase() + name.slice(1)] = canonical
+  }
+}
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const unitPattern = Object.keys(aliases)
   .sort((a, b) => b.length - a.length)
@@ -51,7 +63,7 @@ const unitPattern = Object.keys(aliases)
   .join('|')
 const thermalContext = /(?:термостат|терморегулатор|температур|thermostat|temperature)/i
 const quantityUnit = new RegExp(
-  `(?<![\\p{L}\\p{N}])([-+]?\\d+(?:[.,]\\d+)?)\\s*(${unitPattern})(?![\\p{L}\\p{N}])`,
+  `(?<![\\p{L}\\p{N}])([-+]?\\d+(?:[.,]\\d+)?)(?:\\s*|\\s*-\\s*)(${unitPattern})(?![\\p{L}\\p{N}])`,
   'gu',
 )
 const bareCelsius = /(?<![\p{L}\p{N}])([-+]?\d+(?:[.,]\d+)?)\s*[CС](?![\p{L}\p{N}])/gu

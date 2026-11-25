@@ -13,12 +13,16 @@ ARG NEXT_PUBLIC_SERVER_URL
 ARG PAYLOAD_PUBLIC_SERVER_URL
 ARG NEXT_PUBLIC_GTM_ID
 ARG NEXT_PUBLIC_R2_PUBLIC_BASE_URL
+ARG IBIS_PRODUCT_LOCALIZATION_ENABLED=false
+ARG IBIS_PRODUCT_LOCALIZATION_SCHEMA
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL
 ENV PAYLOAD_PUBLIC_SERVER_URL=$PAYLOAD_PUBLIC_SERVER_URL
 ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
 ENV NEXT_PUBLIC_R2_PUBLIC_BASE_URL=$NEXT_PUBLIC_R2_PUBLIC_BASE_URL
+ENV IBIS_PRODUCT_LOCALIZATION_ENABLED=$IBIS_PRODUCT_LOCALIZATION_ENABLED
+ENV IBIS_PRODUCT_LOCALIZATION_SCHEMA=$IBIS_PRODUCT_LOCALIZATION_SCHEMA
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -54,6 +58,8 @@ COPY --from=builder /app/scripts/backfillR2ImageCacheHeaders.ts ./scripts/backfi
 COPY --from=builder /app/scripts/catalogSyncProductToRomania.ts ./scripts/catalogSyncProductToRomania.ts
 COPY --from=builder /app/scripts/catalogSyncBatchToRomania.ts ./scripts/catalogSyncBatchToRomania.ts
 COPY --from=builder /app/scripts/romaniaUpdates.ts ./scripts/romaniaUpdates.ts
+COPY --from=builder /app/scripts/localization/translationCore.ts ./scripts/localization/translationCore.ts
+COPY --from=builder /app/scripts/localization/comparisonText.ts ./scripts/localization/comparisonText.ts
 
 EXPOSE 3000
 

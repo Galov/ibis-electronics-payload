@@ -9,9 +9,12 @@ import { Message } from '@/components/Message'
 import { Button } from '@/components/ui/button'
 import React, { useCallback, FormEvent, useMemo, useRef } from 'react'
 import { useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
+import type { CompanyInvoice } from '@/ecommerce/companyInvoice'
 import { Address } from '@/payload-types'
 
 type Props = {
+  onlineOnly?: boolean
+  companyInvoice?: CompanyInvoice | null
   customerEmail?: string
   customerNotes?: string
   billingAddress?: Partial<Address>
@@ -58,6 +61,7 @@ const REVOLUT_PENDING_CART_SECRET_KEY = 'ibis-pending-revolut-cart-secret'
 const REVOLUT_PENDING_CHECKOUT_DATA_KEY = 'ibis-pending-revolut-checkout-data'
 
 export const CheckoutForm: React.FC<Props> = ({
+  companyInvoice,
   customerEmail,
   customerNotes,
   billingAddress,
@@ -70,6 +74,7 @@ export const CheckoutForm: React.FC<Props> = ({
   speedyOffice,
   setProcessingPayment,
   revolutPayEnabled = false,
+  onlineOnly = false,
 }) => {
   const locale = useLocale()
   const ui = useCommerceTranslation()
@@ -77,7 +82,7 @@ export const CheckoutForm: React.FC<Props> = ({
   const [error, setError] = React.useState<null | string>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const [paymentMethod, setPaymentMethod] = React.useState<'manual' | 'revolut'>(
-    revolutPayEnabled ? 'revolut' : 'manual',
+    revolutPayEnabled || onlineOnly ? 'revolut' : 'manual',
   )
   const router = useLocalizedRouter()
   const { cart, clearCart } = useCart()
@@ -91,6 +96,7 @@ export const CheckoutForm: React.FC<Props> = ({
     () => ({
       locale,
       billingAddress,
+      companyInvoice,
       customerEmail: effectiveCustomerEmail,
       customerNotes: customerNotes?.trim() || undefined,
       deliveryMethod,
@@ -103,6 +109,7 @@ export const CheckoutForm: React.FC<Props> = ({
     [
       locale,
       billingAddress,
+      companyInvoice,
       boxNowLocker,
       customerNotes,
       deliveryMethod,
@@ -153,6 +160,7 @@ export const CheckoutForm: React.FC<Props> = ({
   const handleManualSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault()
+      if (disabled || isLoading || onlineOnly) return
       setIsLoading(true)
       setProcessingPayment(true)
 
@@ -170,7 +178,16 @@ export const CheckoutForm: React.FC<Props> = ({
       setIsLoading(false)
       setProcessingPayment(false)
     },
-    [checkoutAdditionalData, confirmOrder, redirectToOrder, setProcessingPayment, ui],
+    [
+      checkoutAdditionalData,
+      onlineOnly,
+      confirmOrder,
+      disabled,
+      isLoading,
+      redirectToOrder,
+      setProcessingPayment,
+      ui,
+    ],
   )
 
   const handleRevolutRedirect = useCallback(async () => {
@@ -178,7 +195,7 @@ export const CheckoutForm: React.FC<Props> = ({
     setIsLoading(true)
     setProcessingPayment(true)
 
-    if (disabled) {
+    if (disabled || !revolutPayEnabled) {
       setIsLoading(false)
       setProcessingPayment(false)
       setError(ui('Попълни необходимите данни за контакт и доставка преди плащане.'))
@@ -213,10 +230,8 @@ export const CheckoutForm: React.FC<Props> = ({
       if (cart?.secret) {
         localStorage.setItem(REVOLUT_PENDING_CART_SECRET_KEY, String(cart.secret))
       }
-      localStorage.setItem(
-        REVOLUT_PENDING_CHECKOUT_DATA_KEY,
-        JSON.stringify(checkoutAdditionalData),
-      )
+      const { companyInvoice: _companyInvoice, ...returnCheckoutData } = checkoutAdditionalData
+      localStorage.setItem(REVOLUT_PENDING_CHECKOUT_DATA_KEY, JSON.stringify(returnCheckoutData))
 
       window.location.href = result.checkoutURL
     } catch (err) {
@@ -233,6 +248,7 @@ export const CheckoutForm: React.FC<Props> = ({
     cart?.secret,
     checkoutAdditionalData,
     disabled,
+    revolutPayEnabled,
     effectiveCustomerEmail,
     initiatePayment,
     setProcessingPayment,
@@ -243,7 +259,7 @@ export const CheckoutForm: React.FC<Props> = ({
     <form onSubmit={handleManualSubmit}>
       {error && <Message error={error} />}
 
-      {revolutPayEnabled ? (
+      {revolutPayEnabled && !onlineOnly ? (
         <div className="mt-8 rounded-[10px] border border-black/8 bg-white px-5 py-5">
           <p className="type-subsection-title text-primary/85">
             <CommerceText source={'Начин на плащане'} />
@@ -295,10 +311,10 @@ export const CheckoutForm: React.FC<Props> = ({
       ) : null}
 
       <div className="mt-8 flex flex-col gap-4">
-        {paymentMethod === 'manual' ? (
+        {paymentMethod === 'manual' && !onlineOnly ? (
           <Button
             className="h-12 rounded-md bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)]"
-            disabled={disabled || isLoading}
+            disabled={disabled || isLoading || (onlineOnly && !revolutPayEnabled)}
             type="submit"
             variant="default"
           >
@@ -313,7 +329,7 @@ export const CheckoutForm: React.FC<Props> = ({
             </div>
             <Button
               className="h-12 rounded-md bg-[rgb(1,55,186)] px-9 text-sm font-normal text-white hover:bg-[rgb(1,55,186)]"
-              disabled={disabled || isLoading}
+              disabled={disabled || isLoading || (onlineOnly && !revolutPayEnabled)}
               onClick={(event) => {
                 event.preventDefault()
                 void handleRevolutRedirect()

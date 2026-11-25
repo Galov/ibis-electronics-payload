@@ -1,5 +1,14 @@
 'use client'
 
+import { InternationalAddress } from './InternationalAddress'
+import { internationalPostalIssue, isInternationalCountry } from '@/ecommerce/internationalDelivery'
+
+import { useLocale } from '@/i18n/provider'
+import {
+  companyInvoiceFields,
+  isCompleteCompanyInvoice,
+  type CompanyInvoice,
+} from '@/ecommerce/companyInvoice'
 import { CheckoutCountryStep } from './CheckoutCountryStep'
 import { getCheckoutDestination, type CheckoutCountry } from '@/ecommerce/checkoutDestination'
 import { useCommerceTranslation, CommerceText } from '@/i18n/CommerceText'
@@ -36,6 +45,14 @@ export const CheckoutPage: React.FC<{
   revolutPayEnabled?: boolean
 }> = ({ freeShippingThreshold: _freeShippingThreshold, revolutPayEnabled = false }) => {
   const ui = useCommerceTranslation()
+  const locale = useLocale()
+  const [requestsInvoice, setRequestsInvoice] = useState(false)
+  const [invoice, setInvoice] = useState<CompanyInvoice>({
+    companyName: '',
+    companyId: '',
+    address: '',
+  })
+  const companyInvoice = locale === 'bg' && requestsInvoice ? invoice : null
 
   const [deliveryCountry, setDeliveryCountry] = useState<CheckoutCountry>('')
   const { user } = useAuth()
@@ -107,8 +124,8 @@ export const CheckoutPage: React.FC<{
     Boolean(address?.state?.trim() && address?.city?.trim() && address?.addressLine1?.trim())
 
   useEffect(() => {
-    if (!billingAddress && addresses && addresses.length > 0) {
-      const defaultAddress = addresses[0]
+    if (deliveryCountry === 'BG' && !billingAddress && addresses && addresses.length > 0) {
+      const defaultAddress = addresses.find((address) => address.country === 'BG')
 
       if (defaultAddress) {
         setBillingAddress(defaultAddress)
@@ -119,7 +136,7 @@ export const CheckoutPage: React.FC<{
         setEmail((current) => current || user?.email || '')
       }
     }
-  }, [addresses, billingAddress, user?.email])
+  }, [addresses, billingAddress, user?.email, deliveryCountry])
 
   useEffect(() => {
     if (user?.email) {
@@ -173,10 +190,15 @@ export const CheckoutPage: React.FC<{
     setShippingAddress(undefined)
     setBillingAddress(undefined)
     setBillingAddressSameAsShipping(true)
-    setDeliveryMethod('boxnow')
+    setDeliveryMethod(country === 'BG' ? 'boxnow' : 'address')
   }
   const countryStep = <CheckoutCountryStep country={deliveryCountry} onChange={onCountryChange} />
-  if (getCheckoutDestination(deliveryCountry).kind !== 'local') {
+  const destination = getCheckoutDestination(deliveryCountry)
+  const international = destination.kind === 'international'
+  const postalIssue = isInternationalCountry(deliveryCountry)
+    ? internationalPostalIssue(deliveryCountry, billingAddress?.postalCode)
+    : null
+  if (destination.kind !== 'local' && !international) {
     return <div className="my-8 w-full">{countryStep}</div>
   }
 
@@ -195,10 +217,16 @@ export const CheckoutPage: React.FC<{
   }
 
   const canSubmitOrder = Boolean(
+    (!international ||
+      (revolutPayEnabled &&
+        !postalIssue &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
+        Boolean(billingAddress?.city?.trim() && billingAddress?.addressLine1?.trim()))) &&
+    (!companyInvoice || isCompleteCompanyInvoice(companyInvoice)) &&
     firstName.trim() &&
     lastName.trim() &&
     phone.trim() &&
-    (deliveryMethod !== 'address' || hasCompleteAddress(billingAddress)) &&
+    (deliveryMethod !== 'address' || international || hasCompleteAddress(billingAddress)) &&
     (deliveryMethod !== 'address' ||
       billingAddressSameAsShipping ||
       hasCompleteAddress(shippingAddress)) &&
@@ -208,12 +236,17 @@ export const CheckoutPage: React.FC<{
       (deliveryMethod === 'econt-office' && econtOffice)),
   )
 
-  const deliveryPricingNote = getDeliveryPricingNote(deliveryMethod)
-  const shippingFee = getDeliveryShippingFee(deliveryMethod)
-  const orderTotal = orderSubtotal + shippingFee
+  const deliveryPricingNote = international
+    ? 'Фиксирана международна доставка до адрес, включена в общата сума.'
+    : getDeliveryPricingNote(deliveryMethod)
+  const shippingFee =
+    destination.kind === 'international'
+      ? destination.shippingFee
+      : getDeliveryShippingFee(deliveryMethod)
+  const orderTotal = Math.round((orderSubtotal + shippingFee) * 100) / 100
 
   const customerContactAddress: Partial<Address> = {
-    country: 'BG',
+    country: destination.kind === 'international' ? destination.country : 'BG',
     firstName,
     lastName,
     phone,
@@ -308,7 +341,9 @@ export const CheckoutPage: React.FC<{
                 <p className="type-body-small mt-2 text-primary/60">
                   <CommerceText
                     source={
-                      'Телефонът е задължителен, за да можем да се свържем с теб при нужда. Имейлът е по желание.'
+                      international
+                        ? 'Телефонът и имейлът са задължителни за международна доставка.'
+                        : 'Телефонът е задължителен, за да можем да се свържем с теб при нужда. Имейлът е по желание.'
                     }
                   />{' '}
                 </p>
@@ -350,6 +385,7 @@ export const CheckoutPage: React.FC<{
                   autoComplete="email"
                   id="email"
                   onChange={(e) => setEmail(e.target.value)}
+                  required={international}
                   type="email"
                   value={email}
                 />
@@ -371,101 +407,130 @@ export const CheckoutPage: React.FC<{
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="w-full rounded-[10px] bg-muted/20 px-5 py-5">
-              <p className="mb-4 text-sm text-primary/65">
-                <CommerceText source={'Избери начин на доставка.'} />{' '}
-                <CommerceText source="Доставката в момента е достъпна само в България." />
-              </p>
+          {!international && (
+            <div className="flex items-center gap-4">
+              <div className="w-full rounded-[10px] bg-muted/20 px-5 py-5">
+                <p className="mb-4 text-sm text-primary/65">
+                  <CommerceText source={'Избери начин на доставка.'} />{' '}
+                  <CommerceText source="Доставката в момента е достъпна само в България." />
+                </p>
 
-              <div className="grid gap-3 sm:grid-cols-4">
-                <button
-                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                    deliveryMethod === 'boxnow'
-                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                      : 'border-black/8 bg-white hover:border-black/15'
-                  }`}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    setDeliveryMethod('boxnow')
-                  }}
-                  type="button"
-                >
-                  <p className="type-subsection-title text-primary/85">
-                    <CommerceText source={'Автомат на BoxNow'} />
-                  </p>
-                  <p className="mt-1 text-sm text-primary/60">
-                    <CommerceText source={'Избери удобен автомат'} />
-                  </p>
-                </button>
+                <div className="grid gap-3 sm:grid-cols-4">
+                  <button
+                    className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                      deliveryMethod === 'boxnow'
+                        ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                        : 'border-black/8 bg-white hover:border-black/15'
+                    }`}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      setDeliveryMethod('boxnow')
+                    }}
+                    type="button"
+                  >
+                    <p className="type-subsection-title text-primary/85">
+                      <CommerceText source={'Автомат на BoxNow'} />
+                    </p>
+                    <p className="mt-1 text-sm text-primary/60">
+                      <CommerceText source={'Избери удобен автомат'} />
+                    </p>
+                  </button>
 
-                <button
-                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                    deliveryMethod === 'address'
-                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                      : 'border-black/8 bg-white hover:border-black/15'
-                  }`}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    setDeliveryMethod('address')
-                  }}
-                  type="button"
-                >
-                  <p className="type-subsection-title text-primary/85">
-                    <CommerceText source={'Адрес'} />
-                  </p>
-                  <p className="mt-1 text-sm text-primary/60">
-                    <CommerceText source={'Използвай въведения адрес за доставка.'} />
-                  </p>
-                </button>
+                  <button
+                    className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                      deliveryMethod === 'address'
+                        ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                        : 'border-black/8 bg-white hover:border-black/15'
+                    }`}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      setDeliveryMethod('address')
+                    }}
+                    type="button"
+                  >
+                    <p className="type-subsection-title text-primary/85">
+                      <CommerceText source={'Адрес'} />
+                    </p>
+                    <p className="mt-1 text-sm text-primary/60">
+                      <CommerceText source={'Използвай въведения адрес за доставка.'} />
+                    </p>
+                  </button>
 
-                <button
-                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                    deliveryMethod === 'econt-office'
-                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                      : 'border-black/8 bg-white hover:border-black/15'
-                  }`}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    setDeliveryMethod('econt-office')
-                  }}
-                  type="button"
-                >
-                  <p className="type-subsection-title text-primary/85">
-                    <CommerceText source={'Офис на Econt'} />
-                  </p>
-                  <p className="mt-1 text-sm text-primary/60">
-                    <CommerceText source={'Избери удобен офис.'} />
-                  </p>
-                </button>
+                  <button
+                    className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                      deliveryMethod === 'econt-office'
+                        ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                        : 'border-black/8 bg-white hover:border-black/15'
+                    }`}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      setDeliveryMethod('econt-office')
+                    }}
+                    type="button"
+                  >
+                    <p className="type-subsection-title text-primary/85">
+                      <CommerceText source={'Офис на Econt'} />
+                    </p>
+                    <p className="mt-1 text-sm text-primary/60">
+                      <CommerceText source={'Избери удобен офис.'} />
+                    </p>
+                  </button>
 
-                <button
-                  className={`rounded-[10px] border px-4 py-3 text-left transition ${
-                    deliveryMethod === 'speedy-office'
-                      ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
-                      : 'border-black/8 bg-white hover:border-black/15'
-                  }`}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    setDeliveryMethod('speedy-office')
-                  }}
-                  type="button"
-                >
-                  <p className="type-subsection-title text-primary/85">
-                    <CommerceText source={'Офис на Speedy'} />
-                  </p>
-                  <p className="mt-1 text-sm text-primary/60">
-                    <CommerceText source={'Избери удобен офис.'} />
-                  </p>
-                </button>
+                  <button
+                    className={`rounded-[10px] border px-4 py-3 text-left transition ${
+                      deliveryMethod === 'speedy-office'
+                        ? 'border-[rgb(1,55,186)] bg-[rgb(1,55,186)]/5'
+                        : 'border-black/8 bg-white hover:border-black/15'
+                    }`}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      setDeliveryMethod('speedy-office')
+                    }}
+                    type="button"
+                  >
+                    <p className="type-subsection-title text-primary/85">
+                      <CommerceText source={'Офис на Speedy'} />
+                    </p>
+                    <p className="mt-1 text-sm text-primary/60">
+                      <CommerceText source={'Избери удобен офис.'} />
+                    </p>
+                  </button>
+                </div>
+                <p className="mt-4 text-sm text-primary/60">
+                  <CommerceText source={deliveryPricingNote} />
+                </p>
               </div>
-              <p className="mt-4 text-sm text-primary/60">
-                <CommerceText source={deliveryPricingNote} />
-              </p>
             </div>
-          </div>
+          )}
 
-          {deliveryMethod === 'address' ? (
+          {international ? (
+            <>
+              <InternationalAddress
+                key={deliveryCountry}
+                country={destination.kind === 'international' ? destination.country : 'DE'}
+                value={billingAddress}
+                onChange={setBillingAddress}
+              />
+              {postalIssue && (
+                <p role="status">
+                  {ui(
+                    postalIssue === 'enquiry'
+                      ? 'За този пощенски код е нужно запитване преди поръчка.'
+                      : 'Въведете валиден пощенски код за избраната държава.',
+                  )}
+                </p>
+              )}
+              {!revolutPayEnabled && (
+                <p role="status">
+                  {ui(
+                    'Онлайн плащането в момента не е достъпно. Международни поръчки не се приемат.',
+                  )}
+                </p>
+              )}
+            </>
+          ) : null}
+
+          {!international && deliveryMethod === 'address' ? (
             <>
               {!user ? (
                 <div className="rounded-[10px] bg-muted/20 px-5 py-5">
@@ -529,7 +594,8 @@ export const CheckoutPage: React.FC<{
             </>
           ) : null}
 
-          {deliveryMethod === 'address' &&
+          {!international &&
+            deliveryMethod === 'address' &&
             user &&
             !billingAddressSameAsShipping &&
             (shippingAddress ? (
@@ -628,6 +694,48 @@ export const CheckoutPage: React.FC<{
             />
           ) : null}
 
+          {locale === 'bg' ? (
+            <div className="space-y-4 rounded-[10px] bg-muted/20 p-5">
+              <div className="flex items-center gap-4">
+                <Checkbox
+                  checked={requestsInvoice}
+                  id="requestsCompanyInvoice"
+                  onCheckedChange={(checked) => setRequestsInvoice(checked === true)}
+                />
+                <Label htmlFor="requestsCompanyInvoice">Искам фактура на фирма</Label>
+              </div>
+              {requestsInvoice ? (
+                <fieldset className="grid gap-4">
+                  <legend className="sr-only">Данни за фактура</legend>
+                  {companyInvoiceFields.map(({ label, name, required, maxLength }) => (
+                    <FormItem key={name}>
+                      <Label htmlFor={`invoice-${name}`}>
+                        {label}
+                        {required ? ' *' : ''}
+                      </Label>
+                      <Input
+                        aria-required={required}
+                        aria-describedby={
+                          name === 'companyId' ? 'invoice-company-id-help' : undefined
+                        }
+                        id={`invoice-${name}`}
+                        inputMode={name === 'companyId' ? 'numeric' : undefined}
+                        maxLength={maxLength}
+                        onChange={(event) => setInvoice({ ...invoice, [name]: event.target.value })}
+                        value={invoice[name] ?? ''}
+                      />
+                      {name === 'companyId' ? (
+                        <p className="text-sm text-muted-foreground" id="invoice-company-id-help">
+                          Въведете 9 или 13 цифри.
+                        </p>
+                      ) : null}
+                    </FormItem>
+                  ))}
+                </fieldset>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="rounded-[10px] bg-muted/20 px-5 py-5">
             <FormItem>
               <Label htmlFor="customerNotes">
@@ -644,13 +752,15 @@ export const CheckoutPage: React.FC<{
           </div>
 
           <div className="bg-muted/20 px-5 py-4 text-sm text-primary/60">
-            {revolutPayEnabled
-              ? ui(
-                  'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн с карта или през Revolut Pay.',
-                )
-              : ui(
-                  'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.',
-                )}
+            {international
+              ? ui('Само онлайн плащане с карта')
+              : revolutPayEnabled
+                ? ui(
+                    'Можеш да изпратиш заявка за ръчна обработка или да платиш онлайн с карта или през Revolut Pay.',
+                  )
+                : ui(
+                    'Не се събира онлайн плащане. Изпращането на формата създава заявка за поръчка за ръчна обработка.',
+                  )}
           </div>
 
           <div className="space-y-2 rounded-[10px] bg-muted/20 px-5 py-4 text-sm leading-6 text-primary/70">
@@ -661,8 +771,11 @@ export const CheckoutPage: React.FC<{
           </div>
 
           <CheckoutForm
+            key={deliveryCountry}
+            onlineOnly={international}
             billingAddress={resolvedBillingAddress}
             boxNowLocker={boxNowLocker}
+            companyInvoice={companyInvoice}
             customerEmail={email}
             customerNotes={customerNotes}
             deliveryMethod={deliveryMethod}

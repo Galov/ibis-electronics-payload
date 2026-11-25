@@ -1,4 +1,6 @@
 import { Text } from '@/i18n/Text'
+import { categoryLabel } from '@/i18n/categoryLabel'
+import type { Locale } from '@/i18n/config'
 import type { Product } from '@/payload-types'
 
 import { GridAddToCartButton } from '@/components/Cart/GridAddToCartButton'
@@ -11,6 +13,7 @@ import Image from 'next/image'
 
 type Props = {
   product: Partial<Product>
+  locale?: Locale
 }
 
 const hasCategoryTitle = (
@@ -18,7 +21,7 @@ const hasCategoryTitle = (
 ): category is Extract<NonNullable<Product['categories']>[number], { title: string }> =>
   Boolean(category && typeof category !== 'string' && 'title' in category && category.title)
 
-export const ProductGridItem: React.FC<Props> = ({ product }) => {
+export const ProductGridItem: React.FC<Props> = ({ product, locale = 'bg' }) => {
   const { price, title } = product
   const image = getProductPrimaryImage(product)
   const manufacturerCode = product.manufacturerCode || null
@@ -55,7 +58,7 @@ export const ProductGridItem: React.FC<Props> = ({ product }) => {
           <div className="type-product-card-title min-h-[2.5rem] text-black">{title}</div>
 
           <div className="mt-1 min-h-[3.75rem] space-y-0 text-sm leading-5 text-primary/35">
-            {primaryCategory ? <p>{primaryCategory}</p> : null}
+            {primaryCategory ? <p>{categoryLabel(primaryCategory, locale)}</p> : null}
             {product.sku ? (
               <p>
                 <Text id="code" />: {product.sku}

@@ -1,6 +1,7 @@
+import { internationalDestinations } from '@/ecommerce/internationalDelivery'
 import { localProductLocalizationPlugin } from '@/i18n/localProductLocalization'
 import crypto from 'crypto'
-import type { Plugin } from 'payload'
+import type { Field, Plugin } from 'payload'
 import { ecommercePlugin, EUR } from '@payloadcms/plugin-ecommerce'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { s3Storage } from '@payloadcms/storage-s3'
@@ -11,6 +12,7 @@ import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
 import { ProductsCollection } from '@/collections/Products'
+import { companyInvoiceFields } from '@/ecommerce/companyInvoice'
 import { manualAdapter } from '@/ecommerce/manualAdapter'
 import { revolutAdapter } from '@/ecommerce/revolutAdapter'
 import { nikOrderFields } from '@/services/nikOrders/fields'
@@ -258,7 +260,34 @@ const transactionShippingAddressFields = [
   },
 ]
 
+const companyInvoiceField: Field = {
+  name: 'companyInvoice',
+  label: 'Заявена фирмена фактура',
+  type: 'group',
+  access: { create: () => false, update: () => false, read: adminOnlyFieldAccess },
+  admin: {
+    condition: (data) => Boolean(data?.companyInvoice?.companyName),
+    readOnly: true,
+  },
+  fields: companyInvoiceFields.map(({ name, label, maxLength }) => ({
+    name,
+    label,
+    maxLength,
+    type: 'text',
+  })),
+}
+
+const checkoutLocaleField: Field = {
+  name: 'locale',
+  type: 'select',
+  options: ['bg', 'en'],
+  defaultValue: 'bg',
+  admin: { readOnly: true },
+}
+
 const appendTransactionCheckoutSnapshotFields = (fields: any[]): any[] => [
+  checkoutLocaleField,
+  companyInvoiceField,
   ...fields,
   {
     name: 'customerNotes',
@@ -688,7 +717,7 @@ const arrangeOrderAdminTabs = (fields: any[]): any[] => {
         if (index === 0) {
           return {
             ...tab,
-            fields: [...tab.fields, customerNotesField],
+            fields: [...tab.fields, customerNotesField, companyInvoiceField],
           }
         }
 
@@ -720,6 +749,26 @@ const arrangeOrderAdminTabs = (fields: any[]): any[] => {
 
 export const plugins: Plugin[] = [
   ecommercePlugin({
+    addresses: {
+      addressesCollectionOverride: ({ defaultCollection }) => ({
+        ...defaultCollection,
+        fields: defaultCollection.fields.map((field) => {
+          if (field.type !== 'select' || field.name !== 'country') return field
+          const existing = new Set(
+            field.options.map((option) => (typeof option === 'string' ? option : option.value)),
+          )
+          return {
+            ...field,
+            options: [
+              ...field.options,
+              ...Object.entries(internationalDestinations)
+                .filter(([code]) => !existing.has(code))
+                .map(([value, destination]) => ({ value, label: destination.name })),
+            ],
+          }
+        }),
+      }),
+    },
     access: {
       adminOnlyFieldAccess,
       adminOrPublishedStatus,
@@ -763,6 +812,7 @@ export const plugins: Plugin[] = [
           group: 'Търговия',
         },
         fields: [
+          checkoutLocaleField,
           ...nikOrderFields,
           ...withdrawalFields,
           {

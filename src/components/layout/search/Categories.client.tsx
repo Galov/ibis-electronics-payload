@@ -1,4 +1,6 @@
 'use client'
+import { categoryLabel } from '@/i18n/categoryLabel'
+import { useLocale } from '@/i18n/provider'
 
 import { useTranslate } from '@/i18n/provider'
 import { Text } from '@/i18n/Text'
@@ -85,6 +87,7 @@ export const CategoryItem: React.FC<ItemProps> = ({
   const searchParams = useSearchParams()
   const isExpanded = expandedCategoryIDs.has(category.id)
 
+  const locale = useLocale()
   const isActive = useMemo(() => {
     return searchParams.get('category') === String(category.id)
   }, [category.id, searchParams])
@@ -100,7 +103,7 @@ export const CategoryItem: React.FC<ItemProps> = ({
       params.set('category', String(category.id))
       mobileCatalogControls?.openCategoryStep({
         id: category.id,
-        title: category.title,
+        title: categoryLabel(category.title, locale),
       })
     }
 
@@ -109,7 +112,16 @@ export const CategoryItem: React.FC<ItemProps> = ({
     const newParams = params.toString()
 
     router.push(pathname + '?' + newParams)
-  }, [category.id, category.title, isActive, mobileCatalogControls, pathname, router, searchParams])
+  }, [
+    locale,
+    category.id,
+    category.title,
+    isActive,
+    mobileCatalogControls,
+    pathname,
+    router,
+    searchParams,
+  ])
 
   return (
     <li>
@@ -141,7 +153,7 @@ export const CategoryItem: React.FC<ItemProps> = ({
             'text-primary/80': !isActive,
           })}
         >
-          {category.title}
+          {categoryLabel(category.title, locale)}
           {typeof category.productCount === 'number' ? (
             <span className="ml-2 text-xs text-muted-foreground">({category.productCount})</span>
           ) : null}

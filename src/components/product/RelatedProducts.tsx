@@ -1,3 +1,4 @@
+import type { Locale } from '@/i18n/config'
 import { Text } from '@/i18n/Text'
 import type { Product } from '@/payload-types'
 
@@ -21,9 +22,10 @@ type RelatedProduct = Pick<
 
 type Props = {
   products: RelatedProduct[]
+  locale?: Locale
 }
 
-export const RelatedProducts: React.FC<Props> = ({ products }) => {
+export const RelatedProducts: React.FC<Props> = ({ products, locale = 'bg' }) => {
   if (products.length === 0) return null
 
   return (
@@ -36,7 +38,7 @@ export const RelatedProducts: React.FC<Props> = ({ products }) => {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {products.map((product) => (
-          <ProductGridItem key={product.id} product={product} />
+          <ProductGridItem key={product.id} product={product} locale={locale} />
         ))}
       </div>
     </section>

@@ -2,10 +2,22 @@ import { describe, expect, it } from 'vitest'
 import {
   localizeProductFields,
   localProductLocalizationEnabled,
+  productLocalizationEnabled,
 } from '@/i18n/localProductLocalization'
 import type { Field } from 'payload'
 
 describe('local product localization preview', () => {
+  it('keeps the release off by default and requires explicit migrated schema confirmation', () => {
+    expect(productLocalizationEnabled({})).toBe(false)
+    const release = { IBIS_PRODUCT_LOCALIZATION_ENABLED: 'true', IBIS_PRODUCT_LOCALIZATION_SCHEMA: 'bg-en-v1' }
+    expect(productLocalizationEnabled(release)).toBe(true)
+    expect(() => productLocalizationEnabled({ ...release, IBIS_PRODUCT_LOCALIZATION_SCHEMA: '' })).toThrow('migrated')
+    for (const key of ['IBIS_LOCAL_PREVIEW', 'IBIS_PRODUCT_LOCALIZATION_PREVIEW', 'IBIS_EN_RELEASE_REHEARSAL'])
+      expect(() => productLocalizationEnabled({ ...release, [key]: 'true' })).toThrow('without preview')
+    expect(() => localProductLocalizationEnabled({
+      ...release, IBIS_PRODUCT_LOCALIZATION_PREVIEW: 'true', DATABASE_URL: 'mongodb://remote/live',
+    })).toThrow('isolated local')
+  })
   it('requires the exact isolated local database and preview flag', () => {
     expect(localProductLocalizationEnabled({})).toBe(false)
     const env = {
@@ -14,6 +26,12 @@ describe('local product localization preview', () => {
       DATABASE_URL: 'mongodb://127.0.0.1:27028/ibis_bg_en_test?directConnection=true',
     }
     expect(localProductLocalizationEnabled(env)).toBe(true)
+    expect(
+      localProductLocalizationEnabled({
+        ...env,
+        DATABASE_URL: 'mongodb://127.0.0.1:27028/ibis_en_release_rehearsal?directConnection=true',
+      }),
+    ).toBe(true)
     for (const DATABASE_URL of [
       'mongodb://remote:27028/ibis_bg_en_test',
       'mongodb://127.0.0.1:27028/real',

@@ -1,5 +1,24 @@
 import type { Field, Plugin } from 'payload'
 
+export const localEnglishDatabaseNames = ['ibis_bg_en_test', 'ibis_en_release_rehearsal'] as const
+
+// Separate release switch: the existing preview guard remains strictly local.
+// Set only after the product/history migration, in both build and runtime environments.
+export function productLocalizationEnabled(
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  if (env.IBIS_PRODUCT_LOCALIZATION_ENABLED !== 'true')
+    return localProductLocalizationEnabled(env)
+  if (
+    env.IBIS_PRODUCT_LOCALIZATION_SCHEMA !== 'bg-en-v1' ||
+    env.IBIS_LOCAL_PREVIEW === 'true' ||
+    env.IBIS_PRODUCT_LOCALIZATION_PREVIEW === 'true' ||
+    env.IBIS_EN_RELEASE_REHEARSAL === 'true'
+  )
+    throw new Error('Product localization release requires migrated bg-en-v1 schema without preview flags')
+  return true
+}
+
 export function localProductLocalizationEnabled(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
@@ -10,7 +29,7 @@ export function localProductLocalizationEnabled(
     uri.protocol !== 'mongodb:' ||
     uri.hostname !== '127.0.0.1' ||
     uri.port !== '27028' ||
-    uri.pathname !== '/ibis_bg_en_test'
+    !localEnglishDatabaseNames.some((name) => uri.pathname === `/${name}`)
   ) {
     throw new Error('Product localization preview requires the isolated local test database')
   }
@@ -46,11 +65,10 @@ export function localizeProductFields(fields: Field[], product: boolean, parent 
   })
 }
 
-// This rehearsal switch cannot enable localization on a production database.
 // Existing SEO plugin defaults localize images and other collections as well;
-// restrict this preview to the five agreed product text fields.
+// restrict localization to the five agreed product text fields.
 export const localProductLocalizationPlugin: Plugin = (config) => {
-  if (!localProductLocalizationEnabled()) return config
+  if (!productLocalizationEnabled()) return config
   return {
     ...config,
     localization: { locales: ['bg', 'en'], defaultLocale: 'bg', fallback: true },

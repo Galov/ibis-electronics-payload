@@ -1,3 +1,6 @@
+import { categoryLabel } from '@/i18n/categoryLabel'
+import { localizeHref, type Locale } from '@/i18n/config'
+import { translateCommerce } from '@/i18n/commerce'
 import { Text } from '@/i18n/Text'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import { generateMeta } from '@/utilities/generateMeta'
@@ -12,6 +15,7 @@ import { buildBreadcrumbSchema, buildCategoryBreadcrumbItems } from '@/utilities
 
 type Args = {
   params: Promise<{
+    locale?: Locale
     slug: string[]
   }>
 }
@@ -36,28 +40,33 @@ type CategoryPageData = {
 }
 
 export async function generateMetadata({ params }: Args) {
-  const { slug } = await params
+  const { slug, locale = 'bg' } = await params
   const category = await queryCategoryBySegments({ segments: slug })
 
   if (!category) return notFound()
 
   return generateMeta({
     doc: category,
-    fallbackDescription: `Продукти в категория ${category.title} от Ibis Electronics.`,
+    fallbackDescription: `Продукти в категория ${categoryLabel(category.title, locale)} от Ibis Electronics.`,
     fallbackTitle: category.title,
     path: buildCategoryPath(category),
   })
 }
 
 export default async function CategoryPage({ params }: Args) {
-  const { slug } = await params
+  const { slug, locale = 'bg' } = await params
   const category = await queryCategoryBySegments({ segments: slug })
 
   if (!category) return notFound()
 
-  const products = await queryProductsByCategoryID({ categoryID: category.id })
+  const products = await queryProductsByCategoryID({ categoryID: category.id, locale })
   const categoryTrail = buildCategoryTrail(category)
-  const breadcrumbJsonLd = buildBreadcrumbSchema(buildCategoryBreadcrumbItems({ category }))
+  const breadcrumbJsonLd = buildBreadcrumbSchema(
+    buildCategoryBreadcrumbItems({ category }).map((item) => ({
+      name: translateCommerce(locale, categoryLabel(item.name, locale)),
+      path: localizeHref(item.path, locale),
+    })),
+  )
 
   return (
     <div className="container py-10 md:py-12">
@@ -76,7 +85,7 @@ export default async function CategoryPage({ params }: Args) {
             <React.Fragment key={item.path}>
               <span>/</span>
               <Link className="transition hover:text-primary/80" href={item.path}>
-                {item.title}
+                {categoryLabel(item.title, locale)}
               </Link>
             </React.Fragment>
           ))}
@@ -84,13 +93,13 @@ export default async function CategoryPage({ params }: Args) {
       </div>
 
       <div className="mb-8 max-w-3xl">
-        <h1 className="type-page-title text-primary">{category.title}</h1>
+        <h1 className="type-page-title text-primary">{categoryLabel(category.title, locale)}</h1>
       </div>
 
       {products.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {products.map((product) => (
-            <ProductGridItem key={product.id} product={product} />
+            <ProductGridItem key={product.id} product={product} locale={locale} />
           ))}
         </div>
       ) : (
@@ -156,11 +165,19 @@ const queryCategoryBySegments = async ({ segments }: { segments: string[] }) => 
   return category
 }
 
-const queryProductsByCategoryID = async ({ categoryID }: { categoryID: string }) => {
+const queryProductsByCategoryID = async ({
+  categoryID,
+  locale = 'bg',
+}: {
+  categoryID: string
+  locale?: Locale
+}) => {
   const payload = await getPayload({ config: configPromise })
 
   const result = await payload.find({
     collection: 'products',
+    locale,
+    fallbackLocale: locale === 'en' ? false : 'bg',
     depth: 1,
     draft: false,
     limit: 48,
@@ -181,6 +198,7 @@ const queryProductsByCategoryID = async ({ categoryID }: { categoryID: string })
     sort: 'title',
     where: {
       and: [
+        ...(locale === 'en' ? [{ title: { exists: true } }, { title: { not_equals: '' } }] : []),
         {
           published: {
             equals: true,

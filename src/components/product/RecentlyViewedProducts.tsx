@@ -1,5 +1,7 @@
 'use client'
 
+import { useLocale } from '@/i18n/provider'
+import type { Locale } from '@/i18n/config'
 import { Text } from '@/i18n/Text'
 
 import type { Product } from '@/payload-types'
@@ -33,11 +35,11 @@ const isRecentlyViewedProduct = (value: unknown): value is RecentlyViewedProduct
   return Boolean(candidate.id && candidate.slug && candidate.title)
 }
 
-const readRecentlyViewedProducts = () => {
+const readRecentlyViewedProducts = (locale: Locale) => {
   if (typeof window === 'undefined') return []
 
   try {
-    const storedValue = window.localStorage.getItem(RECENTLY_VIEWED_PRODUCTS_KEY)
+    const storedValue = window.localStorage.getItem(`${RECENTLY_VIEWED_PRODUCTS_KEY}:${locale}`)
 
     if (!storedValue) return []
 
@@ -56,16 +58,17 @@ type Props = {
 }
 
 export const RecentlyViewedProducts: React.FC<Props> = ({ product }) => {
+  const locale = useLocale()
   const [recentlyViewedProducts, setRecentlyViewedProducts] = useState<RecentlyViewedProduct[]>([])
 
   useEffect(() => {
-    const storedProducts = readRecentlyViewedProducts()
+    const storedProducts = readRecentlyViewedProducts(locale)
     const filteredProducts = storedProducts.filter((item) => item.id !== product.id)
     const nextProducts = [product, ...filteredProducts].slice(0, MAX_RECENTLY_VIEWED_PRODUCTS)
 
-    window.localStorage.setItem(RECENTLY_VIEWED_PRODUCTS_KEY, JSON.stringify(nextProducts))
+    window.localStorage.setItem(`${RECENTLY_VIEWED_PRODUCTS_KEY}:${locale}`, JSON.stringify(nextProducts))
     setRecentlyViewedProducts(filteredProducts.slice(0, MAX_RECENTLY_VIEWED_PRODUCTS - 1))
-  }, [product])
+  }, [product, locale])
 
   const productsToRender = useMemo(
     () =>
@@ -93,7 +96,7 @@ export const RecentlyViewedProducts: React.FC<Props> = ({ product }) => {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {productsToRender.map((recentlyViewedProduct) => (
-          <ProductGridItem key={recentlyViewedProduct.id} product={recentlyViewedProduct} />
+          <ProductGridItem key={recentlyViewedProduct.id} product={recentlyViewedProduct} locale={locale} />
         ))}
       </div>
     </section>

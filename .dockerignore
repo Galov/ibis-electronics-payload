@@ -4,6 +4,10 @@
 .git
 .gitignore
 .next
+.next*
+.local-notes
+.playwright
+playwright-report
 .npm-cache
 node_modules
 reports

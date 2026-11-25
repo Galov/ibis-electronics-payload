@@ -70,6 +70,7 @@ const extractCheckoutData = (
       candidate.boxNowLocker ||
       candidate.econtOffice ||
       candidate.speedyOffice ||
+      candidate.companyInvoice !== undefined ||
       candidate.customerNotes ||
       typeof candidate.shippingFee === 'number'
     ) {
@@ -290,6 +291,7 @@ const resolveRevolutTransaction = async ({
           boxNowLockerName: refreshedSnapshot.boxNowLockerName,
           boxNowLockerPostalCode: refreshedSnapshot.boxNowLockerPostalCode,
           customerNotes: refreshedSnapshot.customerNotes,
+          locale: refreshedSnapshot.locale,
           deliveryMethod: refreshedSnapshot.deliveryMethod,
           econtOfficeAddress: refreshedSnapshot.econtOfficeAddress,
           econtOfficeCode: refreshedSnapshot.econtOfficeCode,

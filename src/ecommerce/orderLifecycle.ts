@@ -1,11 +1,12 @@
-import { assertDomesticDelivery } from './deliveryCountry'
+import { localizeHref } from '@/i18n/config'
+import { normalizeCompanyInvoice, type CompanyInvoice } from './companyInvoice'
+import { resolveDelivery } from './deliveryCountry'
 import type { Payload, PayloadRequest } from 'payload'
 import { queueNikOrder } from '@/services/nikOrders'
 import { createCheckoutOrderOnce } from './createCheckoutOrderOnce'
 
 import type { Address, Cart, Product, Transaction, User } from '@/payload-types'
 import type { DeliveryMethod } from '@/utilities/delivery'
-import { getDeliveryShippingFee } from '@/utilities/delivery'
 import { getServerSideURL } from '@/utilities/getURL'
 
 import {
@@ -48,6 +49,7 @@ export type CheckoutBoxNowLocker = {
 }
 
 export type CheckoutPaymentData = {
+  companyInvoice?: CompanyInvoice | null
   locale?: 'bg' | 'en'
   billingAddress?: Partial<Address> | Record<string, unknown>
   boxNowLocker?: CheckoutBoxNowLocker
@@ -140,6 +142,8 @@ const sendOrderEmails = async ({
   currency,
   customerEmail,
   customerNotes,
+  invoiceRequested,
+  locale = 'bg',
   deliveryMethod,
   econtOfficeAddress,
   econtOfficeName,
@@ -149,6 +153,7 @@ const sendOrderEmails = async ({
   orderURL,
   paymentMethod,
   payload,
+  req,
   shippingAddress,
   shippingFee,
   speedyOfficeAddress,
@@ -161,6 +166,8 @@ const sendOrderEmails = async ({
   currency: string
   customerEmail?: string
   customerNotes?: string
+  invoiceRequested?: boolean
+  locale?: 'bg' | 'en'
   deliveryMethod?: OrderEmailDeliveryMethod
   econtOfficeAddress?: string
   econtOfficeName?: string
@@ -170,12 +177,51 @@ const sendOrderEmails = async ({
   orderURL: string
   paymentMethod?: OrderEmailPaymentMethod
   payload: Payload
+  req: PayloadRequest
   shippingAddress?: OrderEmailAddress
   shippingFee: number
   speedyOfficeAddress?: string
   speedyOfficeName?: string
 }) => {
+  let customerItems = items
+  if (locale === 'en' && items?.length) {
+    const ids = items.map((item) =>
+      typeof item.product === 'string'
+        ? item.product
+        : item.product && typeof item.product === 'object' && 'id' in item.product
+          ? String(item.product.id)
+          : '',
+    )
+
+    // A translation lookup must not turn an already-created order into a checkout error.
+    const titles = new Map<string, string>()
+    if (ids.some(Boolean)) {
+      try {
+        const translated = await payload.find({
+          collection: 'products',
+          where: { id: { in: ids.filter(Boolean) } },
+          locale: 'en',
+          fallbackLocale: 'bg',
+          select: { title: true },
+          depth: 0,
+          limit: ids.length,
+          pagination: false,
+          overrideAccess: true,
+          req,
+        })
+        for (const product of translated.docs) titles.set(product.id, product.title || '')
+      } catch {
+        payload.logger.warn({ msg: 'Order email product titles unavailable; using SKU', orderID })
+      }
+    }
+    customerItems = items.map((item, index) => ({
+      ...item,
+      product: { title: titles.get(ids[index]) || item.productSKU || '' },
+    }))
+  }
+
   const templateArgs = {
+    locale,
     amount,
     boxNowLockerAddress,
     boxNowLockerName,
@@ -195,8 +241,8 @@ const sendOrderEmails = async ({
     speedyOfficeAddress,
     speedyOfficeName,
   }
-  const customerHTML = buildCustomerOrderEmailHTML(templateArgs)
-  const adminHTML = buildAdminOrderEmailHTML(templateArgs)
+  const customerHTML = buildCustomerOrderEmailHTML({ ...templateArgs, items: customerItems })
+  const adminHTML = buildAdminOrderEmailHTML({ ...templateArgs, invoiceRequested })
 
   const emailTasks: Promise<unknown>[] = []
 
@@ -204,7 +250,7 @@ const sendOrderEmails = async ({
     emailTasks.push(
       payload.sendEmail({
         html: customerHTML,
-        subject: `Поръчка #${orderID} | Ibis Electronics`,
+        subject: `${locale === 'en' ? 'Order' : 'Поръчка'} #${orderID} | Ibis Electronics`,
         to: customerEmail,
       }),
     )
@@ -215,7 +261,7 @@ const sendOrderEmails = async ({
       emailTasks.push(
         payload.sendEmail({
           html: adminHTML,
-          subject: `Нова поръчка #${orderID}`,
+          subject: `Нова поръчка #${orderID}${invoiceRequested ? ' – нужна е фактура' : ''}`,
           to: adminEmail,
         }),
       )
@@ -264,14 +310,18 @@ export const createCheckoutTransactionData = ({
   paymentMethod,
   user,
 }: CreateCheckoutTransactionArgs) => {
-  assertDomesticDelivery(checkoutData)
   const resolvedEmail = trimToUndefined(user?.email) || trimToUndefined(checkoutData.customerEmail)
   const deliveryMethod = checkoutData.deliveryMethod || 'address'
-  const shippingFee = getDeliveryShippingFee(deliveryMethod)
-  const amount = (cart.subtotal || 0) + shippingFee
+  const shippingFee = resolveDelivery(
+    { ...checkoutData, customerEmail: resolvedEmail },
+    paymentMethod,
+    cart.currency || 'EUR',
+  )
+  const amount = Math.round(((cart.subtotal || 0) + shippingFee) * 100) / 100
 
   return {
     amount,
+    locale: checkoutData.locale === 'en' ? ('en' as const) : ('bg' as const),
     billingAddress: checkoutData.billingAddress,
     cart: cart.id,
     currency: cart.currency,
@@ -281,6 +331,10 @@ export const createCheckoutTransactionData = ({
     boxNowLockerId: trimToUndefined(checkoutData.boxNowLocker?.id),
     boxNowLockerName: trimToUndefined(checkoutData.boxNowLocker?.name),
     boxNowLockerPostalCode: trimToUndefined(checkoutData.boxNowLocker?.postalCode),
+    companyInvoice:
+      checkoutData.locale !== 'en' && checkoutData.companyInvoice != null
+        ? normalizeCompanyInvoice(checkoutData.companyInvoice)
+        : undefined,
     customerNotes: trimToUndefined(checkoutData.customerNotes),
     deliveryMethod,
     econtOfficeAddress: formatEcontOfficeAddress(checkoutData.econtOffice),
@@ -371,6 +425,7 @@ export const finalizeCheckoutTransaction = async ({
     ...(process.env.NIK_ORDERS_SEND_ENABLED === 'true'
       ? { nikOrder: { status: 'pending' as const } }
       : {}),
+    locale: transaction.locale || 'bg',
     amount: transaction.amount,
     currency: transaction.currency,
     customer:
@@ -382,6 +437,9 @@ export const finalizeCheckoutTransaction = async ({
     boxNowLockerId: transaction.boxNowLockerId || undefined,
     boxNowLockerName: transaction.boxNowLockerName || undefined,
     boxNowLockerPostalCode: transaction.boxNowLockerPostalCode || undefined,
+    companyInvoice: transaction.companyInvoice?.companyName
+      ? transaction.companyInvoice
+      : undefined,
     customerNotes: transaction.customerNotes || undefined,
     deliveryMethod: transaction.deliveryMethod || 'address',
     econtOfficeAddress: transaction.econtOfficeAddress || undefined,
@@ -437,18 +495,21 @@ export const finalizeCheckoutTransaction = async ({
   const adminEmails = (orderSettings.notificationRecipients || [])
     .map((recipient) => recipient.email?.trim())
     .filter((email): email is string => Boolean(email))
+  const orderPath = localizeHref(`/orders/${order.id}`, transaction.locale === 'en' ? 'en' : 'bg')
   const orderURL =
     order.accessToken && transaction.customerEmail
-      ? `${serverURL}/orders/${order.id}?email=${encodeURIComponent(transaction.customerEmail)}&accessToken=${encodeURIComponent(order.accessToken)}`
-      : `${serverURL}/orders/${order.id}`
+      ? `${serverURL}${orderPath}?email=${encodeURIComponent(transaction.customerEmail)}&accessToken=${encodeURIComponent(order.accessToken)}`
+      : `${serverURL}${orderPath}`
   const orderAdminURL = `${serverURL}/admin/collections/orders/${order.id}`
 
   await sendOrderEmails({
+    locale: transaction.locale === 'en' ? 'en' : 'bg',
     adminEmails,
     amount: typeof transaction.amount === 'number' ? transaction.amount : 0,
     currency: transaction.currency || 'EUR',
     customerEmail: transaction.customerEmail || undefined,
     customerNotes: transaction.customerNotes || undefined,
+    invoiceRequested: Boolean(transaction.companyInvoice?.companyName),
     deliveryMethod: transaction.deliveryMethod || 'address',
     boxNowLockerAddress: transaction.boxNowLockerAddress || undefined,
     boxNowLockerName: transaction.boxNowLockerName || undefined,
@@ -460,6 +521,7 @@ export const finalizeCheckoutTransaction = async ({
     orderURL,
     paymentMethod: transaction.paymentMethod === 'revolut' ? 'revolut' : 'manual',
     payload,
+    req,
     shippingAddress: transaction.shippingAddress as OrderEmailAddress | undefined,
     shippingFee: typeof transaction.shippingFee === 'number' ? transaction.shippingFee : 0,
     speedyOfficeAddress: transaction.speedyOfficeAddress || undefined,

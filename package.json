@@ -30,7 +30,9 @@
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "review:products:build": "node --import=tsx scripts/review/build.mjs",
-    "review:products:serve": "node scripts/review/serve.mjs"
+    "review:products:serve": "node scripts/review/serve.mjs",
+    "review:products:protect": "node scripts/review/prepareProtected.mjs",
+    "translations:english:local": "node --import=tsx scripts/localization/englishLifecycle.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1027.0",

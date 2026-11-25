@@ -166,6 +166,7 @@ export interface Config {
       syncMerchantProduct: TaskSyncMerchantProduct;
       reconcileMerchantProducts: TaskReconcileMerchantProducts;
       notifyOrderWithdrawal: TaskNotifyOrderWithdrawal;
+      translateEnglishProduct: TaskTranslateEnglishProduct;
       inline: {
         input: unknown;
         output: unknown;
@@ -253,6 +254,7 @@ export interface User {
  */
 export interface Order {
   id: string;
+  locale?: ('bg' | 'en') | null;
   nikOrder?: {
     status?: ('pending' | 'sending' | 'accepted' | 'manual_review' | 'retryable' | 'unknown') | null;
     request?:
@@ -305,6 +307,13 @@ export interface Order {
       }[]
     | null;
   customerNotes?: string | null;
+  companyInvoice?: {
+    companyName?: string | null;
+    companyId?: string | null;
+    address?: string | null;
+    vatNumber?: string | null;
+    representative?: string | null;
+  };
   shippingAddress?: {
     title?: string | null;
     firstName?: string | null;
@@ -541,6 +550,14 @@ export interface Category {
  */
 export interface Transaction {
   id: string;
+  locale?: ('bg' | 'en') | null;
+  companyInvoice?: {
+    companyName?: string | null;
+    companyId?: string | null;
+    address?: string | null;
+    vatNumber?: string | null;
+    representative?: string | null;
+  };
   items?:
     | {
         product?: (string | null) | Product;
@@ -702,7 +719,8 @@ export interface Address {
     | 'SI'
     | 'ES'
     | 'SE'
-    | 'CH';
+    | 'CH'
+    | 'HR';
   phone?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1387,7 +1405,12 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts' | 'notifyOrderWithdrawal';
+        taskSlug:
+          | 'inline'
+          | 'syncMerchantProduct'
+          | 'reconcileMerchantProducts'
+          | 'notifyOrderWithdrawal'
+          | 'translateEnglishProduct';
         taskID: string;
         input?:
           | {
@@ -1420,7 +1443,15 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'syncMerchantProduct' | 'reconcileMerchantProducts' | 'notifyOrderWithdrawal') | null;
+  taskSlug?:
+    | (
+        | 'inline'
+        | 'syncMerchantProduct'
+        | 'reconcileMerchantProducts'
+        | 'notifyOrderWithdrawal'
+        | 'translateEnglishProduct'
+      )
+    | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -2144,6 +2175,7 @@ export interface CartsSelect<T extends boolean = true> {
  * via the `definition` "orders_select".
  */
 export interface OrdersSelect<T extends boolean = true> {
+  locale?: T;
   nikOrder?:
     | T
     | {
@@ -2181,6 +2213,15 @@ export interface OrdersSelect<T extends boolean = true> {
         id?: T;
       };
   customerNotes?: T;
+  companyInvoice?:
+    | T
+    | {
+        companyName?: T;
+        companyId?: T;
+        address?: T;
+        vatNumber?: T;
+        representative?: T;
+      };
   shippingAddress?:
     | T
     | {
@@ -2237,6 +2278,16 @@ export interface OrdersSelect<T extends boolean = true> {
  * via the `definition` "transactions_select".
  */
 export interface TransactionsSelect<T extends boolean = true> {
+  locale?: T;
+  companyInvoice?:
+    | T
+    | {
+        companyName?: T;
+        companyId?: T;
+        address?: T;
+        vatNumber?: T;
+        representative?: T;
+      };
   items?:
     | T
     | {
@@ -2896,6 +2947,18 @@ export interface TaskNotifyOrderWithdrawal {
   };
   output: {
     sent: boolean;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskTranslateEnglishProduct".
+ */
+export interface TaskTranslateEnglishProduct {
+  input: {
+    productId: string;
+  };
+  output: {
+    status: string;
   };
 }
 /**

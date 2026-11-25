@@ -1,4 +1,6 @@
 'use client'
+import { categoryLabel } from '@/i18n/categoryLabel'
+import { useLocale } from '@/i18n/provider'
 
 import { Text } from '@/i18n/Text'
 import type { Product, ShopPage } from '@/payload-types'
@@ -27,6 +29,7 @@ export function ProductDescription({
   product: Product
   productBanner?: ProductBanner | null
 }) {
+  const locale = useLocale()
   const description = formatLegacyProductDescription(
     product.description || product.shortDescription,
   )
@@ -79,10 +82,10 @@ export function ProductDescription({
                       className="text-[rgb(1,55,186)] hover:text-[rgb(1,55,186)]"
                       href={buildCategoryPath(category)}
                     >
-                      {category.title}
+                      {categoryLabel(category.title, locale)}
                     </Link>
                   ) : (
-                    category.title
+                    categoryLabel(category.title, locale)
                   )}
                 </React.Fragment>
               ))}

@@ -214,7 +214,7 @@ export default async function ProductPage({ params }: Args) {
           }}
         />
 
-        <RelatedProducts products={relatedProducts} />
+        <RelatedProducts products={relatedProducts} locale={locale} />
       </div>
     </React.Fragment>
   )
@@ -229,7 +229,7 @@ const queryProductBySlug = async ({ slug, locale = 'bg' }: { slug: string; local
   const result = await payload.find({
     collection: 'products',
     locale,
-    fallbackLocale: 'bg',
+    fallbackLocale: locale === 'en' ? false : 'bg',
     depth: 2,
     draft: false,
     limit: 1,
@@ -237,6 +237,7 @@ const queryProductBySlug = async ({ slug, locale = 'bg' }: { slug: string; local
     pagination: false,
     where: {
       and: [
+        ...(locale === 'en' ? [{ title: { exists: true } }, { title: { not_equals: '' } }] : []),
         {
           slug: {
             in: slugs,
@@ -259,13 +260,14 @@ const queryProductBySlug = async ({ slug, locale = 'bg' }: { slug: string; local
     const preview = await payload.find({
       collection: 'products',
       locale: 'en',
-      fallbackLocale: 'bg',
+      fallbackLocale: locale === 'en' ? false : 'bg',
       depth: 2,
       limit: 1,
       overrideAccess: true,
       pagination: false,
       where: {
         and: [
+          ...(locale === 'en' ? [{ title: { exists: true } }, { title: { not_equals: '' } }] : []),
           { slug: { in: slugs } },
           { published: { equals: true } },
           { sku: { in: ['126ZN07OR', '167AR06', '219FR05'] } },
@@ -293,7 +295,7 @@ const queryRelatedProducts = async ({
   const result = await payload.find({
     collection: 'products',
     locale,
-    fallbackLocale: 'bg',
+    fallbackLocale: locale === 'en' ? false : 'bg',
     depth: 1,
     draft: false,
     limit: 5,
@@ -314,6 +316,7 @@ const queryRelatedProducts = async ({
     sort: '-updatedAt',
     where: {
       and: [
+        ...(locale === 'en' ? [{ title: { exists: true } }, { title: { not_equals: '' } }] : []),
         {
           published: {
             equals: true,

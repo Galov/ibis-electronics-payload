@@ -140,7 +140,7 @@ describe('English guest checkout', () => {
     expect(screen.queryByRole('button', { name: 'Place order' })).toBeNull()
     expect(mocks.confirmOrder).not.toHaveBeenCalled()
   })
-  it('offers Germany for testing with card-only payment and no unpriced submission', () => {
+  it('offers approved Germany flat rate with card-only payment and blocks unavailable online payment', () => {
     render(
       <LocaleProvider locale="en">
         <CheckoutPage />
@@ -149,18 +149,58 @@ describe('English guest checkout', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Choose a country' }), {
       target: { value: 'DE' },
     })
-    expect(screen.getByText('Online card payment only')).toBeTruthy()
+    expect(screen.getAllByText(/Online card payment only/).length).toBeGreaterThan(0)
     expect((screen.getByRole('button', { name: 'Pay online' }) as HTMLButtonElement).disabled).toBe(
       true,
     )
     expect(screen.queryByText('Cash on delivery')).toBeNull()
     expect(getCheckoutDestination('DE')).toEqual({
-      kind: 'preview',
+      kind: 'international',
       country: 'DE',
       paymentMethods: ['revolut'],
-      canSubmit: false,
+      shippingFee: 23.99,
     })
     expect(getCheckoutDestination('US')).toEqual({ kind: 'unavailable' })
+    expect(mocks.confirmOrder).not.toHaveBeenCalled()
+  })
+  it('enables card payment only with a complete international address, and clears it on country change', () => {
+    render(
+      <LocaleProvider locale="en">
+        <CheckoutPage revolutPayEnabled />
+      </LocaleProvider>,
+    )
+    const country = screen.getByRole('combobox', { name: 'Choose a country' })
+    fireEvent.change(country, { target: { value: 'DE' } })
+    const pay = screen.getByRole('button', { name: 'Pay online' }) as HTMLButtonElement
+    expect(pay.disabled).toBe(true)
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Jane' } })
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Smith' } })
+    fireEvent.change(screen.getByLabelText('Phone'), { target: { value: '+49123456789' } })
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'jane@example.com' } })
+    fireEvent.change(document.getElementById('international-city')!, {
+      target: { value: 'Berlin' },
+    })
+    fireEvent.change(document.getElementById('international-addressLine1')!, {
+      target: { value: 'Test 1' },
+    })
+    fireEvent.change(document.getElementById('international-postalCode')!, {
+      target: { value: '10115' },
+    })
+    expect(pay.disabled).toBe(false)
+    expect(screen.queryByText('Cash on delivery')).toBeNull()
+    expect(screen.queryByText('BoxNow locker')).toBeNull()
+    fireEvent.change(document.getElementById('international-postalCode')!, {
+      target: { value: '18565' },
+    })
+    expect(pay.disabled).toBe(true)
+    expect(screen.getByText(/Please contact us about delivery/)).toBeTruthy()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Choose a country' }), {
+      target: { value: 'FR' },
+    })
+    expect((document.getElementById('international-postalCode') as HTMLInputElement).value).toBe('')
+    expect((screen.getByRole('button', { name: 'Pay online' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
     expect(mocks.confirmOrder).not.toHaveBeenCalled()
   })
 })

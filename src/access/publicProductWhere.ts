@@ -6,9 +6,11 @@ export const publicProductWhere: Where = {
     { stockQty: { greater_than: 0 } },
     {
       or: [
-        { 'images.image': { exists: true } },
-        { 'images.storageKey': { exists: true } },
-        { 'images.legacyUrl': { exists: true } },
+        // Positive comparisons can match one array item even when other items omit the field.
+        // The MongoDB adapter casts the upload comparison to an ObjectId.
+        { 'images.image': { greater_than: '000000000000000000000000' } },
+        { 'images.storageKey': { greater_than: '' } },
+        { 'images.legacyUrl': { greater_than: '' } },
       ],
     },
   ],

@@ -1,3 +1,6 @@
+import { categoryLabel } from '@/i18n/categoryLabel'
+import { getPageLocale } from '@/i18n/pageLocale'
+import type { Locale } from '@/i18n/config'
 import configPromise from '@payload-config'
 import Link from '@/i18n/Link'
 import { CommerceText } from '@/i18n/CommerceText'
@@ -37,9 +40,14 @@ export async function generateMetadata(): Promise<Metadata> {
   })
 }
 
-const formatCount = (value: number) => new Intl.NumberFormat('bg-BG').format(value)
+const formatCount = (value: number, locale: Locale) =>
+  new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'bg-BG').format(value)
 
-const renderCategoryBranch = (category: CategoryNode, level = 0): React.ReactNode => {
+const renderCategoryBranch = (
+  category: CategoryNode,
+  level = 0,
+  locale: Locale = 'bg',
+): React.ReactNode => {
   const isTopLevel = level === 0
   const isSecondLevel = level === 1
 
@@ -56,9 +64,9 @@ const renderCategoryBranch = (category: CategoryNode, level = 0): React.ReactNod
         ].join(' ')}
         href={buildCategoryPath(category)}
       >
-        <span>{category.title}</span>
+        <span>{categoryLabel(category.title, locale)}</span>
         <span className="text-[11px] font-normal text-primary/38">
-          ({formatCount(category.productCount)})
+          ({formatCount(category.productCount, locale)})
         </span>
       </Link>
 
@@ -66,7 +74,7 @@ const renderCategoryBranch = (category: CategoryNode, level = 0): React.ReactNod
 
       {category.children.length > 0 ? (
         <ul className={isTopLevel ? 'space-y-1 list-none' : 'mt-1 space-y-0.5 list-none pl-3'}>
-          {category.children.map((child) => renderCategoryBranch(child, level + 1))}
+          {category.children.map((child) => renderCategoryBranch(child, level + 1, locale))}
         </ul>
       ) : null}
     </li>
@@ -131,7 +139,10 @@ const buildCategoryTree = (docs: CategoryDoc[]) => {
   return rootNodes
 }
 
-export default async function CategoriesDirectoryPage() {
+export default async function CategoriesDirectoryPage({
+  params,
+}: { params?: Promise<{ locale?: Locale }> }) {
+  const locale = await getPageLocale(params)
   const payload = await getPayload({ config: configPromise })
   const categoriesResult = await payload.find({
     collection: 'categories',
@@ -167,7 +178,7 @@ export default async function CategoriesDirectoryPage() {
               className="rounded-[10px] border border-transparent bg-white px-5 py-5 shadow-[0_6px_14px_rgba(15,23,42,0.04)] transition duration-300 ease-out hover:border-black/5 hover:shadow-[0_10px_22px_rgba(15,23,42,0.06)]"
               key={category.id}
             >
-              <ul className="list-none">{renderCategoryBranch(category)}</ul>
+              <ul className="list-none">{renderCategoryBranch(category, 0, locale)}</ul>
             </section>
           ))}
         </div>
