@@ -11,12 +11,14 @@ import {
 } from '../../scripts/localization/translationCore'
 import { englishText, englishHash, type EnglishText } from './transfer'
 export type TranslationState = {
+  sku?: string | null
   productId: string
   fingerprint: string
   sourceHashes: Record<string, string>
   englishHash: string
 }
 export type TranslationJob = {
+  sku?: string | null
   id: string
   productId: string
   fingerprint: string
@@ -40,7 +42,7 @@ export type TranslationJob = {
 export interface TranslationStore {
   product(id: string): Promise<Record<string, unknown> | null>
   state(id: string): Promise<TranslationState | null>
-  reviewHold?(id: string): Promise<boolean>
+  reviewHold?(id: string, fingerprint?: string): Promise<boolean>
   job(id: string): Promise<TranslationJob | null>
   insert(job: TranslationJob): Promise<boolean>
   mark(id: string, values: Partial<TranslationJob>): Promise<void>
@@ -71,7 +73,9 @@ export async function prepareProductTranslation(store: TranslationStore, product
   const before = englishText(product)
   const fingerprint = sourceFingerprint(source)
   const state = await store.state(productId)
-  if (!state && (await store.reviewHold?.(productId))) return { status: 'manual_review' }
+  if (state && Object.hasOwn(state, 'sku') && state.sku !== (product.sku ?? null))
+    return { status: 'manual_review' }
+  if (!state && (await store.reviewHold?.(productId, fingerprint))) return { status: 'manual_review' }
   if (state && state.englishHash !== englishHash(before)) return { status: 'manual_review' }
   if (!state && Object.values(before).some((value) => value?.trim()))
     return { status: 'untracked_english' }
@@ -90,6 +94,7 @@ export async function prepareProductTranslation(store: TranslationStore, product
   await store.insert({
     id,
     productId,
+    sku: (product.sku as string | null | undefined) ?? null,
     fingerprint,
     source,
     before,
@@ -129,6 +134,10 @@ export async function runProductTranslation(
   if (!product || !current || sourceFingerprint(current) !== job.fingerprint) {
     await store.mark(id, { status: 'stale' })
     return 'stale'
+  }
+  if (Object.hasOwn(job, 'sku') && job.sku !== (product.sku ?? null)) {
+    await store.mark(id, { status: 'needs_review', error: 'SKU_CHANGED' })
+    return 'needs_review'
   }
   if (englishHash(englishText(product)) !== englishHash(job.before)) {
     await store.mark(id, { status: 'needs_review', error: 'EN_CHANGED' })

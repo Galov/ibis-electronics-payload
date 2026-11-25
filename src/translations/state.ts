@@ -9,6 +9,7 @@ export function translationState(
   fingerprint: string,
   source: SourceText,
   english: EnglishText,
+  sku?: string | null,
 ) {
   return {
     productId,
@@ -17,5 +18,6 @@ export function translationState(
       translationPaths.map((path) => [path, textHash(source[path])]),
     ),
     englishHash: englishHash(english),
+    ...(sku !== undefined ? { sku } : {}),
   }
 }

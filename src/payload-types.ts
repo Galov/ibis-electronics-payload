@@ -167,6 +167,7 @@ export interface Config {
       reconcileMerchantProducts: TaskReconcileMerchantProducts;
       notifyOrderWithdrawal: TaskNotifyOrderWithdrawal;
       translateEnglishProduct: TaskTranslateEnglishProduct;
+      recoverEnglishProductTranslations: TaskRecoverEnglishProductTranslations;
       inline: {
         input: unknown;
         output: unknown;
@@ -1410,7 +1411,8 @@ export interface PayloadJob {
           | 'syncMerchantProduct'
           | 'reconcileMerchantProducts'
           | 'notifyOrderWithdrawal'
-          | 'translateEnglishProduct';
+          | 'translateEnglishProduct'
+          | 'recoverEnglishProductTranslations';
         taskID: string;
         input?:
           | {
@@ -1450,6 +1452,7 @@ export interface PayloadJob {
         | 'reconcileMerchantProducts'
         | 'notifyOrderWithdrawal'
         | 'translateEnglishProduct'
+        | 'recoverEnglishProductTranslations'
       )
     | null;
   queue?: string | null;
@@ -2959,6 +2962,16 @@ export interface TaskTranslateEnglishProduct {
   };
   output: {
     status: string;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskRecoverEnglishProductTranslations".
+ */
+export interface TaskRecoverEnglishProductTranslations {
+  input?: unknown;
+  output: {
+    recovered: number;
   };
 }
 /**

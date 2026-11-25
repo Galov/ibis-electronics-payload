@@ -12,12 +12,13 @@ export function mongoTranslationStore(db, client, toId, { delta = false } = {}) 
   return {
     product: (id) => products.findOne({ _id: idOf(id) }),
     state: (id) => states.findOne({ _id: id }),
-    reviewHold: async (id) =>
-      Boolean(
-        await db
+    reviewHold: async (id, fingerprint) => {
+      const hold = await db.collection('product_english_holds').findOne({ _id: id })
+      if (hold && (hold.reason === 'identity_changed' || hold.fingerprint === fingerprint)) return true
+      return Boolean(await db
           .collection('local_translation_jobs')
-          .findOne({ productId: idOf(id), status: 'needs_review' }, { projection: { _id: 1 } }),
-      ),
+          .findOne({ productId: idOf(id), status: 'needs_review' }, { projection: { _id: 1 } }))
+    },
     job: (id) => jobs.findOne({ _id: id }),
     insert: async (job) => {
       try {
@@ -59,7 +60,7 @@ export function mongoTranslationStore(db, client, toId, { delta = false } = {}) 
             const existing = await products.findOne({ _id: idOf(job.productId) }, { session })
             if (!existing) return
             const result = await products.updateOne(
-              guardedTextFilter(existing._id, existing.sku, job.source, job.before),
+              guardedTextFilter(existing._id, Object.hasOwn(job, 'sku') ? job.sku : existing.sku, job.source, job.before),
               { $set: Object.keys(patch).length ? patch : { 'title.en': job.before.title } },
               { session },
             )
@@ -68,7 +69,7 @@ export function mongoTranslationStore(db, client, toId, { delta = false } = {}) 
               { _id: job.productId },
               {
                 $set: {
-                  ...translationState(job.productId, job.fingerprint, job.source, english),
+                  ...translationState(job.productId, job.fingerprint, job.source, english, existing.sku ?? null),
                 },
                 $unset: { source: '', english: '' },
               },

@@ -1,4 +1,4 @@
-import { englishProductTranslationTask, englishTranslationQueueEnabled } from '@/translations/tasks'
+import { englishProductTranslationTask, englishTranslationRecoveryTask, englishTranslationQueueEnabled } from '@/translations/tasks'
 import { localProductLocalizationEnabled } from '@/i18n/localProductLocalization'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { resendAdapter } from '@payloadcms/email-resend'
@@ -257,7 +257,10 @@ export default buildConfig({
             { cron: '*/10 * * * * *', limit: 5, queue: 'order-withdrawal' },
           ]),
       ...(englishTranslationQueueEnabled() && process.env.IBIS_EN_TRANSLATION_API_ENABLED === 'true'
-        ? [{ cron: '*/30 * * * * *', limit: 1, queue: 'english-products' }]
+        ? [
+            { cron: '*/30 * * * * *', limit: 2, queue: 'english-products' },
+            { cron: '*/30 * * * * *', limit: 1, queue: 'english-products-recovery' },
+          ]
         : []),
     ],
     enableConcurrencyControl: true,
@@ -267,6 +270,7 @@ export default buildConfig({
       merchantReconcileTask,
       withdrawalNotificationTask,
       englishProductTranslationTask,
+      englishTranslationRecoveryTask,
     ],
   },
   secret: process.env.PAYLOAD_SECRET || '',

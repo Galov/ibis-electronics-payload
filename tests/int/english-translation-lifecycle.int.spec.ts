@@ -252,7 +252,7 @@ describe('durable product translation engine', () => {
   })
 })
 describe('NIK/admin product hooks', () => {
-  it('is off by default and refuses production activation', () => {
+  it('is off by default and refuses unapproved database activation', () => {
     vi.stubEnv('IBIS_EN_TRANSLATION_QUEUE_ENABLED', 'false')
     expect(englishTranslationQueueEnabled()).toBe(false)
     vi.stubEnv('IBIS_EN_TRANSLATION_QUEUE_ENABLED', 'true')

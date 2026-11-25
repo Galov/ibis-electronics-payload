@@ -1,4 +1,5 @@
 import type { Field, Plugin } from 'payload'
+import { preserveProductLocaleInput, preserveOtherProductLocale } from './preserveProductLocales'
 
 export const localEnglishDatabaseNames = ['ibis_bg_en_test', 'ibis_en_release_rehearsal'] as const
 
@@ -51,6 +52,10 @@ export function localizeProductFields(fields: Field[], product: boolean, parent 
     if ('localized' in field || (product && productText.has(path))) {
       Object.assign(next, { localized: product && productText.has(path) })
     }
+    if (product && productText.has(path)) {
+      const hooks = 'hooks' in field ? field.hooks : undefined
+      Object.assign(next, { hooks: { ...hooks, beforeChange: [preserveOtherProductLocale, ...(hooks?.beforeChange || [])] } })
+    }
     if ('fields' in next) next.fields = localizeProductFields(next.fields, product, path)
     if ('tabs' in next)
       next.tabs = next.tabs.map((tab) => ({
@@ -71,9 +76,16 @@ export const localProductLocalizationPlugin: Plugin = (config) => {
   if (!productLocalizationEnabled()) return config
   return {
     ...config,
-    localization: { locales: ['bg', 'en'], defaultLocale: 'bg', fallback: true },
+    localization: {
+      locales: [{ code: 'bg', label: 'Български' }, { code: 'en', label: 'English' }],
+      defaultLocale: 'bg', fallback: true,
+    },
     collections: config.collections?.map((collection) => ({
       ...collection,
+      ...(collection.slug === 'products' ? { hooks: {
+        ...collection.hooks,
+        beforeValidate: [preserveProductLocaleInput, ...(collection.hooks?.beforeValidate || [])],
+      } } : {}),
       fields: localizeProductFields(collection.fields, collection.slug === 'products'),
     })),
     globals: config.globals?.map((global) => ({
