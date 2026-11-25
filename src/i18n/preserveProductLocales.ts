@@ -13,24 +13,42 @@ const hasInput = (doc: any, path: string) => {
 }
 function load(req: PayloadRequest, id: string, refresh = false) {
   let cache = current.get(req)
-  if (!cache) { cache = new Map(); current.set(req, cache) }
-  if (refresh || !cache.has(id)) cache.set(id, req.payload.db.findOne({
-    collection: 'products', where: { id: { equals: id } }, req,
-  }))
+  if (!cache) {
+    cache = new Map()
+    current.set(req, cache)
+  }
+  if (refresh || !cache.has(id))
+    cache.set(
+      id,
+      req.payload.db.findOne({
+        collection: 'products',
+        where: { id: { equals: id } },
+        req,
+      }),
+    )
   return cache.get(id)!
 }
 
 // Payload drafts may predate an external text-only translation. Always preserve
 // the current product's other locale instead of restoring stale version content.
-export const preserveProductLocaleInput: CollectionBeforeValidateHook = async ({ data, operation, originalDoc, req }) => {
-  if (operation !== 'update' || !originalDoc?.id || !['bg', 'en'].includes(req.locale || '')) return data
+export const preserveProductLocaleInput: CollectionBeforeValidateHook = async ({
+  data,
+  operation,
+  originalDoc,
+  req,
+}) => {
+  if (operation !== 'update' || !originalDoc?.id) return data
   const doc = await load(req, String(originalDoc.id), true)
   if (!doc || !data) return data
+  for (const field of ['englishSlug', 'englishLegacySlug']) data[field] = doc[field] ?? null
+  if (req.locale === 'en') data.slug = doc.slug
+  if (!['bg', 'en'].includes(req.locale || '')) return data
   for (const path of paths) {
     if (hasInput(data, path)) continue
     const value = read(doc, path)?.[req.locale!]
     if (value === undefined) continue
-    const parts = path.split('.'), leaf = parts.pop()!
+    const parts = path.split('.'),
+      leaf = parts.pop()!
     let parent = data
     for (const part of parts) parent = parent[part] ||= {}
     parent[leaf] = value
@@ -38,8 +56,45 @@ export const preserveProductLocaleInput: CollectionBeforeValidateHook = async ({
   return data
 }
 
-export const preserveOtherProductLocale: FieldHook = async ({ operation, originalDoc, req, siblingDocWithLocales, field, path, value }) => {
-  if (operation !== 'update' || !originalDoc?.id || !['bg', 'en'].includes(req.locale || '') || !('name' in field) || !field.name) return value
+export const preserveEnglishProductRoute: FieldHook = async ({
+  operation,
+  originalDoc,
+  req,
+  field,
+}) => {
+  if (operation !== 'update' || !originalDoc?.id || !('name' in field)) return null
+  const doc = await load(req, String(originalDoc.id))
+  return doc?.[field.name!] ?? null
+}
+
+export const preserveBulgarianProductSlug: FieldHook = async ({
+  operation,
+  originalDoc,
+  req,
+  value,
+}) => {
+  if (operation !== 'update' || !originalDoc?.id || req.locale !== 'en') return value
+  const doc = await load(req, String(originalDoc.id))
+  return doc?.slug ?? value
+}
+
+export const preserveOtherProductLocale: FieldHook = async ({
+  operation,
+  originalDoc,
+  req,
+  siblingDocWithLocales,
+  field,
+  path,
+  value,
+}) => {
+  if (
+    operation !== 'update' ||
+    !originalDoc?.id ||
+    !['bg', 'en'].includes(req.locale || '') ||
+    !('name' in field) ||
+    !field.name
+  )
+    return value
   const doc = await load(req, String(originalDoc.id))
   if (!doc || !siblingDocWithLocales) return value
   const stored = read(doc, path.join('.'))

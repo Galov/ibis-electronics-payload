@@ -1,5 +1,9 @@
 import type { Field, Plugin } from 'payload'
-import { preserveProductLocaleInput, preserveOtherProductLocale } from './preserveProductLocales'
+import {
+  preserveProductLocaleInput,
+  preserveOtherProductLocale,
+  preserveBulgarianProductSlug,
+} from './preserveProductLocales'
 
 export const localEnglishDatabaseNames = ['ibis_bg_en_test', 'ibis_en_release_rehearsal'] as const
 
@@ -50,6 +54,15 @@ export function localizeProductFields(fields: Field[], product: boolean, parent 
   return fields.map((field) => {
     const path = 'name' in field ? [parent, field.name].filter(Boolean).join('.') : parent
     const next = { ...field }
+    if (product && path === 'slug') {
+      const hooks = 'hooks' in field ? field.hooks : undefined
+      Object.assign(next, {
+        hooks: {
+          ...hooks,
+          beforeChange: [...(hooks?.beforeChange || []), preserveBulgarianProductSlug],
+        },
+      })
+    }
     if ('localized' in field || (product && productText.has(path))) {
       Object.assign(next, { localized: product && productText.has(path) })
     }

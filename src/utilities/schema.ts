@@ -55,9 +55,7 @@ export const buildBreadcrumbSchema = (items: BreadcrumbItem[]) => ({
 })
 
 export const buildOrganizationSchema = (contactPage?: ContactPageLike | null) => {
-  const phones = [contactPage?.store?.phone]
-    .map((phone) => normalizePhone(phone))
-    .filter(Boolean)
+  const phones = [contactPage?.store?.phone].map((phone) => normalizePhone(phone)).filter(Boolean)
 
   return {
     '@context': 'https://schema.org',
@@ -82,19 +80,22 @@ export const buildLocalBusinessSchemas = (contactPage?: ContactPageLike | null) 
     workingHours: contactPage?.store?.workingHours || '',
   }
 
-  return [({
-    '@context': 'https://schema.org',
-    '@type': 'Store',
-    address: buildPostalAddress(location.address),
-    areaServed: 'BG',
-    name: location.label,
-    openingHours: location.workingHours,
-    telephone: normalizePhone(location.phone),
-    url: toAbsoluteUrl('/kontakti'),
-  })]
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Store',
+      address: buildPostalAddress(location.address),
+      areaServed: 'BG',
+      name: location.label,
+      openingHours: location.workingHours,
+      telephone: normalizePhone(location.phone),
+      url: toAbsoluteUrl('/kontakti'),
+    },
+  ]
 }
 
 export const buildProductSchema = (args: {
+  locale?: Locale
   brand?: null | string
   category?: null | CategoryLike
   description?: null | string
@@ -184,7 +185,9 @@ export const buildProductSchema = (args: {
           },
         },
       ],
-      url: toAbsoluteUrl(`/products/${slug}`),
+      url: toAbsoluteUrl(
+        localizeHref(`/products/${encodeURIComponent(slug)}`, args.locale || 'bg'),
+      ),
     },
   }
 }

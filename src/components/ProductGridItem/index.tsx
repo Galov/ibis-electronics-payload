@@ -6,7 +6,7 @@ import type { Product } from '@/payload-types'
 import { GridAddToCartButton } from '@/components/Cart/GridAddToCartButton'
 import { Price } from '@/components/Price'
 import { getProductPrimaryImage } from '@/utilities/product'
-import Link from '@/i18n/Link'
+import { ProductLink } from '@/components/ProductLink'
 import React from 'react'
 import clsx from 'clsx'
 import Image from 'next/image'
@@ -37,7 +37,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, locale = 'bg' }) => 
         ) : null}
       </div>
 
-      <Link className="flex flex-1 flex-col" href={`/products/${product.slug}`}>
+      <ProductLink className="flex flex-1 flex-col" product={product} locale={locale}>
         <div className="relative mb-4 aspect-square overflow-hidden bg-white p-6">
           {image?.url ? (
             <Image
@@ -66,7 +66,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, locale = 'bg' }) => 
             ) : null}
           </div>
         </div>
-      </Link>
+      </ProductLink>
 
       <div className="mt-2 flex items-center justify-between gap-4">
         {typeof price === 'number' && (

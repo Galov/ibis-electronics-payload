@@ -185,6 +185,7 @@ const queryProductsByCategoryID = async ({
       price: true,
       published: true,
       slug: true,
+      englishSlug: true,
       sku: true,
       stockQty: true,
       title: true,

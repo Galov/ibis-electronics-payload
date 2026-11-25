@@ -1,7 +1,7 @@
 import type { Product } from '@/payload-types'
 
 import { GridTileImage } from '@/components/Grid/tile'
-import Link from 'next/link'
+import { ProductLink } from '@/components/ProductLink'
 import React from 'react'
 import type { DefaultDocumentIDType } from 'payload'
 import { getProductPrimaryImage } from '@/utilities/product'
@@ -19,7 +19,7 @@ export const ThreeItemGridItem: React.FC<Props> = ({ item, size }) => {
     <div
       className={size === 'full' ? 'md:col-span-4 md:row-span-2' : 'md:col-span-2 md:row-span-1'}
     >
-      <Link className="relative block aspect-square h-full w-full" href={`/products/${item.slug}`}>
+      <ProductLink className="relative block aspect-square h-full w-full" product={item}>
         {image?.url ? (
           <GridTileImage
             label={{
@@ -30,7 +30,7 @@ export const ThreeItemGridItem: React.FC<Props> = ({ item, size }) => {
             src={image.url}
           />
         ) : null}
-      </Link>
+      </ProductLink>
     </div>
   )
 }

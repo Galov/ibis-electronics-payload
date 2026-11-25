@@ -7,6 +7,7 @@ import { messages } from '@/i18n/messages'
 import { rememberStorefront } from '@/i18n/storefrontPreference'
 import { ROMANIAN_STOREFRONT } from '@/ecommerce/checkoutDestination'
 import { ChevronDown } from 'lucide-react'
+import { productLanguageSwitchHref } from '@/i18n/productHref'
 
 export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname()
@@ -16,11 +17,12 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   const href = `${pathname}${query ? `?${query}` : ''}`
   const locale = getPathLocale(pathname)
   const languageHref = (language: 'bg' | 'en') =>
-    hasEnglishRoute(pathname)
+    productLanguageSwitchHref(href, language) ||
+    (hasEnglishRoute(pathname)
       ? localizeHref(href, language)
       : language === 'en'
         ? '/en'
-        : '/magazin'
+        : '/magazin')
   if (compact)
     return (
       <div className="relative inline-flex items-center">
@@ -32,6 +34,13 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
             const language = event.target.value as 'bg' | 'en' | 'ro'
             rememberStorefront(language)
             if (language === 'ro') window.location.assign(ROMANIAN_STOREFRONT)
+            else if (productLanguageSwitchHref(pathname, language))
+              window.location.assign(
+                productLanguageSwitchHref(
+                  `${pathname}${window.location.search}${window.location.hash}`,
+                  language,
+                )!,
+              )
             else
               router.push(
                 hasEnglishRoute(pathname)
@@ -63,6 +72,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
           key={language}
           aria-current={language === locale ? 'page' : undefined}
           href={languageHref(language)}
+          prefetch={false}
           hrefLang={language}
           lang={language}
           onClick={(event) => {
@@ -77,6 +87,14 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
             )
               return
             event.preventDefault()
+            const productRoute = productLanguageSwitchHref(
+              `${pathname}${window.location.search}${window.location.hash}`,
+              language,
+            )
+            if (productRoute) {
+              window.location.assign(productRoute)
+              return
+            }
             router.push(
               hasEnglishRoute(pathname)
                 ? localizeHref(

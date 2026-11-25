@@ -24,6 +24,7 @@ import { OpenCartButton } from './OpenCart'
 import { Button } from '@/components/ui/button'
 import { Product } from '@/payload-types'
 import { getProductPrimaryImage } from '@/utilities/product'
+import { ProductLink } from '@/components/ProductLink'
 
 export function CartModal() {
   const { cart } = useCart()
@@ -87,10 +88,7 @@ export function CartModal() {
                         <div className="absolute left-12 top-0 z-40">
                           <DeleteItemButton item={item} />
                         </div>
-                        <Link
-                          className="z-30 flex flex-1 flex-row gap-3"
-                          href={`/products/${(item.product as Product)?.slug}`}
-                        >
+                        <ProductLink className="z-30 flex flex-1 flex-row gap-3" product={product}>
                           <div className="relative h-16 w-16 overflow-hidden rounded-md border border-black/8 bg-white">
                             {image?.url ? (
                               <Image
@@ -108,7 +106,7 @@ export function CartModal() {
                               {product?.title}
                             </span>
                           </div>
-                        </Link>
+                        </ProductLink>
                         <div className="flex h-16 flex-col justify-between">
                           {typeof price === 'number' && (
                             <Price

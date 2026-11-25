@@ -1,4 +1,3 @@
-import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 const batchSize = 250
@@ -6,6 +5,7 @@ const batchSize = 250
 const roundPrice = (value: number) => Math.round(value * 100) / 100
 
 export const recalculateRetailPrices = async () => {
+  const { default: configPromise } = await import('@payload-config')
   const payload = await getPayload({ config: configPromise })
   const pricingSettings = await payload.findGlobal({
     slug: 'pricing-settings',

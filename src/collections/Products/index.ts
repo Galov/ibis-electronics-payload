@@ -1,4 +1,5 @@
-import { queueEnglishProductTranslation } from '@/translations/tasks'
+import { queueEnglishProductTranslation, queueEnglishProductSlug } from '@/translations/tasks'
+import { preserveEnglishProductRoute } from '@/i18n/preserveProductLocales'
 import { isEnglishTextOnlyProductChange } from '@/i18n/productChanges'
 import type { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import type { Access } from 'payload'
@@ -166,6 +167,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
       ...(defaultCollection.hooks?.afterChange || []),
       syncProductReviewQueueAfterChange,
       queueEnglishProductTranslation,
+      queueEnglishProductSlug,
       async ({ doc, previousDoc, operation, req }) => {
         if (isEnglishTextOnlyProductChange({ doc, previousDoc, operation, locale: req.locale }))
           return doc
@@ -201,6 +203,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     ...defaultCollection.defaultPopulate,
     title: true,
     slug: true,
+    englishSlug: true,
     sku: true,
     description: true,
     shortDescription: true,
@@ -621,5 +624,24 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
       ],
     },
     slugField(),
+    {
+      name: 'englishSlug',
+      type: 'text',
+      label: 'Английски slug',
+      localized: false,
+      admin: {
+        readOnly: true,
+        description:
+          'Създава се автоматично от първото английско заглавие и остава постоянен. Българският адрес е отделен.',
+      },
+      hooks: { beforeChange: [preserveEnglishProductRoute] },
+    },
+    {
+      name: 'englishLegacySlug',
+      type: 'text',
+      localized: false,
+      admin: { hidden: true },
+      hooks: { beforeChange: [preserveEnglishProductRoute] },
+    },
   ],
 })

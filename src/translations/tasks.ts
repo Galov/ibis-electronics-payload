@@ -6,6 +6,53 @@ import { readPath, translationPaths } from '../../scripts/localization/translati
 import { prepareProductTranslation, runProductTranslation } from './engine'
 import { mongoTranslationStore } from './mongoStore.mjs'
 import { openAITranslationProvider } from './provider'
+import { assignEnglishProductSlug } from '../i18n/englishProductSlugs.mjs'
+
+export const queueEnglishProductSlug: CollectionAfterChangeHook = async ({ doc, req, context }) => {
+  if (!englishTranslationQueueEnabled() || context.skipEnglishSlug || doc.englishSlug) return doc
+  const current = (await req.payload.db.findOne({
+    collection: 'products',
+    where: { id: { equals: String(doc.id) } },
+    req,
+  })) as Record<string, any> | null
+  if (current?.title?.en?.trim())
+    await req.payload.jobs.queue({
+      task: 'assignEnglishProductSlug',
+      queue: 'english-products',
+      input: { productId: String(doc.id) },
+      req,
+    })
+  return doc
+}
+
+export const englishProductSlugTask: TaskConfig<{
+  input: { productId: string }
+  output: { status: string }
+}> = {
+  slug: 'assignEnglishProductSlug',
+  label: 'Английски адрес на продукт',
+  inputSchema: [{ name: 'productId', type: 'text', required: true }],
+  outputSchema: [{ name: 'status', type: 'text', required: true }],
+  concurrency: { key: ({ input }) => `english-product-${input.productId}`, exclusive: true },
+  retries: { attempts: 3, backoff: { delay: 10000, type: 'exponential' } },
+  handler: async ({ input, req }) => {
+    if (!englishTranslationQueueEnabled()) return { output: { status: 'disabled' } }
+    const connection = req.payload.db.connection,
+      db = connection.db
+    if (!db) throw Error('Missing translation database')
+    assertEnglishTranslationDatabase(db.databaseName)
+    const productId = req.payload.db.collections.products.schema.path('_id').cast(input.productId)
+    return {
+      output: {
+        status: await assignEnglishProductSlug(
+          db.collection('products'),
+          connection.getClient(),
+          productId,
+        ),
+      },
+    }
+  },
+}
 
 export const queueEnglishProductTranslation: CollectionAfterChangeHook = async ({
   doc,
@@ -61,7 +108,11 @@ export const englishProductTranslationTask: TaskConfig<{
         )
       : prepared.status
     if (['manual_review', 'untracked_english', 'needs_review', 'request_unknown'].includes(status))
-      req.payload.logger.warn({ msg: 'English product translation requires review', productId: input.productId, status })
+      req.payload.logger.warn({
+        msg: 'English product translation requires review',
+        productId: input.productId,
+        status,
+      })
     return { output: { status } }
   },
 }
@@ -83,11 +134,17 @@ export const englishTranslationRecoveryTask: TaskConfig<{
     const db = req.payload.db.connection.db
     if (!db) throw Error('Missing translation database')
     assertEnglishTranslationDatabase(db.databaseName)
-    const result = await db.collection('payload-jobs').updateMany({
-      queue: 'english-products', taskSlug: 'translateEnglishProduct', processing: true,
-      hasError: { $ne: true }, completedAt: null,
-      updatedAt: { $type: 'date', $lt: new Date(Date.now() - 15 * 60_000) },
-    }, { $set: { processing: false, updatedAt: new Date() } })
+    const result = await db.collection('payload-jobs').updateMany(
+      {
+        queue: 'english-products',
+        taskSlug: 'translateEnglishProduct',
+        processing: true,
+        hasError: { $ne: true },
+        completedAt: null,
+        updatedAt: { $type: 'date', $lt: new Date(Date.now() - 15 * 60_000) },
+      },
+      { $set: { processing: false, updatedAt: new Date() } },
+    )
     return { output: { recovered: result.modifiedCount } }
   },
 }

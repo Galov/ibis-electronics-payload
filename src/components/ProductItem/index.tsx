@@ -3,7 +3,7 @@ import { Price } from '@/components/Price'
 import { Product } from '@/payload-types'
 import { getProductPrimaryImage } from '@/utilities/product'
 import Image from 'next/image'
-import Link from '@/i18n/Link'
+import { ProductLink } from '@/components/ProductLink'
 
 type Props = {
   product: Product
@@ -19,7 +19,6 @@ export const ProductItem: React.FC<Props> = ({ product, quantity, currencyCode }
   const { title } = product
   const image = getProductPrimaryImage(product)
   const itemPrice = product.price
-  const itemURL = `/products/${product.slug}`
 
   return (
     <div className="flex items-center gap-4">
@@ -33,7 +32,7 @@ export const ProductItem: React.FC<Props> = ({ product, quantity, currencyCode }
       <div className="flex grow justify-between items-center">
         <div className="flex flex-col gap-1">
           <p className="text-lg font-medium text-primary/85">
-            <Link href={itemURL}>{title}</Link>
+            <ProductLink product={product}>{title}</ProductLink>
           </p>
           <div className="text-sm text-primary/55">
             {'x'}

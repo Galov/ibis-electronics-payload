@@ -1,6 +1,7 @@
 // Raw text-only writes deliberately bypass commerce hooks; transactions preserve the journal.
 import { translationState } from './state.ts'
 import { guardedTextFilter } from './transfer.ts'
+import { planEnglishSlugPatch } from '../i18n/englishProductSlugs.mjs'
 export function mongoTranslationStore(db, client, toId, { delta = false } = {}) {
   const products = db.collection(delta ? 'english_release_delta_products' : 'products')
   const states = db.collection(delta ? 'english_release_delta_state' : 'product_english_state')
@@ -14,10 +15,13 @@ export function mongoTranslationStore(db, client, toId, { delta = false } = {}) 
     state: (id) => states.findOne({ _id: id }),
     reviewHold: async (id, fingerprint) => {
       const hold = await db.collection('product_english_holds').findOne({ _id: id })
-      if (hold && (hold.reason === 'identity_changed' || hold.fingerprint === fingerprint)) return true
-      return Boolean(await db
+      if (hold && (hold.reason === 'identity_changed' || hold.fingerprint === fingerprint))
+        return true
+      return Boolean(
+        await db
           .collection('local_translation_jobs')
-          .findOne({ productId: idOf(id), status: 'needs_review' }, { projection: { _id: 1 } }))
+          .findOne({ productId: idOf(id), status: 'needs_review' }, { projection: { _id: 1 } }),
+      )
     },
     job: (id) => jobs.findOne({ _id: id }),
     insert: async (job) => {
@@ -59,9 +63,25 @@ export function mongoTranslationStore(db, client, toId, { delta = false } = {}) 
             applied = false
             const existing = await products.findOne({ _id: idOf(job.productId) }, { session })
             if (!existing) return
+            const routePatch = await planEnglishSlugPatch(
+              products,
+              existing,
+              english.title,
+              session,
+            )
             const result = await products.updateOne(
-              guardedTextFilter(existing._id, Object.hasOwn(job, 'sku') ? job.sku : existing.sku, job.source, job.before),
-              { $set: Object.keys(patch).length ? patch : { 'title.en': job.before.title } },
+              guardedTextFilter(
+                existing._id,
+                Object.hasOwn(job, 'sku') ? job.sku : existing.sku,
+                job.source,
+                job.before,
+              ),
+              {
+                $set: {
+                  ...(Object.keys(patch).length ? patch : { 'title.en': job.before.title }),
+                  ...routePatch,
+                },
+              },
               { session },
             )
             if (result.matchedCount !== 1) return
@@ -69,7 +89,13 @@ export function mongoTranslationStore(db, client, toId, { delta = false } = {}) 
               { _id: job.productId },
               {
                 $set: {
-                  ...translationState(job.productId, job.fingerprint, job.source, english, existing.sku ?? null),
+                  ...translationState(
+                    job.productId,
+                    job.fingerprint,
+                    job.source,
+                    english,
+                    existing.sku ?? null,
+                  ),
                   lastJobId: job.id,
                 },
                 $unset: { source: '', english: '' },

@@ -1,7 +1,7 @@
 import { localProductLocalizationEnabled } from '@/i18n/localProductLocalization'
 import { categoryLabel } from '@/i18n/categoryLabel'
 import { Text } from '@/i18n/Text'
-import { localizeHref, type Locale } from '@/i18n/config'
+import { type Locale } from '@/i18n/config'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
 import { RelatedProducts } from '@/components/product/RelatedProducts'
@@ -9,7 +9,7 @@ import { RecentlyViewedProducts } from '@/components/product/RecentlyViewedProdu
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import Link from '@/i18n/Link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound, redirect, permanentRedirect } from 'next/navigation'
 import React, { Suspense } from 'react'
 import { Metadata } from 'next'
 import { getProductPrimaryImage, getProductSEODescription } from '@/utilities/product'
@@ -21,17 +21,10 @@ import {
   buildProductBreadcrumbItems,
   buildProductSchema,
 } from '@/utilities/schema'
-import { decodeMangledLegacySlug } from '@/utilities/legacySlugs'
+import { decodeRouteSlug, queryProductBySlug } from '@/utilities/getProductByRoute'
+import { productHref } from '@/i18n/productHref'
 
 export const dynamic = 'force-dynamic'
-
-const decodeRouteSlug = (slug: string) => {
-  try {
-    return decodeURIComponent(slug)
-  } catch {
-    return slug
-  }
-}
 
 type Args = {
   params: Promise<{
@@ -63,7 +56,7 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     },
     fallbackDescription: getProductSEODescription(product),
     fallbackTitle: product.title,
-    path: localizeHref(`/products/${product.slug || slug}`, locale),
+    path: productHref(product, locale),
   })
 
   return {
@@ -84,8 +77,10 @@ export default async function ProductPage({ params }: Args) {
   const product = await queryProductBySlug({ slug, locale })
 
   if (!product) return notFound()
-  if (product.slug && product.slug !== decodeRouteSlug(slug)) {
-    redirect(localizeHref(`/products/${encodeURIComponent(product.slug)}`, locale))
+  const canonicalSlug = (locale === 'en' ? product.englishSlug : null) || product.slug || slug
+  if (canonicalSlug !== decodeRouteSlug(slug)) {
+    if (locale === 'en') permanentRedirect(productHref(product, locale))
+    redirect(productHref(product, locale))
   }
 
   const primaryCategory =
@@ -118,7 +113,8 @@ export default async function ProductPage({ params }: Args) {
       name: product.title,
       price: product.price,
       sku: product.sku,
-      slug,
+      slug: canonicalSlug,
+      locale,
     }),
   }
   const breadcrumbJsonLd = buildBreadcrumbSchema(
@@ -126,7 +122,7 @@ export default async function ProductPage({ params }: Args) {
       locale,
       category: primaryCategory,
       productName: product.title,
-      productSlug: slug,
+      productSlug: canonicalSlug,
     }),
   )
 
@@ -210,6 +206,7 @@ export default async function ProductPage({ params }: Args) {
             price: product.price,
             published: product.published,
             slug: product.slug,
+            englishSlug: product.englishSlug,
             sku: product.sku,
             stockQty: product.stockQty,
             title: product.title,
@@ -220,65 +217,6 @@ export default async function ProductPage({ params }: Args) {
       </div>
     </React.Fragment>
   )
-}
-
-const queryProductBySlug = async ({ slug, locale = 'bg' }: { slug: string; locale?: Locale }) => {
-  const payload = await getPayload({ config: configPromise })
-  const routeSlug = decodeRouteSlug(slug)
-  const decodedSlug = decodeMangledLegacySlug(routeSlug)
-  const slugs = Array.from(new Set([slug, routeSlug, decodedSlug].filter(Boolean))) as string[]
-
-  const result = await payload.find({
-    collection: 'products',
-    locale,
-    fallbackLocale: locale === 'en' ? false : 'bg',
-    depth: 2,
-    draft: false,
-    limit: 1,
-    overrideAccess: false,
-    pagination: false,
-    where: {
-      and: [
-        ...(locale === 'en' ? [{ title: { exists: true } }, { title: { not_equals: '' } }] : []),
-        {
-          slug: {
-            in: slugs,
-          },
-        },
-        {
-          published: {
-            equals: true,
-          },
-        },
-      ],
-    },
-  })
-
-  if (result.docs?.[0]) return result.docs[0]
-
-  // Only the three explicitly selected local translation examples may bypass
-  // public visibility for review. Stock and the normal catalog access stay intact.
-  if (locale === 'en' && localProductLocalizationEnabled()) {
-    const preview = await payload.find({
-      collection: 'products',
-      locale: 'en',
-      fallbackLocale: locale === 'en' ? false : 'bg',
-      depth: 2,
-      limit: 1,
-      overrideAccess: true,
-      pagination: false,
-      where: {
-        and: [
-          ...(locale === 'en' ? [{ title: { exists: true } }, { title: { not_equals: '' } }] : []),
-          { slug: { in: slugs } },
-          { published: { equals: true } },
-          { sku: { in: ['126ZN07OR', '167AR06', '219FR05'] } },
-        ],
-      },
-    })
-    return preview.docs[0] || null
-  }
-  return null
 }
 
 const queryRelatedProducts = async ({
@@ -311,6 +249,7 @@ const queryRelatedProducts = async ({
       price: true,
       published: true,
       slug: true,
+      englishSlug: true,
       sku: true,
       stockQty: true,
       title: true,

@@ -22,6 +22,7 @@ type RecentlyViewedProduct = Pick<
   | 'price'
   | 'published'
   | 'slug'
+  | 'englishSlug'
   | 'sku'
   | 'stockQty'
   | 'title'
@@ -66,7 +67,10 @@ export const RecentlyViewedProducts: React.FC<Props> = ({ product }) => {
     const filteredProducts = storedProducts.filter((item) => item.id !== product.id)
     const nextProducts = [product, ...filteredProducts].slice(0, MAX_RECENTLY_VIEWED_PRODUCTS)
 
-    window.localStorage.setItem(`${RECENTLY_VIEWED_PRODUCTS_KEY}:${locale}`, JSON.stringify(nextProducts))
+    window.localStorage.setItem(
+      `${RECENTLY_VIEWED_PRODUCTS_KEY}:${locale}`,
+      JSON.stringify(nextProducts),
+    )
     setRecentlyViewedProducts(filteredProducts.slice(0, MAX_RECENTLY_VIEWED_PRODUCTS - 1))
   }, [product, locale])
 
@@ -96,7 +100,11 @@ export const RecentlyViewedProducts: React.FC<Props> = ({ product }) => {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {productsToRender.map((recentlyViewedProduct) => (
-          <ProductGridItem key={recentlyViewedProduct.id} product={recentlyViewedProduct} locale={locale} />
+          <ProductGridItem
+            key={recentlyViewedProduct.id}
+            product={recentlyViewedProduct}
+            locale={locale}
+          />
         ))}
       </div>
     </section>

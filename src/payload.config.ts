@@ -1,4 +1,9 @@
-import { englishProductTranslationTask, englishTranslationRecoveryTask, englishTranslationQueueEnabled } from '@/translations/tasks'
+import {
+  englishProductTranslationTask,
+  englishTranslationRecoveryTask,
+  englishTranslationQueueEnabled,
+  englishProductSlugTask,
+} from '@/translations/tasks'
 import { localProductLocalizationEnabled } from '@/i18n/localProductLocalization'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { resendAdapter } from '@payloadcms/email-resend'
@@ -270,6 +275,7 @@ export default buildConfig({
       merchantReconcileTask,
       withdrawalNotificationTask,
       englishProductTranslationTask,
+      englishProductSlugTask,
       englishTranslationRecoveryTask,
     ],
   },

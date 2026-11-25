@@ -167,6 +167,7 @@ export interface Config {
       reconcileMerchantProducts: TaskReconcileMerchantProducts;
       notifyOrderWithdrawal: TaskNotifyOrderWithdrawal;
       translateEnglishProduct: TaskTranslateEnglishProduct;
+      assignEnglishProductSlug: TaskAssignEnglishProductSlug;
       recoverEnglishProductTranslations: TaskRecoverEnglishProductTranslations;
       inline: {
         input: unknown;
@@ -456,6 +457,11 @@ export interface Product {
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * Създава се автоматично от първото английско заглавие и остава постоянен. Българският адрес е отделен.
+   */
+  englishSlug?: string | null;
+  englishLegacySlug?: string | null;
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -1412,6 +1418,7 @@ export interface PayloadJob {
           | 'reconcileMerchantProducts'
           | 'notifyOrderWithdrawal'
           | 'translateEnglishProduct'
+          | 'assignEnglishProductSlug'
           | 'recoverEnglishProductTranslations';
         taskID: string;
         input?:
@@ -1452,6 +1459,7 @@ export interface PayloadJob {
         | 'reconcileMerchantProducts'
         | 'notifyOrderWithdrawal'
         | 'translateEnglishProduct'
+        | 'assignEnglishProductSlug'
         | 'recoverEnglishProductTranslations'
       )
     | null;
@@ -2140,6 +2148,8 @@ export interface ProductsSelect<T extends boolean = true> {
   productCreatedSource?: T;
   generateSlug?: T;
   slug?: T;
+  englishSlug?: T;
+  englishLegacySlug?: T;
   meta?:
     | T
     | {
@@ -2966,6 +2976,18 @@ export interface TaskNotifyOrderWithdrawal {
  * via the `definition` "TaskTranslateEnglishProduct".
  */
 export interface TaskTranslateEnglishProduct {
+  input: {
+    productId: string;
+  };
+  output: {
+    status: string;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskAssignEnglishProductSlug".
+ */
+export interface TaskAssignEnglishProductSlug {
   input: {
     productId: string;
   };

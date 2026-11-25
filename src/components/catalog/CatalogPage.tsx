@@ -90,6 +90,7 @@ export async function MagazinPageContent({
       price: true,
       title: true,
       slug: true,
+      englishSlug: true,
       categories: true,
       brand: true,
       sku: true,

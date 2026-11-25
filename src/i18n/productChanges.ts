@@ -1,7 +1,16 @@
 import { isDeepStrictEqual } from 'node:util'
 
 const sharedProjection = (doc: Record<string, unknown>) => {
-  const { title, description, shortDescription, updatedAt, meta, ...shared } = doc
+  const {
+    title,
+    description,
+    shortDescription,
+    updatedAt,
+    meta,
+    englishSlug,
+    englishLegacySlug,
+    ...shared
+  } = doc
   if (meta && typeof meta === 'object' && !Array.isArray(meta)) {
     const {
       title: seoTitle,

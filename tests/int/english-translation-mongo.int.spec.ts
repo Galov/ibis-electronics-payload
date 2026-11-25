@@ -74,6 +74,11 @@ describe.skipIf(process.env.IBIS_RUN_LOCAL_TRANSLATION_MONGO_TESTS !== 'true')(
           expect(await runProductTranslation(store, job.jobId!, provider)).toBe('completed')
           expect(provider).toHaveBeenCalledTimes(1)
           expect((await store.job(job.jobId!))!.status).toBe('completed')
+          const translated = await db.collection('products').findOne({ _id: fresh._id })
+          expect(translated.englishSlug).toBe('shock-absorber-120n')
+          expect(translated.slug).toBe(fresh.slug)
+          expect(translated.price).toBe(fresh.price)
+          expect(translated.stockQty).toBe(fresh.stockQty)
           expect((await store.state(String(fresh._id)))!.englishHash).toBe(
             englishHash({ ...englishText(fresh), title: 'Shock absorber 120N' }),
           )

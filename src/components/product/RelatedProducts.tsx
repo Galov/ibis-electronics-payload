@@ -15,6 +15,7 @@ type RelatedProduct = Pick<
   | 'price'
   | 'published'
   | 'slug'
+  | 'englishSlug'
   | 'sku'
   | 'stockQty'
   | 'title'
