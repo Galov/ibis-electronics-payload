@@ -70,6 +70,7 @@ export function mongoTranslationStore(db, client, toId, { delta = false } = {}) 
               {
                 $set: {
                   ...translationState(job.productId, job.fingerprint, job.source, english, existing.sku ?? null),
+                  lastJobId: job.id,
                 },
                 $unset: { source: '', english: '' },
               },

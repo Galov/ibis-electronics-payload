@@ -104,6 +104,7 @@ function memory(p: Record<string, unknown> | null = product()) {
       }
       data.state = {
         ...translationState(id, job.fingerprint, job.source, english),
+        lastJobId: job.id,
       }
       data.jobs.get(job.id)!.status = 'completed'
       return true
@@ -158,6 +159,23 @@ describe('English-only transfer and reconciliation', () => {
   })
 })
 describe('durable product translation engine', () => {
+  it('reuses the saved response on repeated A -> B -> A changes without leaving the B translation', async () => {
+    const {data,store}=memory()
+    const first=await prepareProductTranslation(store,id)
+    await runProductTranslation(store,first.jobId!,provider())
+    const call=vi.fn(async()=>({title:'Shock absorber 140N'}))
+    for(let i=0;i<2;i++){
+      ;(data.p!.title as {bg:string}).bg='Амортисьор 140N'
+      const b=await prepareProductTranslation(store,id)
+      await runProductTranslation(store,b.jobId!,call)
+      expect(readPath(data.p,'title.en')).toBe('Shock absorber 140N')
+      ;(data.p!.title as {bg:string}).bg='Амортисьор 120N'
+      const a=await prepareProductTranslation(store,id)
+      await runProductTranslation(store,a.jobId!,call)
+      expect(readPath(data.p,'title.en')).toBe('Shock absorber 120N')
+    }
+    expect(call).toHaveBeenCalledTimes(1)
+  })
   it('translates a new product once and leaves all commerce data unchanged', async () => {
     const { data, store } = memory(),
       call = provider()

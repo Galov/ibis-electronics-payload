@@ -11,6 +11,7 @@ import {
 } from '../../scripts/localization/translationCore'
 import { englishText, englishHash, type EnglishText } from './transfer'
 export type TranslationState = {
+  lastJobId?: string
   sku?: string | null
   productId: string
   fingerprint: string
@@ -88,9 +89,17 @@ export async function prepareProductTranslation(store: TranslationStore, product
   const clear = translationPaths.filter(
     (path) => isEmptyProductText(source[path]) && !!before[path],
   )
-  const id = `${productId}:${fingerprint}`
-  const job = await store.job(id)
+  const baseId = `${productId}:${fingerprint}`
+  const cached = await store.job(baseId)
+  // A -> B -> A must not return an old completed job while EN still contains B.
+  const newOccurrence = cached && (cached.status === 'completed' ||
+    (englishHash(cached.before) !== englishHash(before) && ['pending', 'stale', 'response_saved'].includes(cached.status)))
+  const id = newOccurrence
+    ? `${baseId}:${textHash(state?.lastJobId || `${state?.fingerprint}:${state?.englishHash}`)}`
+    : baseId
+  const job = newOccurrence ? await store.job(id) : cached
   if (job) return { status: job.status, jobId: id }
+  const reusable = cached?.status === 'completed' && fields.every(path => typeof cached.translation?.[path] === 'string')
   await store.insert({
     id,
     productId,
@@ -100,9 +109,10 @@ export async function prepareProductTranslation(store: TranslationStore, product
     before,
     fields,
     clear,
-    status: 'pending',
+    status: reusable ? 'response_saved' : 'pending',
+    ...(reusable ? { translation: Object.fromEntries(fields.map(path => [path, cached.translation![path]])) } : {}),
   })
-  return { status: 'pending', jobId: id }
+  return { status: reusable ? 'response_saved' : 'pending', jobId: id }
 }
 export async function runProductTranslation(
   store: TranslationStore,
