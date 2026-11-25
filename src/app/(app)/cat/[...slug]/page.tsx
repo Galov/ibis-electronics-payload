@@ -1,6 +1,5 @@
 import { categoryLabel } from '@/i18n/categoryLabel'
-import { localizeHref, type Locale } from '@/i18n/config'
-import { translateCommerce } from '@/i18n/commerce'
+import type { Locale } from '@/i18n/config'
 import { Text } from '@/i18n/Text'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import { generateMeta } from '@/utilities/generateMeta'
@@ -61,12 +60,7 @@ export default async function CategoryPage({ params }: Args) {
 
   const products = await queryProductsByCategoryID({ categoryID: category.id, locale })
   const categoryTrail = buildCategoryTrail(category)
-  const breadcrumbJsonLd = buildBreadcrumbSchema(
-    buildCategoryBreadcrumbItems({ category }).map((item) => ({
-      name: translateCommerce(locale, categoryLabel(item.name, locale)),
-      path: localizeHref(item.path, locale),
-    })),
-  )
+  const breadcrumbJsonLd = buildBreadcrumbSchema(buildCategoryBreadcrumbItems({ category, locale }))
 
   return (
     <div className="container py-10 md:py-12">

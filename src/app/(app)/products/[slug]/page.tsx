@@ -1,4 +1,5 @@
 import { localProductLocalizationEnabled } from '@/i18n/localProductLocalization'
+import { categoryLabel } from '@/i18n/categoryLabel'
 import { Text } from '@/i18n/Text'
 import { localizeHref, type Locale } from '@/i18n/config'
 import { Gallery } from '@/components/product/Gallery'
@@ -122,6 +123,7 @@ export default async function ProductPage({ params }: Args) {
   }
   const breadcrumbJsonLd = buildBreadcrumbSchema(
     buildProductBreadcrumbItems({
+      locale,
       category: primaryCategory,
       productName: product.title,
       productSlug: slug,
@@ -161,7 +163,7 @@ export default async function ProductPage({ params }: Args) {
                   className="transition hover:text-primary/80"
                   href={buildCategoryPath(parentCategory)}
                 >
-                  {parentCategory.title}
+                  {categoryLabel(parentCategory.title, locale)}
                 </Link>
               </>
             ) : null}
@@ -172,7 +174,7 @@ export default async function ProductPage({ params }: Args) {
                   className="transition hover:text-primary/80"
                   href={buildCategoryPath(primaryCategory)}
                 >
-                  {primaryCategory.title}
+                  {categoryLabel(primaryCategory.title, locale)}
                 </Link>
               </>
             ) : null}

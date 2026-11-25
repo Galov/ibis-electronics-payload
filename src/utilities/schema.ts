@@ -1,5 +1,7 @@
 import { buildCategoryPath } from '@/utilities/category'
 import { getBaseURL } from '@/utilities/getBaseURL'
+import { categoryLabel } from '@/i18n/categoryLabel'
+import { localizeHref, type Locale } from '@/i18n/config'
 
 type BreadcrumbItem = {
   name: string
@@ -228,13 +230,15 @@ export const buildBlogPostingSchema = (args: {
 }
 
 export const buildProductBreadcrumbItems = (args: {
+  locale?: Locale
   category?: null | CategoryLike
   productName: string
   productSlug: string
 }) => {
+  const locale = args.locale || 'bg'
   const items: BreadcrumbItem[] = [
-    { name: 'Начало', path: '/' },
-    { name: 'Каталог', path: '/magazin' },
+    { name: locale === 'en' ? 'Home' : 'Начало', path: '/' },
+    { name: locale === 'en' ? 'Products' : 'Каталог', path: '/magazin' },
   ]
 
   const categoryChain: CategoryLike[] = []
@@ -248,7 +252,7 @@ export const buildProductBreadcrumbItems = (args: {
   for (const category of categoryChain) {
     if (!category.title) continue
     items.push({
-      name: category.title,
+      name: categoryLabel(category.title, locale),
       path: buildCategoryPath(category),
     })
   }
@@ -258,13 +262,17 @@ export const buildProductBreadcrumbItems = (args: {
     path: `/products/${args.productSlug}`,
   })
 
-  return items
+  return items.map((item) => ({ ...item, path: localizeHref(item.path, locale) }))
 }
 
-export const buildCategoryBreadcrumbItems = (args: { category: CategoryLike & { title: string } }) => {
+export const buildCategoryBreadcrumbItems = (args: {
+  category: CategoryLike & { title: string }
+  locale?: Locale
+}) => {
+  const locale = args.locale || 'bg'
   const items: BreadcrumbItem[] = [
-    { name: 'Начало', path: '/' },
-    { name: 'Каталог', path: '/magazin' },
+    { name: locale === 'en' ? 'Home' : 'Начало', path: '/' },
+    { name: locale === 'en' ? 'Products' : 'Каталог', path: '/magazin' },
   ]
 
   const categoryChain: CategoryLike[] = []
@@ -278,10 +286,10 @@ export const buildCategoryBreadcrumbItems = (args: { category: CategoryLike & { 
   for (const category of categoryChain) {
     if (!category.title) continue
     items.push({
-      name: category.title,
+      name: categoryLabel(category.title, locale),
       path: buildCategoryPath(category),
     })
   }
 
-  return items
+  return items.map((item) => ({ ...item, path: localizeHref(item.path, locale) }))
 }
