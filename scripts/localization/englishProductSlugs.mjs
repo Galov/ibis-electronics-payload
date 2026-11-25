@@ -18,6 +18,7 @@ export const routeDocumentHash = (doc) => {
   for (const key of englishRouteFields) delete copy[key]
   return createHash('sha256').update(BSON.serialize(copy)).digest('hex')
 }
+/** @param {any} db @param {{apply?: boolean, backupDir?: string}} options */
 export async function backfillEnglishSlugs(db, { apply = false, backupDir } = {}) {
   const products = db.collection('products'),
     docs = await products.find({}).sort({ _id: 1 }).toArray()
