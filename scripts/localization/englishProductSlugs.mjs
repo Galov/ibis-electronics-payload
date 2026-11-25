@@ -46,20 +46,24 @@ export async function backfillEnglishSlugs(db, { apply = false, backupDir } = {}
   })
   await ensureEnglishSlugIndexes(products)
   const before = new Map(docs.map((d) => [String(d._id), d]))
-  for (const row of rows) {
-    const doc = before.get(row.id)
-    const filter = {
-      _id: doc._id,
-      'title.en': doc.title.en,
-      slug: doc.slug,
-      ...Object.fromEntries(
-        englishRouteFields.map((k) => [k, Object.hasOwn(doc, k) ? doc[k] : { $exists: false }]),
-      ),
-    }
-    const result = await products.updateOne(filter, { $set: row.patch })
-    if (result.matchedCount !== 1)
+  for (let offset = 0; offset < rows.length; offset += 250) {
+    const batch = rows.slice(offset, offset + 250)
+    const operations = batch.map((row) => {
+      const doc = before.get(row.id)
+      const filter = {
+        _id: doc._id,
+        'title.en': doc.title.en,
+        slug: doc.slug,
+        ...Object.fromEntries(
+          englishRouteFields.map((k) => [k, Object.hasOwn(doc, k) ? doc[k] : { $exists: false }]),
+        ),
+      }
+      return { updateOne: { filter, update: { $set: row.patch } } }
+    })
+    const result = await products.bulkWrite(operations, { ordered: true })
+    if (result.matchedCount !== batch.length)
       throw Error('Concurrent product change: migration stopped; review backup before retry')
-    report.applied++
+    report.applied += result.matchedCount
   }
   const after = await products.find({}).sort({ _id: 1 }).toArray()
   if (

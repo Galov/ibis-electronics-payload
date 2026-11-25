@@ -1,4 +1,3 @@
-import { localProductLocalizationEnabled } from '@/i18n/localProductLocalization'
 import { categoryLabel } from '@/i18n/categoryLabel'
 import { Text } from '@/i18n/Text'
 import { type Locale } from '@/i18n/config'
