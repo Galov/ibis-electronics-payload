@@ -26,6 +26,13 @@ describe.skipIf(process.env.IBIS_RUN_LOCAL_TRANSLATION_MONGO_TESTS !== 'true')(
           }))
           await db.collection('products').insertMany(docs)
           expect((await backfillEnglishSlugs(db)).planned).toBe(601)
+          await db
+            .collection('payload-jobs')
+            .insertOne({ queue: 'english-products', processing: true })
+          await expect(
+            backfillEnglishSlugs(db, { apply: true, backupDir: directory }),
+          ).rejects.toThrow('Active English jobs')
+          await db.collection('payload-jobs').deleteMany({})
           expect(
             await backfillEnglishSlugs(db, { apply: true, backupDir: directory }),
           ).toMatchObject({ applied: 601, verifiedOnlyRouteMetadataChanged: true })

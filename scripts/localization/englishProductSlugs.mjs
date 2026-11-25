@@ -20,6 +20,13 @@ export const routeDocumentHash = (doc) => {
 }
 /** @param {any} db @param {{apply?: boolean, backupDir?: string}} options */
 export async function backfillEnglishSlugs(db, { apply = false, backupDir } = {}) {
+  if (
+    apply &&
+    (await db
+      .collection('payload-jobs')
+      .countDocuments({ queue: 'english-products', processing: true, completedAt: null }))
+  )
+    throw Error('Active English jobs: stop writers and wait before applying route migration')
   const products = db.collection('products'),
     docs = await products.find({}).sort({ _id: 1 }).toArray()
   const rows = planEnglishSlugBackfill(docs)
