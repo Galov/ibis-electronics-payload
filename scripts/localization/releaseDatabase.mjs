@@ -91,21 +91,58 @@ function filterFor(row, reverse) {
     return { [key]: expected.exists ? {$exists:true,$eq:expected.value} : {$exists:false} }
   }) }
 }
+function matchesRow(doc, row, reverse) {
+  if (!doc || (row.collection === 'products' && (doc.sku ?? null) !== row.sku)) return false
+  return Object.keys(row.before).every(key => {
+    const expected = reverse ? {exists:true,value:row.after[key]} : row.before[key]
+    const value = readPath(doc,key)
+    return expected.exists ? value !== undefined && isDeepStrictEqual(value,expected.value) : value === undefined
+  })
+}
 export async function executePlan(db, plan, reverse = false) {
   validatePlan(plan)
   const counts = { changed:0, alreadyApplied:0, conflicts:0 }
-  for (const row of reverse ? [...plan.rows].reverse() : plan.rows) {
-    const set = {}, unset = {}
-    for (const key of Object.keys(row.before)) {
-      if (!reverse) set[key] = row.after[key]
-      else if (row.before[key].exists) set[key] = row.before[key].value
-      else unset[key] = ''
-    }
-    const update = { ...(Object.keys(set).length ? {$set:set} : {}), ...(Object.keys(unset).length ? {$unset:unset} : {}) }
-    const result = await db.collection(row.collection).updateOne(filterFor(row,reverse),update)
-    if (result.matchedCount === 1) counts.changed++
-    else if (await db.collection(row.collection).findOne(filterFor(row,!reverse),{projection:{_id:1}})) counts.alreadyApplied++
-    else { counts.conflicts++; throw Error(`Release stopped on concurrent text/identity change; completed=${counts.changed}. Resume only after review.`) }
+  const rows = reverse ? [...plan.rows].reverse() : plan.rows
+  // Batches avoid tens of thousands of Atlas round trips. Each batch is all-or-nothing.
+  for (let offset=0; offset<rows.length; offset+=250) {
+    const batch = rows.slice(offset,offset+250), session = db.client.startSession()
+    let changed=0, alreadyApplied=0
+    try {
+      await session.withTransaction(async () => {
+        changed=0; alreadyApplied=0
+        const byCollection = new Map()
+        for (const row of batch) {
+          if (!byCollection.has(row.collection)) byCollection.set(row.collection,[])
+          byCollection.get(row.collection).push(row)
+        }
+        for (const [collection,group] of byCollection) {
+          const found=await db.collection(collection).find({_id:{$in:group.map(row=>row.id)}},{session}).toArray()
+          const current=new Map(found.map(doc=>[String(doc._id),doc]))
+          const writes=[]
+          for (const row of group) {
+            const doc=current.get(String(row.id))
+            if (!matchesRow(doc,row,reverse)) {
+              if (matchesRow(doc,row,!reverse)) {alreadyApplied++;continue}
+              throw Error(`Release stopped on concurrent text/identity change; completed=${counts.changed}. Resume only after review.`)
+            }
+            const set={},unset={}
+            for (const key of Object.keys(row.before)) {
+              if (!reverse) set[key]=row.after[key]
+              else if (row.before[key].exists) set[key]=row.before[key].value
+              else unset[key]=''
+            }
+            const update={...(Object.keys(set).length?{$set:set}:{}),...(Object.keys(unset).length?{$unset:unset}:{})}
+            writes.push({updateOne:{filter:filterFor(row,reverse),update}})
+          }
+          if (writes.length) {
+            const result=await db.collection(collection).bulkWrite(writes,{ordered:true,session})
+            if(result.matchedCount!==writes.length)throw Error('Concurrent release write conflict')
+            changed+=writes.length
+          }
+        }
+      }, {writeConcern:{w:'majority',j:true},readConcern:{level:'snapshot'}})
+      counts.changed+=changed;counts.alreadyApplied+=alreadyApplied
+    } finally {await session.endSession()}
   }
   return counts
 }

@@ -43,6 +43,7 @@ describe.skipIf(process.env.IBIS_RUN_LOCAL_TRANSLATION_MONGO_TESTS !== 'true')('
         await db.collection('products').updateOne({_id:id},{$set:{price:15,'title.en':'Manual edit'}})
         await expect(executePlan(db,plan,true)).rejects.toThrow('concurrent')
         expect((await db.collection('products').findOne({_id:id})).title.en).toBe('Manual edit')
+        expect((await db.collection('_products_versions').findOne({_id:versionId})).version.title).toEqual({bg:source.title})
         await db.collection('products').updateOne({_id:id},{$set:{'title.en':'Pump 30W'}})
         await executePlan(db,plan,true)
         const product=await db.collection('products').findOne({_id:id})
