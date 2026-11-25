@@ -12,6 +12,11 @@ const bannerFields = (label: string) => ({
         : 'productBanner',
   label,
   type: 'group' as const,
+  localized: true,
+  admin: {
+    description:
+      'Избери езика от „Локализация“. Изображението и настройките са отделни за BG и EN. Без изображение банерът не се показва.',
+  },
   fields: [
     {
       name: 'image',

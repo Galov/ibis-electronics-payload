@@ -18,12 +18,6 @@ const redirects = async () => {
     source: '/produkt/:slug',
   }
 
-  const homeRedirect = {
-    destination: '/magazin',
-    permanent: true,
-    source: '/',
-  }
-
   const shopRedirect = {
     destination: '/magazin',
     permanent: true,
@@ -40,7 +34,6 @@ const redirects = async () => {
     { source: '/en/shop', destination: '/en', permanent: true },
     { source: '/en/magazin', destination: '/en', permanent: true },
     legacyProductRedirect,
-    homeRedirect,
     shopRedirect,
     contactRedirect,
     internetExplorerRedirect,

@@ -66,6 +66,8 @@ export async function MagazinPageContent({
   const shopPage = await payload.findGlobal({
     slug: 'shopPage',
     depth: 1,
+    locale,
+    fallbackLocale: false,
   })
   const selectedBrandID = brand ? await getBrandIDForFilter(payload, String(brand)) : null
   const categoryIDs = category ? await getCategoryIDsForFilter(payload, String(category)) : null

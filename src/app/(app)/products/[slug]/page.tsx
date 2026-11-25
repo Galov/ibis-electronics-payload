@@ -105,7 +105,7 @@ export default async function ProductPage({ params }: Args) {
     productID: product.id,
     locale,
   })
-  const shopPage = await getCachedGlobal('shopPage', 1)()
+  const shopPage = await getCachedGlobal('shopPage', 1, locale)()
 
   const productJsonLd = {
     ...buildProductSchema({

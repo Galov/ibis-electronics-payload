@@ -2634,6 +2634,9 @@ export interface ContactPage {
  */
 export interface ShopPage {
   id: string;
+  /**
+   * Избери езика от „Локализация“. Изображението и настройките са отделни за BG и EN. Без изображение банерът не се показва.
+   */
   topBanner?: {
     image?: (string | null) | Media;
     /**
@@ -2642,6 +2645,9 @@ export interface ShopPage {
     url?: string | null;
     openInNewTab?: boolean | null;
   };
+  /**
+   * Избери езика от „Локализация“. Изображението и настройките са отделни за BG и EN. Без изображение банерът не се показва.
+   */
   bottomBanner?: {
     image?: (string | null) | Media;
     /**
@@ -2650,6 +2656,9 @@ export interface ShopPage {
     url?: string | null;
     openInNewTab?: boolean | null;
   };
+  /**
+   * Избери езика от „Локализация“. Изображението и настройките са отделни за BG и EN. Без изображение банерът не се показва.
+   */
   productBanner?: {
     image?: (string | null) | Media;
     /**

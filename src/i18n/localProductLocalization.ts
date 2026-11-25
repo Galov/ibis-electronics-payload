@@ -8,15 +8,16 @@ export const localEnglishDatabaseNames = ['ibis_bg_en_test', 'ibis_en_release_re
 export function productLocalizationEnabled(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
-  if (env.IBIS_PRODUCT_LOCALIZATION_ENABLED !== 'true')
-    return localProductLocalizationEnabled(env)
+  if (env.IBIS_PRODUCT_LOCALIZATION_ENABLED !== 'true') return localProductLocalizationEnabled(env)
   if (
     env.IBIS_PRODUCT_LOCALIZATION_SCHEMA !== 'bg-en-v1' ||
     env.IBIS_LOCAL_PREVIEW === 'true' ||
     env.IBIS_PRODUCT_LOCALIZATION_PREVIEW === 'true' ||
     env.IBIS_EN_RELEASE_REHEARSAL === 'true'
   )
-    throw new Error('Product localization release requires migrated bg-en-v1 schema without preview flags')
+    throw new Error(
+      'Product localization release requires migrated bg-en-v1 schema without preview flags',
+    )
   return true
 }
 
@@ -54,7 +55,12 @@ export function localizeProductFields(fields: Field[], product: boolean, parent 
     }
     if (product && productText.has(path)) {
       const hooks = 'hooks' in field ? field.hooks : undefined
-      Object.assign(next, { hooks: { ...hooks, beforeChange: [preserveOtherProductLocale, ...(hooks?.beforeChange || [])] } })
+      Object.assign(next, {
+        hooks: {
+          ...hooks,
+          beforeChange: [preserveOtherProductLocale, ...(hooks?.beforeChange || [])],
+        },
+      })
     }
     if ('fields' in next) next.fields = localizeProductFields(next.fields, product, path)
     if ('tabs' in next)
@@ -71,26 +77,39 @@ export function localizeProductFields(fields: Field[], product: boolean, parent 
 }
 
 // Existing SEO plugin defaults localize images and other collections as well;
-// restrict localization to the five agreed product text fields.
+// restrict collection localization to product text, and keep the explicitly
+// localized catalog banners in the shopPage global.
 export const localProductLocalizationPlugin: Plugin = (config) => {
   if (!productLocalizationEnabled()) return config
   return {
     ...config,
     localization: {
-      locales: [{ code: 'bg', label: 'Български' }, { code: 'en', label: 'English' }],
-      defaultLocale: 'bg', fallback: true,
+      locales: [
+        { code: 'bg', label: 'Български' },
+        { code: 'en', label: 'English' },
+      ],
+      defaultLocale: 'bg',
+      fallback: true,
     },
     collections: config.collections?.map((collection) => ({
       ...collection,
-      ...(collection.slug === 'products' ? { hooks: {
-        ...collection.hooks,
-        beforeValidate: [preserveProductLocaleInput, ...(collection.hooks?.beforeValidate || [])],
-      } } : {}),
+      ...(collection.slug === 'products'
+        ? {
+            hooks: {
+              ...collection.hooks,
+              beforeValidate: [
+                preserveProductLocaleInput,
+                ...(collection.hooks?.beforeValidate || []),
+              ],
+            },
+          }
+        : {}),
       fields: localizeProductFields(collection.fields, collection.slug === 'products'),
     })),
     globals: config.globals?.map((global) => ({
       ...global,
-      fields: localizeProductFields(global.fields, false),
+      fields:
+        global.slug === 'shopPage' ? global.fields : localizeProductFields(global.fields, false),
     })),
   }
 }

@@ -131,70 +131,15 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
   return (
     <header className="sticky top-0 z-40 border-b border-[rgb(1,55,186)]/28 bg-[rgb(248,252,255)] shadow-[0_10px_24px_rgba(1,55,186,0.03)] md:relative md:z-20">
       <div className="relative z-30 border-b border-white/12 bg-[rgb(1,55,186)]">
-        <div className="container hidden h-11 items-center justify-end md:flex">
-          <div className="flex items-center gap-2">
-            <Suspense fallback={null}>
-              <div className="text-white/82">
-                <LanguageSwitcher />
-              </div>
-            </Suspense>
-            {user ? (
-              <div className="relative" ref={profileMenuRef}>
-                <button
-                  className={clsx(
-                    'inline-flex h-9 items-center gap-2 rounded-[2px] px-3 text-sm text-white/82 transition-colors',
-                    'hover:bg-white/8 hover:text-white',
-                    profileOpen && 'bg-white/8 text-white',
-                  )}
-                  onClick={() => setProfileOpen((current) => !current)}
-                  type="button"
-                >
-                  <span>
-                    <CommerceText source="Моят профил" />
-                  </span>
-                  <ChevronDown
-                    className={clsx('h-3.5 w-3.5 transition-transform duration-200', {
-                      'rotate-180': profileOpen,
-                    })}
-                  />
-                </button>
-
-                {profileOpen ? (
-                  <div className="absolute right-0 top-[calc(100%+0.45rem)] z-40 min-w-52 overflow-hidden rounded-[10px] border border-black/8 bg-white py-2 shadow-[0_18px_42px_rgba(15,23,42,0.12)]">
-                    {profileItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        className="block px-4 py-2.5 text-sm text-primary/72 transition hover:bg-black/[0.03] hover:text-primary"
-                        href={item.href}
-                      >
-                        <CommerceText source={item.label} />
-                      </Link>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="flex items-center">
-                <Link
-                  className="rounded-[2px] px-3 py-2 text-sm text-white/82 transition-colors hover:bg-white/8 hover:text-white"
-                  href="/login"
-                >
-                  <CommerceText source="Вход" />
-                </Link>
-                <span className="text-white/28">|</span>
-                <Link
-                  className="rounded-[2px] px-3 py-2 text-sm text-white/82 transition-colors hover:bg-white/8 hover:text-white"
-                  href="/create-account"
-                >
-                  <CommerceText source="Регистрация" />
-                </Link>
-              </div>
-            )}
-
-            <div className="ml-5 border-l border-white/14 pl-5">
-              <Cart />
+        <div className="container flex h-11 items-center justify-end text-white">
+          <Suspense fallback={null}>
+            <div className="hidden md:block">
+              <LanguageSwitcher />
             </div>
-          </div>
+            <div className="md:hidden">
+              <LanguageSwitcher compact />
+            </div>
+          </Suspense>
         </div>
       </div>
 
@@ -235,12 +180,15 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
       </div>
 
       <div className="hidden md:block">
-        <nav className="container flex items-center justify-between py-6">
+        <nav className="container flex flex-wrap items-center justify-between gap-x-5 gap-y-4 py-5">
           <Link className="flex items-center" href="/magazin">
-            <SiteLogo className="h-auto w-44" priority />
+            <SiteLogo className="h-auto w-36 xl:w-40" priority />
           </Link>
 
-          <div className="headerNav relative flex items-center gap-8 text-sm" ref={navRef}>
+          <div
+            className="headerNav relative order-3 flex w-full flex-wrap items-center justify-center gap-x-1 text-sm xl:order-2 xl:w-auto xl:flex-1"
+            ref={navRef}
+          >
             <span
               className="headerNavIndicator"
               style={{
@@ -253,7 +201,7 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
               <Link
                 key={item.href}
                 className={clsx(
-                  'headerNavLink rounded-md px-3 py-2 text-base text-[rgb(1,55,186)]/88 transition-colors',
+                  'headerNavLink rounded-md px-2 py-2 text-sm text-[rgb(1,55,186)]/88 transition-colors',
                   'hover:bg-[rgb(1,55,186)]/6 hover:text-[rgb(1,55,186)]',
                   isNavItemActive(item.href, pathname) && 'active',
                 )}
@@ -265,6 +213,64 @@ export function HeaderClient({ navItems }: { navItems: HeaderNavItem[] }) {
                 <CommerceText source={item.label} />
               </Link>
             ))}
+          </div>
+          <div className="order-2 ml-auto flex shrink-0 items-center gap-1 xl:order-3">
+            {user ? (
+              <div className="relative" ref={profileMenuRef}>
+                <button
+                  className={clsx(
+                    'inline-flex h-9 items-center gap-2 rounded-[2px] px-3 text-sm text-[rgb(1,55,186)] transition-colors',
+                    'hover:bg-[rgb(1,55,186)]/6 hover:text-[rgb(1,55,186)]',
+                    profileOpen && 'bg-[rgb(1,55,186)]/6 text-[rgb(1,55,186)]',
+                  )}
+                  onClick={() => setProfileOpen((current) => !current)}
+                  type="button"
+                >
+                  <span>
+                    <CommerceText source="Моят профил" />
+                  </span>
+                  <ChevronDown
+                    className={clsx('h-3.5 w-3.5 transition-transform duration-200', {
+                      'rotate-180': profileOpen,
+                    })}
+                  />
+                </button>
+
+                {profileOpen ? (
+                  <div className="absolute right-0 top-[calc(100%+0.45rem)] z-40 min-w-52 overflow-hidden rounded-[10px] border border-black/8 bg-white py-2 shadow-[0_18px_42px_rgba(15,23,42,0.12)]">
+                    {profileItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        className="block px-4 py-2.5 text-sm text-primary/72 transition hover:bg-black/[0.03] hover:text-primary"
+                        href={item.href}
+                      >
+                        <CommerceText source={item.label} />
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <Link
+                  className="rounded-[2px] px-3 py-2 text-sm text-[rgb(1,55,186)] transition-colors hover:bg-[rgb(1,55,186)]/6 hover:text-[rgb(1,55,186)]"
+                  href="/login"
+                >
+                  <CommerceText source="Вход" />
+                </Link>
+                <span className="text-[rgb(1,55,186)]/28">|</span>
+                <Link
+                  className="rounded-[2px] px-3 py-2 text-sm text-[rgb(1,55,186)] transition-colors hover:bg-[rgb(1,55,186)]/6 hover:text-[rgb(1,55,186)]"
+                  href="/create-account"
+                >
+                  <CommerceText source="Регистрация" />
+                </Link>
+              </div>
+            )}
+
+            <div className="ml-2 border-l border-[rgb(1,55,186)]/14 pl-3">
+              <Cart />
+            </div>
           </div>
         </nav>
       </div>

@@ -1,6 +1,5 @@
 'use client'
 
-import { useLocale } from '@/i18n/provider'
 import type { Media } from '@/payload-types'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -19,9 +18,6 @@ type Props = {
 }
 
 export const ShopBanner: React.FC<Props> = ({ banner, className, priority = false }) => {
-  const locale = useLocale()
-  if (locale === 'en') return null
-
   if (!banner?.image || typeof banner.image === 'string') {
     return null
   }

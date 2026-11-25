@@ -6,6 +6,8 @@ import { LocaleProvider } from '@/i18n/provider'
 import { formatMessage, messages } from '@/i18n/messages'
 import { Text } from '@/i18n/Text'
 import { ShopBanner } from '@/components/shop/ShopBanner'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { STOREFRONT_CHOICE_COOKIE } from '@/i18n/storefrontPreference'
 import { getProductImageAlt } from '@/utilities/product'
 import { Price } from '@/components/Price'
 import { StockIndicator } from '@/components/product/StockIndicator'
@@ -25,9 +27,24 @@ afterEach(() => {
   cleanup()
   window.localStorage.clear()
   vi.clearAllMocks()
+  document.cookie = `${STOREFRONT_CHOICE_COOKIE}=; Path=/; Max-Age=0`
 })
 
 describe('translated storefront interface', () => {
+  it('offers the Romanian storefront as an external language link', () => {
+    render(<LanguageSwitcher />)
+    expect(screen.getByRole('link', { name: /Română/ }).getAttribute('href')).toBe(
+      'https://ibis-electronics.ro/',
+    )
+    expect(screen.getByRole('link', { name: 'English' }).getAttribute('aria-current')).toBe('page')
+  })
+  it('provides a compact mobile selector that remembers a manual language choice', () => {
+    render(<LanguageSwitcher compact />)
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'bg' } })
+    expect(document.cookie).toContain(`${STOREFRONT_CHOICE_COOKIE}=bg`)
+    expect(push).toHaveBeenCalledWith('/magazin')
+    expect(screen.getByRole('option', { name: /Română/ })).toBeTruthy()
+  })
   it('preserves placeholders and technical identifiers without interpreting them as markup', () => {
     expect(formatMessage('en', 'searchIn', { category: 'IC <NE555>' })).toBe('Search in IC <NE555>')
     const html = renderToStaticMarkup(
@@ -78,17 +95,22 @@ describe('translated storefront interface', () => {
     )
   })
 
-  it('keeps domestic promotional images out of the English storefront', () => {
+  it('renders the selected language banner and hides an empty English banner', () => {
     const banner = {
       image: { url: '/domestic-shipping.jpg', width: 800, height: 200, alt: 'Доставка в България' },
     }
-    const html = (locale: 'bg' | 'en') =>
+    const html = (locale: 'bg' | 'en', selectedBanner = banner) =>
       renderToStaticMarkup(
         <LocaleProvider locale={locale}>
-          <ShopBanner banner={banner as never} />
+          <ShopBanner banner={selectedBanner as never} />
         </LocaleProvider>,
       )
-    expect(html('en')).toBe('')
+    expect(html('en', { image: null } as never)).toBe('')
+    expect(
+      html('en', {
+        image: { url: '/international.jpg', width: 800, height: 200, alt: 'European delivery' },
+      }),
+    ).toContain('European delivery')
     expect(html('bg')).toContain('Доставка в България')
   })
 

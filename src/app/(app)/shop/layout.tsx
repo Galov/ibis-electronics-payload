@@ -9,6 +9,8 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   const shopPage = await payload.findGlobal({
     slug: 'shopPage',
     depth: 1,
+    locale: 'bg',
+    fallbackLocale: false,
   })
 
   return (

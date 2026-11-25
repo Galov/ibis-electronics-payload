@@ -20,6 +20,10 @@ import { getSocialImageURL } from '@/utilities/getSocialImageURL'
 import { buildOrganizationSchema } from '@/utilities/schema'
 import Script from 'next/script'
 import '@/app/(app)/globals.css'
+import { cookies, headers } from 'next/headers'
+import { RomanianStoreSuggestion } from '@/components/RomanianStoreSuggestion'
+import { shouldOfferRomanianStore } from '@/i18n/storefrontDetection'
+import { STOREFRONT_CHOICE_COOKIE } from '@/i18n/storefrontPreference'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,6 +64,10 @@ export default async function RootLayout({
     depth: 0,
   })
   const organizationJsonLd = buildOrganizationSchema(contactPage as never)
+  const showRomanianSuggestion = shouldOfferRomanianStore(
+    await headers(),
+    (await cookies()).get(STOREFRONT_CHOICE_COOKIE)?.value,
+  )
 
   return (
     <html
@@ -132,6 +140,7 @@ export default async function RootLayout({
               <LivePreviewListener />
 
               <Header locale={locale} />
+              <RomanianStoreSuggestion eligible={showRomanianSuggestion} />
               <main className="flex-1">{children}</main>
               <Footer locale={locale} />
               <CookieConsentBanner analyticsEnabled={Boolean(gtmID)} />

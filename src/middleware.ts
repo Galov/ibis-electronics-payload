@@ -1,5 +1,8 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { detectStorefront, isSearchOrPreviewAgent } from './i18n/storefrontDetection'
+import { parseStorefrontChoice, STOREFRONT_CHOICE_COOKIE } from './i18n/storefrontPreference'
+import { ROMANIAN_STOREFRONT } from './ecommerce/checkoutDestination'
 
 const normalizeDuplicatedProductPath = (pathname: string) => {
   const match = pathname.match(/^\/products\/([^/]+)\/products\/([^/]+)\/?$/u)
@@ -34,6 +37,24 @@ export function middleware(request: NextRequest) {
   if (normalizedCategoryPath) {
     nextURL.pathname = normalizedCategoryPath
     return NextResponse.redirect(nextURL, 301)
+  }
+
+  // Negotiate only the neutral entry URL. Explicit BG/EN pages stay intact.
+  if (nextURL.pathname === '/' && ['GET', 'HEAD'].includes(request.method)) {
+    const bot = isSearchOrPreviewAgent(request.headers.get('user-agent'))
+    const choice = parseStorefrontChoice(request.cookies.get(STOREFRONT_CHOICE_COOKIE)?.value)
+    const detected = detectStorefront(
+      request.headers.get('cf-ipcountry'),
+      request.headers.get('accept-language'),
+    )
+    const target = bot ? 'bg' : choice || (detected === 'ro' ? 'en' : detected)
+    const destination = target === 'ro' ? new URL(ROMANIAN_STOREFRONT) : nextURL
+    if (target !== 'ro') destination.pathname = target === 'en' ? '/en' : '/magazin'
+    destination.searchParams.delete('add-to-cart')
+    const response = NextResponse.redirect(destination, 307)
+    response.headers.set('Cache-Control', 'private, no-store')
+    response.headers.set('Vary', 'Cookie, Accept-Language, CF-IPCountry, User-Agent')
+    return response
   }
 
   if (!nextURL.searchParams.has('add-to-cart')) {
