@@ -39,6 +39,7 @@ const CommerceProviders: React.FC<{ children: React.ReactNode }> = ({ children }
             priceInUSD: true,
             published: true,
             slug: true,
+            englishSlug: true,
             title: true,
           },
         },
