@@ -152,6 +152,10 @@ const adminOrCatalogPublished: Access = ({ req: { user } }) => {
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
+  versions: {
+    ...(typeof defaultCollection.versions === 'object' ? defaultCollection.versions : {}),
+    maxPerDoc: 3,
+  },
   access: {
     ...defaultCollection.access,
     read: adminOrCatalogPublished,

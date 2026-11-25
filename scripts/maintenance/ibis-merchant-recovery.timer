@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly Ibis Merchant job recovery
+
+[Timer]
+OnCalendar=*-*-* *:05:00 Europe/Sofia
+Persistent=true
+Unit=ibis-merchant-recovery.service
+
+[Install]
+WantedBy=timers.target
