@@ -5,6 +5,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy after building (disable for a prepared release image)
+        type: boolean
+        default: true
 
 env:
   REGISTRY: ghcr.io
@@ -43,7 +48,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
           tags: |
-            type=raw,value=main
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,prefix=sha-
 
       - name: Build and push image
@@ -66,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-and-publish
-    if: needs.build-and-publish.result == 'success' && vars.DEPLOY_HOST != '' && vars.DEPLOY_USER != '' && vars.DEPLOY_PATH != ''
+    if: needs.build-and-publish.result == 'success' && vars.DEPLOY_HOST != '' && vars.DEPLOY_USER != '' && vars.DEPLOY_PATH != '' && (github.event_name != 'workflow_dispatch' || inputs.deploy)
     steps:
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.2.0
